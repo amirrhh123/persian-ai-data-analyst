@@ -22,4 +22,11 @@ def test_dashboard_renders_incremental_sync_changes():
     html = Path("backend/api/dashboard.html").read_text(encoding="utf-8")
     assert "renderIncrementalSync" in html
     assert "incremental_sync" in html
+
+
+def test_dashboard_includes_user_feedback_controls():
+    html = Path("backend/api/dashboard.html").read_text(encoding="utf-8")
+    assert "submitFeedback" in html
+    assert "fetch('/feedback'" in html
+    assert "درست بود" in html
     assert "تغییر ساختاری" in html

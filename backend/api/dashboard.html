@@ -37,6 +37,10 @@
     footer{margin-top:18px;text-align:left;color:var(--muted);font-size:11px;direction:ltr}
     @media(min-width:1400px){.shell{max-width:1120px}.panel{padding:18px}}
     @media(max-width:980px){header{flex-direction:column}.grid,.demo,.flow{grid-template-columns:1fr}.step{min-height:auto}.step:not(:last-child):after{content:'↓';top:auto;bottom:-22px;left:50%}.samples{grid-template-columns:1fr}}
+    .feedback-bar{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.55);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .feedback-bar button{width:auto;padding:8px 13px;font:inherit;border-radius:10px;cursor:pointer}
+    .feedback-good{background:#e7f8ef;color:#12633b;border:1px solid #9ed8b8}.feedback-bad{background:#fff1ee;color:#8b2f24;border:1px solid #efb2a9}
+    .feedback-status{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -541,7 +545,27 @@ async function loadAuditSummary(){
     $('auditEvents').innerHTML='<div class="audit-event"><span class="badge bad">خطا</span> امکان دریافت خلاصه audit وجود ندارد.</div>';
   }
 }
+let lastQueryResponse=null;
+function renderFeedback(d){
+  if(!d.query_id)return '';
+  return `<div class="feedback-bar"><b>این پاسخ مفید بود؟</b><button class="feedback-good" onclick="submitFeedback('positive')">درست بود</button><button class="feedback-bad" onclick="submitFeedback('negative')">نیاز به اصلاح دارد</button><span id="feedbackStatus" class="feedback-status"></span></div>`;
+}
+async function submitFeedback(rating){
+  if(!lastQueryResponse)return;
+  let comment=null;
+  if(rating==='negative')comment=prompt('لطفاً مشکل پاسخ را کوتاه بنویسید (اختیاری):')||null;
+  const payload={query_id:lastQueryResponse.query_id,question:$('q').value.trim(),rating,selected_group:lastQueryResponse.group||null,selected_report:lastQueryResponse.report||null,comment};
+  const status=$('feedbackStatus');
+  try{
+    const response=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await response.json();
+    if(!response.ok)throw Error(data.detail||'ثبت بازخورد انجام نشد');
+    status.textContent='ممنون؛ بازخورد شما ثبت شد.';
+    document.querySelectorAll('.feedback-bar button').forEach(button=>button.disabled=true);
+  }catch(error){status.textContent=`خطا: ${error.message}`;}
+}
 function renderResponse(d){
+  lastQueryResponse=d;
   const status=d.rejected?'رد شده':d.unsupported?'خارج از محدوده':d.needs_clarification?'نیازمند شفاف‌سازی':d.valid?'موفق':'نامعتبر';
   const cls=d.rejected||d.unsupported?'bad':d.needs_clarification?'warn':'ok';
   const firstError=(d.errors||[])[0]||'پردازش کامل نشد. لطفاً سؤال را کمی دقیق‌تر وارد کنید.';
@@ -561,6 +585,7 @@ function renderResponse(d){
     <div class="answer-card"><div class="answer-title">پاسخ سیستم</div><div class="answer">${esc(faDigits(answer))}</div></div>
     ${renderExplanation(d.explanation)}
     ${renderCitations(d.citations)}
+    ${renderFeedback(d)}
     ${renderRows(d.result)}
     ${d.sql?`<details><summary>نمایش SQL تولید شده</summary><div class="sql">${esc(d.sql)}</div></details>`:''}
     <div class="trace">${renderTrace(d.trace)}</div>`;

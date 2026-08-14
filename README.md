@@ -26,6 +26,7 @@ into validated, read-only SQL and a structured Persian answer.
 - Bounded, schema-grounded SQL repair with validation after every attempt
 - Query-level source citations derived from SQL and pipeline trace evidence
 - Incremental table-level auto-sync for semantic metadata and the Value Index
+- Privacy-aware user feedback loop with bounded retrieval adjustments
 - Generic Value Index for discovering filters from database values
 - Deterministic SQL planning with optional Ollama fallback
 - Join-path, aggregate, identifier, and result-shape validation

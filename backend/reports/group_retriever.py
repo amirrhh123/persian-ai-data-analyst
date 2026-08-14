@@ -8,6 +8,7 @@ from backend.reports.reranker import retrieval_reranker
 from backend.reports.confidence_gate import confidence_gate
 from backend.reports.query_decomposition import query_decomposer, fuse_vector_scores
 from backend.reports.vector_store import vector_store
+from backend.feedback.service import feedback_service
 
 
 class GroupRetriever:
@@ -149,11 +150,13 @@ class GroupRetriever:
                 query_scores[group_id] = max(0.0, min(1.0, 1.0 - distance))
             score_maps.append(query_scores)
         vector_scores = fuse_vector_scores(score_maps)
+        feedback_adjustments = feedback_service.candidate_adjustments(tenant_id, question, "group")
 
         for group in groups:
             score = vector_scores.get(group.id, 0.0)
             score += self._keyword_boost(question, group)
             score += self._entity_boost(question, group)
+            score += feedback_adjustments.get(group.id, 0.0)
             vector_scores[group.id] = max(0.0, min(1.0, score))
 
         candidates = [
@@ -187,6 +190,8 @@ class GroupRetriever:
             "lexical_score": best.source.lexical_score,
             "hybrid_score": best.source.final_score,
             "reranker_score": best.reranker_score,
+            "feedback_adjustment": feedback_adjustments.get(best.source.candidate.id, 0.0),
+            "feedback_applied": bool(feedback_adjustments),
             "confidence_gate": {
                 "accepted": gate.accepted,
                 "reason_code": gate.reason_code,
@@ -207,6 +212,7 @@ class GroupRetriever:
                     "hybrid_score": item.source.final_score,
                     "reranker_score": item.reranker_score,
                     "final_score": item.final_score,
+                    "feedback_adjustment": feedback_adjustments.get(item.source.candidate.id, 0.0),
                     "rerank_features": {
                         "token_coverage": item.features.token_coverage,
                         "exact_phrase": item.features.exact_phrase,
@@ -232,6 +238,8 @@ class GroupRetriever:
             "lexical_score": 0.0,
             "hybrid_score": 0.0,
             "reranker_score": 0.0,
+            "feedback_adjustment": 0.0,
+            "feedback_applied": False,
             "confidence_gate": {
                 "accepted": False,
                 "reason_code": "no_candidates",

@@ -59,6 +59,8 @@ from backend.pipeline.models import PipelineRequest, PipelineResponse
 from backend.pipeline.query_pipeline import query_pipeline
 from backend.pipeline.error_taxonomy import pipeline_error_taxonomy
 from backend.value_index.service import value_index_service
+from backend.feedback.models import FeedbackRequest, FeedbackResponse, FeedbackSummary
+from backend.feedback.service import feedback_service
 from pathlib import Path
 
 settings = get_settings()
@@ -652,6 +654,22 @@ async def query(request: PipelineRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in query pipeline: {str(e)}")
+
+
+@app.post("/feedback", response_model=FeedbackResponse)
+async def submit_feedback(request: FeedbackRequest):
+    try:
+        return feedback_service.submit(settings.tenant_id, request)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving feedback: {str(e)}")
+
+
+@app.get("/feedback/summary", response_model=FeedbackSummary)
+async def get_feedback_summary():
+    try:
+        return feedback_service.summary(settings.tenant_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading feedback: {str(e)}")
 
 
 @app.post("/llm/chat", response_model=ChatResponse)

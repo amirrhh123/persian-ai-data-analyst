@@ -39,6 +39,7 @@ jobs:
       - name: Run offline regression tests
         run: >-
           python -m pytest
+          tests/test_feedback_loop.py
           tests/test_incremental_auto_sync.py
           tests/test_citation_service.py
           tests/test_sql_repair_loop.py

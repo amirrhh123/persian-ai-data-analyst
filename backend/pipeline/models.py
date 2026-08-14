@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from uuid import uuid4
 
 
 class PipelineRequest(BaseModel):
@@ -49,6 +50,7 @@ class PipelineErrorDetail(BaseModel):
 
 
 class PipelineResponse(BaseModel):
+    query_id: str = Field(default_factory=lambda: str(uuid4()))
     question: str
     success: bool = True
     rejected: bool = False

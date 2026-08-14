@@ -72,7 +72,8 @@ class CitationService:
         report_retrieval = self._step_data(trace, "report_retrieval")
         retrieval_details: dict[str, Any] = {}
         for key in ("retrieval_mode", "vector_score", "lexical_score", "hybrid_score",
-                    "reranker_score", "confidence_gate", "query_decomposition"):
+                    "reranker_score", "feedback_adjustment", "feedback_applied",
+                    "confidence_gate", "query_decomposition"):
             if key in group_retrieval:
                 retrieval_details[f"group_{key}"] = group_retrieval[key]
             if key in report_retrieval:
