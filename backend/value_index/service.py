@@ -288,5 +288,45 @@ class ValueIndexService:
         )
         return index, self.save(index)
 
+    def sync_incremental(
+        self,
+        discovery: SchemaDiscoverySnapshot,
+        *,
+        changed_tables: set[str],
+        removed_tables: set[str],
+        column_aliases: Mapping[str, list[str]] | None = None,
+        pii_columns: set[str] | None = None,
+    ) -> tuple[ValueIndexSnapshot, Path]:
+        """Replace index slices for changed tables and discard removed tables."""
+        previous = self.load(discovery.tenant_id)
+        refresh_tables = changed_tables | {
+            table.name for table in discovery.tables if previous is None
+        }
+        partial_snapshot = discovery.model_copy(update={
+            "tables": [table for table in discovery.tables if table.name in refresh_tables]
+        })
+        partial = self.build(
+            partial_snapshot, column_aliases=column_aliases, pii_columns=pii_columns,
+        )
+        retained_entries = [] if previous is None else [
+            entry for entry in previous.entries
+            if entry.table not in refresh_tables and entry.table not in removed_tables
+        ]
+        retained_excluded = {} if previous is None else {
+            key: value for key, value in previous.excluded_columns.items()
+            if key.split(".", 1)[0] not in refresh_tables | removed_tables
+        }
+        combined = ValueIndexSnapshot(
+            tenant_id=discovery.tenant_id,
+            source_fingerprint=discovery.fingerprint,
+            generated_at=datetime.now().isoformat(timespec="seconds"),
+            entries=sorted(
+                [*retained_entries, *partial.entries],
+                key=lambda entry: (entry.table, entry.column, -entry.count, entry.normalized_value),
+            ),
+            excluded_columns={**retained_excluded, **partial.excluded_columns},
+        )
+        return combined, self.save(combined)
+
 
 value_index_service = ValueIndexService()

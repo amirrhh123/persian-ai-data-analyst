@@ -332,6 +332,27 @@ function renderLifecycle(d){
     ? `وضعیت نهایی: <b>${esc(d.status)}</b><br>Benchmark: <b>${faDigits(b.passed)}/${faDigits(b.total)}</b> پاس شده، نرخ موفقیت <b>${faDigits(b.pass_rate)}٪</b><br>${d.benchmark.output_path?`فایل خروجی: <span style="direction:ltr;display:inline-block">${esc(d.benchmark.output_path)}</span>`:''}`
     : `وضعیت نهایی: <b>${esc(d.status)}</b>`;
 }
+function renderIncrementalSync(d){
+  const changes=d.changes||{};
+  const groups=[
+    ['جدول‌های جدید',changes.added_tables||[],'ok'],
+    ['تغییر ساختاری',changes.structurally_changed_tables||[],'warn'],
+    ['تغییر داده و مقدارها',changes.value_changed_tables||[],'warn'],
+    ['جدول‌های حذف‌شده',changes.removed_tables||[],'bad']
+  ];
+  const ready=d.status==='ready'||d.status==='skipped';
+  $('lifeStatus').className=`badge ${ready?'ok':'warn'}`;
+  $('lifeStatus').textContent=ready?'به‌روزرسانی افزایشی انجام شد':'نیازمند بررسی';
+  $('lifeSteps').innerHTML=groups.map(([title,items,cls])=>`<div class="life-step">
+    <div class="life-step-head"><b>${esc(title)}</b><span class="badge ${items.length?cls:'ok'}">${faDigits(items.length)}</span></div>
+    <p>${items.length?items.map(esc).join('، '):'موردی پیدا نشد.'}</p>
+  </div>`).join('');
+  const artifacts=d.artifacts||{};
+  $('lifeResult').innerHTML=`روش اجرا: <b>فقط بخش‌های تغییرکرده</b><br>
+    جدول‌های بدون تغییر: <b>${faDigits((changes.unchanged_tables||[]).length)}</b><br>
+    رکوردهای Value Index: <b>${faDigits(artifacts.value_entries||0)}</b><br>
+    <small>${esc(d.message||'')}</small>`;
+}
 function setAdminBusy(label){
   $('lifeStatus').className='badge warn';
   $('lifeStatus').textContent=label||'در حال اجرا...';
@@ -453,6 +474,8 @@ async function runLifecycle(){
     if(!r.ok)throw Error(d.detail||'آپدیت خودکار semantic اجرا نشد');
     if(d.lifecycle){
       renderLifecycle(d.lifecycle);
+    }else if(d.incremental_sync){
+      renderIncrementalSync(d.incremental_sync);
     }else{
       $('lifeStatus').className='badge ok';
       $('lifeStatus').textContent='بدون نیاز به آپدیت';

@@ -25,6 +25,7 @@ into validated, read-only SQL and a structured Persian answer.
 - Safe query decomposition with multi-query vector-score fusion
 - Bounded, schema-grounded SQL repair with validation after every attempt
 - Query-level source citations derived from SQL and pipeline trace evidence
+- Incremental table-level auto-sync for semantic metadata and the Value Index
 - Generic Value Index for discovering filters from database values
 - Deterministic SQL planning with optional Ollama fallback
 - Join-path, aggregate, identifier, and result-shape validation
@@ -45,6 +46,8 @@ flowchart LR
     RR --> G["Confidence gate"]
     G --> S["Semantic catalog and Value Index"]
     S --> P["Deterministic SQL planner"]
+    DB -. "changed tables" .-> IS["Incremental auto-sync"]
+    IS --> S
     P --> V["Safety and SQL validation"]
     V -->|"invalid"| SR["Bounded SQL repair"]
     SR --> V
@@ -139,6 +142,8 @@ When a new database or table is introduced, the lifecycle performs:
 6. Human-reviewed semantic activation
 7. Smoke tests and regression benchmark
 
+After the first full lifecycle, later schema or sampled-value changes use table-level incremental synchronization. Unchanged semantic reviews and Value Index slices are preserved; removed tables are purged. If a usable checkpoint does not exist, the system safely falls back to the full lifecycle.
+
 This keeps database content in PostgreSQL while regenerating only the metadata required for understanding and safe SQL generation.
 
 ## Safety model
@@ -156,7 +161,7 @@ This keeps database content in PostgreSQL while regenerating only the metadata r
 Run focused unit and regression tests:
 
 ```powershell
-python -m pytest tests/test_citation_service.py tests/test_sql_repair_loop.py tests/test_query_decomposition.py tests/test_confidence_gate.py tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
+python -m pytest tests/test_incremental_auto_sync.py tests/test_citation_service.py tests/test_sql_repair_loop.py tests/test_query_decomposition.py tests/test_confidence_gate.py tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
 python -m pytest tests/test_regression_benchmark.py -v
 ```
 

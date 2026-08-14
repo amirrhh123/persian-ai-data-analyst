@@ -361,6 +361,7 @@ class SemanticAutoUpdateResponse(BaseModel):
     action: str
     freshness_before: SemanticFreshnessResponse
     lifecycle: SemanticLifecycleResponse | None = None
+    incremental_sync: dict | None = None
     freshness_after: SemanticFreshnessResponse | None = None
     message: str = ""
 

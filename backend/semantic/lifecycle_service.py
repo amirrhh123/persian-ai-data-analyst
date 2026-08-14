@@ -15,6 +15,7 @@ from backend.semantic.models import (
 )
 from backend.semantic.suggestion_service import semantic_suggestion_service
 from backend.value_index.service import value_index_service
+from backend.sync.incremental_service import incremental_sync_service
 
 
 class SemanticLifecycleService:
@@ -140,6 +141,39 @@ class SemanticLifecycleService:
                 freshness_before=freshness_before,
                 message="Could not check the database safely, so automatic update was not run.",
             )
+
+        if (
+            freshness_before.status == "stale"
+            and freshness_before.active_catalog_exists
+            and freshness_before.discovery_exists
+            and freshness_before.suggestions_exist
+        ):
+            try:
+                incremental = await incremental_sync_service.run(
+                    tenant_id=tenant, schema_name=schema_name,
+                    sample_size=sample_size, sample_value_limit=sample_value_limit,
+                    min_pass_rate=min_pass_rate, benchmark_limit=benchmark_limit,
+                    force_activate=force_activate,
+                )
+                freshness_after = self.check_freshness(
+                    tenant_id=tenant, schema_name=schema_name,
+                    sample_size=sample_size, sample_value_limit=sample_value_limit,
+                )
+                success = (
+                    incremental.get("status") in {"ready", "skipped"}
+                    and freshness_after.status == "up_to_date"
+                )
+                return SemanticAutoUpdateResponse(
+                    status="updated" if success else str(incremental.get("status", "failed")),
+                    tenant_id=tenant, action="incremental_sync",
+                    freshness_before=freshness_before,
+                    incremental_sync=incremental,
+                    freshness_after=freshness_after,
+                    message=("Changed tables were synchronized incrementally."
+                             if success else "Incremental synchronization ran but did not pass every quality gate."),
+                )
+            except Exception:
+                pass
 
         lifecycle = await self.run(
             tenant_id=tenant,

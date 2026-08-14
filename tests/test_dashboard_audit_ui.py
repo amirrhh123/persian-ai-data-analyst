@@ -16,3 +16,10 @@ def test_dashboard_includes_source_citation_view():
     assert "renderCitations" in html
     assert "citations" in html
     assert "منابع پاسخ" in html
+
+
+def test_dashboard_renders_incremental_sync_changes():
+    html = Path("backend/api/dashboard.html").read_text(encoding="utf-8")
+    assert "renderIncrementalSync" in html
+    assert "incremental_sync" in html
+    assert "تغییر ساختاری" in html

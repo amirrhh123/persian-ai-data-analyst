@@ -597,6 +597,28 @@ async def auto_update_semantic_layer(
         raise HTTPException(status_code=500, detail=f"Error auto-updating semantic layer: {str(e)}")
 
 
+@app.post("/semantic/incremental-sync", response_model=Dict[str, Any])
+async def incremental_sync_semantic_layer(
+    min_pass_rate: float = 95.0,
+    benchmark_limit: int | None = None,
+    force_activate: bool = False,
+):
+    """Synchronize only table-level changes from the latest checkpoint."""
+    try:
+        from backend.sync.incremental_service import incremental_sync_service
+        return await incremental_sync_service.run(
+            tenant_id=settings.tenant_id, min_pass_rate=min_pass_rate,
+            benchmark_limit=benchmark_limit, force_activate=force_activate,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Incremental checkpoint is missing; run the full lifecycle once. {exc}",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error running incremental sync: {str(e)}")
+
+
 @app.post("/sql/generate", response_model=SQLResponse)
 async def generate_sql(request: SQLRequest):
     try:

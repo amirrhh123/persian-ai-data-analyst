@@ -641,5 +641,42 @@ class SemanticSuggestionService:
         suggestions = self.generate(tenant_id)
         return suggestions, self.save(suggestions, output_path)
 
+    def sync_incremental(
+        self,
+        discovery: SchemaDiscoverySnapshot,
+        *,
+        changed_tables: set[str],
+        removed_tables: set[str],
+        output_path: Optional[Path] = None,
+    ) -> tuple[SemanticSuggestionSet, Path]:
+        """Regenerate changed table semantics while preserving unchanged reviews."""
+        tenant = discovery.tenant_id
+        path = output_path or self._tenant_dir(tenant) / "semantic_suggestions.json"
+        existing: SemanticSuggestionSet | None = None
+        if path.exists():
+            with path.open("r", encoding="utf-8") as file:
+                existing = SemanticSuggestionSet.model_validate(json.load(file))
+        current_tables = {table.name: table for table in discovery.tables}
+        existing_tables = {table.name: table for table in (existing.tables if existing else [])}
+        merged_tables = [
+            self._suggest_table(table)
+            if name in changed_tables or name not in existing_tables
+            else existing_tables[name]
+            for name, table in current_tables.items()
+        ]
+        table_names = set(current_tables) - removed_tables
+        suggestions = SemanticSuggestionSet(
+            tenant_id=tenant, source_fingerprint=discovery.fingerprint,
+            generated_at=datetime.now().isoformat(timespec="seconds"),
+            tables=merged_tables, joins=self._suggest_joins(discovery),
+            business_terms=self._business_terms(table_names),
+            value_mappings=self._value_mappings(table_names),
+            rules=self._rules(table_names),
+        )
+        suggestions = self._merge_existing_reviews(
+            suggestions, self._load_existing_active_catalog(tenant),
+        )
+        return suggestions, self.save(suggestions, path)
+
 
 semantic_suggestion_service = SemanticSuggestionService()
