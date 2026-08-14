@@ -1,0 +1,31 @@
+terminology:
+  - term: رتبه
+    meaning: درجه شغلی کارمند
+    synonyms:
+      - درجه
+      - پایه
+      
+  - term: واحد سازمانی
+    meaning: بخش تشکیلاتی
+    synonyms:
+      - واحد
+      - بخش
+      - اداره
+      
+  - term: دانش‌آموز
+    meaning: فرد در حال تحصیل
+    synonyms:
+      - شاگرد
+      - محصل
+      
+  - term: مدرسه
+    meaning: محل آموزش
+    synonyms:
+      - آموزشگاه
+      - مکتب
+      
+  - term: وزارتخانه
+    meaning: دستگاه اجرایی دولتی
+    synonyms:
+      - وزارت
+      - سازمان

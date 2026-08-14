@@ -1,0 +1,448 @@
+[
+  {
+    "id": "reg_school_phone_001",
+    "question": "شماره تلفن دبیرستان شهید بهشتی",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "sql_contains": ["SELECT schools.name, schools.phone", "FROM schools", "schools.name = 'دبیرستان شهید بهشتی'"],
+      "row_count": 1,
+      "first_row": {"phone": "021-88776655"}
+    }
+  },
+  {
+    "id": "reg_employee_national_id_name_001",
+    "question": "اسم و فامیل کارمند با کد ملی 8223876400",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "report": "employee_list",
+      "intent": {"national_id": "8223876400"},
+      "sql_contains": ["employees.national_id = '8223876400'", "employees.first_name", "employees.last_name"],
+      "sql_not_contains": ["employees.national_id = 8223876400"],
+      "row_count": 1,
+      "first_row": {"first_name": "میلاد", "last_name": "احمدی", "national_id": "8223876400"}
+    }
+  },
+  {
+    "id": "reg_employee_national_id_profile_001",
+    "question": "کارمند با کد ملی 4871587050 وضعیت و شغل و اسم و فامیل و تمام ستون ها",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "report": "employee_list",
+      "intent": {"national_id": "4871587050", "wants_full_profile": true},
+      "sql_contains": ["employees.position", "employees.status", "employees.hire_date", "employees.created_at", "employees.national_id = '4871587050'"],
+      "row_count": 1,
+      "first_row": {"first_name": "آرش", "last_name": "هاشمی", "position": "دبیر ریاضی", "status": "active", "national_id": "4871587050"}
+    }
+  },
+  {
+    "id": "reg_employee_pension_amount_by_national_id_001",
+    "question": "سنوات کارمند با کد ملی \"2475429291\"",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "report": "employee_list",
+      "intent": {"national_id": "2475429291", "wants_service_years": true},
+      "sql_contains": ["JOIN retirement_records ON retirement_records.employee_id = employees.id", "retirement_records.pension_amount", "employees.national_id = '2475429291'"],
+      "row_count": 0
+    }
+  },
+  {
+    "id": "reg_student_count_tehran_001",
+    "question": "تعداد دانش آموزان استان تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "sql_contains": ["COUNT(students.id) AS student_count", "JOIN schools ON students.school_id = schools.id", "JOIN organization_units ON schools.organization_unit_id = organization_units.id", "organization_units.province = 'تهران'"],
+      "row_count": 1,
+      "first_row": {"province": "تهران", "student_count": 35851}
+    }
+  },
+  {
+    "id": "reg_student_list_tehran_001",
+    "question": "اطلاعات دانش آموزان استان تهران را نشان بده",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "student_list",
+      "intent": {"province": "تهران"},
+      "sql_contains": ["FROM students", "JOIN schools ON students.school_id = schools.id", "JOIN organization_units ON schools.organization_unit_id = organization_units.id", "organization_units.province = 'تهران'"],
+      "sql_not_contains": ["schools.name LIKE '%تهران%'", "schools.name = 'تهران'"],
+      "row_count": 1000
+    }
+  },
+  {
+    "id": "reg_student_list_by_school_001",
+    "question": "دانش آموزانی که در مدرسه دبیرستان فرزانگان مرودشت هستند",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "student_list",
+      "intent": {"named_school": "دبیرستان فرزانگان مرودشت"},
+      "sql_contains": ["FROM students", "JOIN schools ON students.school_id = schools.id", "schools.name = 'دبیرستان فرزانگان مرودشت'"],
+      "row_count": 558,
+      "first_row": {"school_name": "دبیرستان فرزانگان مرودشت"}
+    }
+  },
+  {
+    "id": "reg_student_count_by_school_001",
+    "question": "تعداد دانش آموزان دبستان امید مرودشت را بگو",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "student_list",
+      "intent": {"named_school": "دبستان امید مرودشت", "aggregation": "COUNT"},
+      "sql_contains": ["COUNT(students.id) AS student_count", "JOIN schools ON students.school_id = schools.id", "schools.name = 'دبستان امید مرودشت'", "GROUP BY schools.name"],
+      "row_count": 1,
+      "first_row": {"school_name": "دبستان امید مرودشت", "student_count": 2404}
+    }
+  },
+  {
+    "id": "reg_student_count_by_school_with_province_name_001",
+    "question": "تعداد دانش آموزان مدرسه دبیرستان نمونه دولتی اصفهان",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "student_list",
+      "intent": {"named_school": "دبیرستان نمونه دولتی اصفهان", "aggregation": "COUNT", "province": null},
+      "sql_contains": ["COUNT(students.id) AS student_count", "JOIN schools ON students.school_id = schools.id", "schools.name = 'دبیرستان نمونه دولتی اصفهان'"],
+      "sql_not_contains": ["organization_units.province = 'اصفهان'"],
+      "row_count": 1,
+      "first_row": {"school_name": "دبیرستان نمونه دولتی اصفهان", "student_count": 1164}
+    }
+  },
+  {
+    "id": "reg_student_by_national_id_001",
+    "question": "نام دانش آموز با کد ملی \"3489881390\"",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "student_list",
+      "intent": {"national_id": "3489881390"},
+      "sql_contains": ["FROM students", "students.national_id = '3489881390'", "students.first_name"],
+      "sql_not_contains": ["students.national_id = 3489881390"],
+      "row_count": 1,
+      "first_row": {"first_name": "پوریا", "last_name": "محمدی", "national_id": "3489881390"}
+    }
+  },
+  {
+    "id": "reg_student_profile_by_national_id_001",
+    "question": "اطلاعات دانش آموز با کد ملی \"3489881390\"",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "student_list",
+      "intent": {"national_id": "3489881390", "wants_full_profile": true},
+      "sql_contains": ["students.grade", "students.status", "students.school_id", "students.enrollment_year", "students.national_id = '3489881390'"],
+      "row_count": 1,
+      "first_row": {"first_name": "پوریا", "last_name": "محمدی", "national_id": "3489881390"}
+    }
+  },
+  {
+    "id": "reg_school_profile_by_name_001",
+    "question": "اطلاعات مدرسه دبیرستان شهید بهشتی",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "intent": {"named_school": "دبیرستان شهید بهشتی", "wants_full_profile": true},
+      "sql_contains": ["schools.phone", "schools.address", "schools.capacity", "schools.established_year", "schools.name = 'دبیرستان شهید بهشتی'"],
+      "row_count": 1,
+      "first_row": {"name": "دبیرستان شهید بهشتی", "phone": "021-88776655"}
+    }
+  },
+  {
+    "id": "reg_school_name_with_city_word_001",
+    "question": "اطلاعات مدرسه دبستان امید شیراز",
+    "execute": false,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "intent": {"named_school": "دبستان امید شیراز", "province": null, "city": null},
+      "sql_contains": ["FROM schools", "schools.name = 'دبستان امید شیراز'"],
+      "sql_not_contains": ["organization_units.province", "organization_units.city"]
+    }
+  },
+  {
+    "id": "reg_school_city_filter_001",
+    "question": "مدارس شهر تهران را نشان بده",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "intent": {"province": null, "city": "تهران"},
+      "sql_contains": ["JOIN organization_units ON schools.organization_unit_id = organization_units.id", "organization_units.city = 'تهران'"],
+      "sql_not_contains": ["organization_units.province = 'تهران'", "organization_units.city = 'تهران را'"],
+      "row_count": 70
+    }
+  },
+  {
+    "id": "reg_school_profile_uses_schools_not_org_units_001",
+    "question": "اطلاعات مدرسه دبیرستان فرزانگان",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "intent": {"named_school": "دبیرستان فرزانگان"},
+      "sql_contains": ["FROM schools", "schools.name = 'دبیرستان فرزانگان'"],
+      "sql_not_contains": ["FROM organization_units"],
+      "row_count": 1,
+      "first_row": {"name": "دبیرستان فرزانگان"}
+    }
+  },
+  {
+    "id": "reg_school_count_by_org_unit_name_001",
+    "question": "تعداد مدارس منطقه آموزشی یک تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "intent": {"named_organization_unit": "منطقه آموزشی یک تهران", "province": null},
+      "sql_contains": ["FROM schools", "JOIN organization_units ON schools.organization_unit_id = organization_units.id", "organization_units.name = 'منطقه آموزشی یک تهران'", "COUNT(DISTINCT schools.id) AS school_count"],
+      "sql_not_contains": ["organization_units.province = 'تهران'"],
+      "row_count": 1,
+      "first_row": {"organization_unit_name": "منطقه آموزشی یک تهران", "school_count": 3}
+    }
+  },
+  {
+    "id": "reg_count_list_student_school_pair_count_001",
+    "question": "تعداد دانش آموزان مدرسه دبیرستان شهید بهشتی",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "student_list",
+      "intent": {"aggregation": "COUNT", "named_school": "دبیرستان شهید بهشتی"},
+      "sql_contains": ["COUNT(students.id) AS student_count", "schools.name = 'دبیرستان شهید بهشتی'"],
+      "row_count": 1,
+      "first_row": {"school_name": "دبیرستان شهید بهشتی", "student_count": 595}
+    }
+  },
+  {
+    "id": "reg_count_list_student_school_pair_list_001",
+    "question": "دانش آموزان مدرسه دبیرستان شهید بهشتی را نشان بده",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "student_list",
+      "intent": {"aggregation": null, "wants_list": true, "named_school": "دبیرستان شهید بهشتی"},
+      "sql_contains": ["students.first_name", "students.last_name", "schools.name = 'دبیرستان شهید بهشتی'"],
+      "sql_not_contains": ["COUNT("],
+      "row_count": 595
+    }
+  },
+  {
+    "id": "reg_count_list_school_city_pair_count_001",
+    "question": "تعداد مدارس شهر تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "intent": {"aggregation": "COUNT", "city": "تهران"},
+      "sql_contains": ["COUNT(DISTINCT schools.id) AS school_count", "organization_units.city = 'تهران'"],
+      "row_count": 1,
+      "first_row": {"city": "تهران", "school_count": 70}
+    }
+  },
+  {
+    "id": "reg_count_list_school_city_pair_list_001",
+    "question": "مدارس شهر تهران را نشان بده",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "intent": {"aggregation": null, "wants_list": true, "city": "تهران"},
+      "sql_contains": ["schools.id", "schools.name", "organization_units.city = 'تهران'"],
+      "sql_not_contains": ["COUNT("],
+      "row_count": 70
+    }
+  },
+  {
+    "id": "reg_org_unit_profile_by_name_001",
+    "question": "اطلاعات واحد سازمانی اداره کل آموزش و پرورش تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "organization",
+      "report": "organization_structure",
+      "intent": {"named_organization_unit": "اداره کل آموزش و پرورش تهران", "province": null},
+      "sql_contains": ["FROM organization_units", "organization_units.name = 'اداره کل آموزش و پرورش تهران'"],
+      "sql_not_contains": ["FROM schools", "واحد سازمانی اداره کل"],
+      "row_count": 4,
+      "first_row": {"name": "اداره کل آموزش و پرورش تهران", "province": "تهران"}
+    }
+  },
+  {
+    "id": "reg_student_count_tehran_pouria_001",
+    "question": "تعداد دانش آموزان تهران که اسم آن ها پوریا هست را بگو",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "intent": {"province": "تهران", "named_student": "پوریا"},
+      "sql_contains": ["organization_units.province = 'تهران'", "students.first_name = 'پوریا'"],
+      "row_count": 1,
+      "first_row": {"province": "تهران", "student_count": 973}
+    }
+  },
+  {
+    "id": "reg_school_count_tehran_001",
+    "question": "تعداد مدارس استان تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "sql_contains": ["COUNT(DISTINCT schools.id) AS school_count", "FROM schools", "JOIN organization_units", "organization_units.province = 'تهران'"],
+      "row_count": 1,
+      "first_row": {"province": "تهران", "school_count": 169}
+    }
+  },
+  {
+    "id": "reg_school_names_tehran_001",
+    "question": "اسم مدارس استان تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "sql_contains": ["SELECT schools.id, schools.name", "FROM schools", "ORDER BY schools.name, schools.id"],
+      "row_count": 169
+    }
+  },
+  {
+    "id": "reg_lowest_service_payment_001",
+    "question": "برای کدام کارمند کمترین سنوات پرداخت شده؟",
+    "execute": false,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "report": "employee_list",
+      "intent": {"requested_entity": "retirement", "ranking_metric": "pension_amount"},
+      "sql_contains": ["FROM retirement_records", "JOIN employees ON retirement_records.employee_id = employees.id", "retirement_records.pension_amount", "ORDER BY retirement_records.pension_amount ASC", "LIMIT 1"],
+      "sql_not_contains": ["salary_items", "AVG("]
+    }
+  },
+  {
+    "id": "reg_employee_count_isfahan_001",
+    "question": "تعداد کارمندان استان اصفهان را نشان بده",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "report": "employee_statistics",
+      "sql_contains": ["COUNT(employees.id) AS employee_count", "JOIN organization_units", "organization_units.province = 'اصفهان'"],
+      "row_count": 1,
+      "first_row": {"province": "اصفهان", "employee_count": 2968}
+    }
+  },
+  {
+    "id": "reg_employee_list_tehran_001",
+    "question": "اطلاعات کارمندان استان تهران را نشان بده",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "report": "employee_list",
+      "intent": {"province": "تهران"},
+      "sql_contains": ["FROM employees", "JOIN organization_units ON employees.organization_unit_id = organization_units.id", "organization_units.province = 'تهران'"],
+      "sql_not_contains": ["organization_units.name = 'تهران'", "ou.name = 'تهران'"],
+      "row_count": 1000
+    }
+  },
+  {
+    "id": "reg_routing_student_not_training_request_001",
+    "question": "تعداد دانش آموزان استان تهران",
+    "execute": false,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "sql_contains": ["FROM students", "JOIN schools", "JOIN organization_units", "organization_units.province = 'تهران'"],
+      "sql_not_contains": ["demo_training_requests"]
+    }
+  },
+  {
+    "id": "reg_routing_employee_not_training_request_001",
+    "question": "اطلاعات کارمندان استان تهران",
+    "execute": false,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "sql_contains": ["FROM employees", "JOIN organization_units", "organization_units.province = 'تهران'"],
+      "sql_not_contains": ["demo_training_requests"]
+    }
+  },
+  {
+    "id": "reg_routing_school_not_training_request_001",
+    "question": "اسم مدارس استان تهران",
+    "execute": false,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "report": "school_statistics",
+      "sql_contains": ["FROM schools", "JOIN organization_units", "organization_units.province = 'تهران'"],
+      "sql_not_contains": ["demo_training_requests"]
+    }
+  },
+  {
+    "id": "reg_training_request_generic_value_routing_001",
+    "question": "تعداد موارد با کارمند اداری",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "training_request",
+      "report": "semantic_table_demo_training_requests",
+      "sql_contains": ["FROM demo_training_requests", "requester_role = 'کارمند اداری'"],
+      "row_count": 1,
+      "first_row": {"training_request_count": 2}
+    }
+  },
+  {
+    "id": "reg_training_request_numeric_filter_001",
+    "question": "تعداد درخواست های آموزشی با هزینه کمتر از ۸۰ میلیون",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "training_request",
+      "report": "semantic_table_demo_training_requests",
+      "sql_contains": ["FROM demo_training_requests", "estimated_cost < 80000000"],
+      "row_count": 1,
+      "first_row": {"training_request_count": 8}
+    }
+  },
+  {
+    "id": "reg_training_request_ambiguous_tehran_001",
+    "question": "تعداد درخواست ها با تهران",
+    "execute": false,
+    "expected": {
+      "success": false,
+      "group": "training_request",
+      "needs_clarification": true,
+      "valid": false,
+      "sql_contains": [],
+      "sql_not_contains": ["SELECT", "demo_training_requests"]
+    }
+  }
+]

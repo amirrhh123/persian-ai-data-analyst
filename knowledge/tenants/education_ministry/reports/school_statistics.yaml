@@ -1,0 +1,38 @@
+id: school_statistics
+name: آمار مدارس
+description: گزارش آماری مدارس و ظرفیت آنها
+linked_table: schools
+group_id: student
+allowed_metrics:
+  - تعداد_دانش_آموز
+  - نرخ_ثبت_نام
+business_rules: []
+example_questions:
+  - مدارس پرجمعیت
+  - ظرفیت مدارس به تفکیک نوع
+  - مدارس جدید
+important_columns:
+  name:
+    meaning: نام مدرسه
+    persian_name: نام مدرسه
+    data_type: varchar
+  school_type:
+    meaning: نوع مدرسه
+    persian_name: نوع
+    data_type: varchar
+  capacity:
+    meaning: ظرفیت
+    persian_name: ظرفیت
+    data_type: integer
+  established_year:
+    meaning: سال تاسیس
+    persian_name: سال تاسیس
+    data_type: integer
+sql_hints:
+  default_filters: []
+  preferred_joins:
+    - "schools.organization_unit_id = organization_units.id"
+  aggregate_columns:
+    - capacity
+  group_by_columns:
+    - school_type

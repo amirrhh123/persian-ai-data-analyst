@@ -1,0 +1,72 @@
+# Python caches and build outputs
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+
+# IDE, operating-system, and agent-local files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.agents/
+.codex/
+.mimocode/
+
+# Runtime and temporary artifacts
+.tmp/
+tmp/
+logs/
+output/
+*.log
+server.out.log
+server.err.log
+
+# Local AI models and offline dependency caches
+models/
+docker_wheels/
+
+# Databases, dumps, and generated seed datasets
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+database_scripts/seed/data/
+
+# Tenant-specific generated schema and semantic artifacts
+schema/tenants/
+
+# Generated test and benchmark outputs
+tests/results/
+tests/results_*.json
+tests/live_test_results.json
+tests/benchmark/generated_smoke_cases.json
+
+# Local notebooks and profiling artifacts
+.ipynb_checkpoints/
+*.prof
+*.pstats

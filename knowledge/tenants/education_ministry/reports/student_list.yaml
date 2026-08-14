@@ -1,0 +1,50 @@
+id: student_list
+name: لیست دانش‌آموزان
+description: گزارش لیست دانش‌آموزان با اطلاعات پایه
+linked_table: students
+group_id: student
+allowed_metrics:
+  - تعداد_دانش_آموز
+business_rules: []
+example_questions:
+  - لیست دانش‌آموزان فعال
+  - تعداد دانش‌آموزان هر مدرسه
+  - دانش‌آموزان جدید
+important_columns:
+  national_id:
+    meaning: کد ملی
+    persian_name: کد ملی
+    data_type: varchar
+  first_name:
+    meaning: نام
+    persian_name: نام
+    data_type: varchar
+  last_name:
+    meaning: نام خانوادگی
+    persian_name: نام خانوادگی
+    data_type: varchar
+  school_id:
+    meaning: شناسه مدرسه
+    persian_name: مدرسه
+    data_type: integer
+  grade:
+    meaning: پایه تحصیلی
+    persian_name: پایه
+    data_type: varchar
+  enrollment_year:
+    meaning: سال ثبت‌نام
+    persian_name: سال ثبت‌نام
+    data_type: integer
+  status:
+    meaning: وضعیت تحصیلی
+    persian_name: وضعیت
+    data_type: varchar
+sql_hints:
+  default_filters:
+    - "status = 'active'"
+  preferred_joins:
+    - "students.school_id = schools.id"
+  aggregate_columns: []
+  group_by_columns:
+    - grade
+    - schools.name

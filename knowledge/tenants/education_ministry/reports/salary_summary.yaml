@@ -1,0 +1,60 @@
+id: salary_summary
+name: خلاصه حقوق ماهانه
+description: گزارش خلاصه پرداخت‌های حقوق ماهانه کارکنان
+linked_table: salary_items
+group_id: salary
+allowed_metrics:
+  - میانگین_حقوق
+  - تعداد_کارکنان
+business_rules:
+  - قانون_حقوق
+example_questions:
+  - خلاصه حقوق ماه گذشته
+  - مجموع پرداخت‌ها
+  - میانگین حقوق
+  - بیشترین و کمترین حقوق
+important_columns:
+  employee_id:
+    meaning: شناسه کارمند
+    persian_name: کد کارمند
+    data_type: integer
+  year:
+    meaning: سال مالی
+    persian_name: سال
+    data_type: integer
+  month:
+    meaning: ماه مالی
+    persian_name: ماه
+    data_type: integer
+  base_salary:
+    meaning: حقوق پایه
+    persian_name: حقوق پایه
+    data_type: decimal
+  allowances:
+    meaning: مزایا
+    persian_name: مزایا
+    data_type: decimal
+  deductions:
+    meaning: کسورات
+    persian_name: کسورات
+    data_type: decimal
+  net_salary:
+    meaning: خالص پرداختی
+    persian_name: خالص حقوق
+    data_type: decimal
+sql_hints:
+  default_filters: []
+  preferred_joins:
+    - "salary_items.employee_id = employees.id"
+  aggregate_columns:
+    - net_salary
+    - allowances
+    - deductions
+    - base_salary
+  group_by_columns:
+    - month
+    - year
+  notes:
+    - "برای پیدا کردن نام کارمند باید با جدول employees اتصال یابد"
+    - "برای بیشترین/کمترین حقوق از ORDER BY ... LIMIT 1 استفاده کن"
+    - "هرگز از MAX(*) استفاده نکن"

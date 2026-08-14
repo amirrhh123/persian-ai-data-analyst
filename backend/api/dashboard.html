@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>داشبورد تحلیل‌گر هوشمند داده</title>
+  <style>
+    @font-face{font-family:Vazirmatn;src:url("/assets/vazirmatn.woff2") format("woff2");font-style:normal;font-weight:100 900;font-display:swap}
+    :root{--ink:#132f2c;--muted:#687874;--paper:#f4f0e7;--card:#fffdf8;--line:#d9ded5;--green:#1f6b5c;--mint:#e0f1eb;--amber:#efa83f;--blue:#315d8d;--red:#b95648;--shadow:0 18px 42px #213d360f}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Vazirmatn,Tahoma,Arial,sans-serif;font-feature-settings:"ss01";text-rendering:optimizeLegibility}
+    .shell{max-width:1120px;margin:auto;padding:28px 22px 50px}
+    header{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;margin-bottom:22px}
+    .eyebrow{font-size:11px;font-weight:800;color:var(--green);letter-spacing:.08em;text-transform:uppercase}
+    h1{font-size:clamp(28px,3.6vw,46px);margin:8px 0 10px;letter-spacing:0}.lead{max-width:760px;color:var(--muted);line-height:1.9;margin:0}
+    .live{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);padding:10px 14px;border-radius:8px;white-space:nowrap;font-size:13px;box-shadow:var(--shadow)}
+    .dot{width:9px;height:9px;border-radius:50%;background:var(--amber)}.dot.ok{background:#35a477;box-shadow:0 0 0 4px #35a47722}.dot.bad{background:var(--red)}
+    .grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.75fr);gap:16px}.panel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px;box-shadow:var(--shadow)}
+    .head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.head h2{font-size:18px;margin:0}.tag{font-size:11px;background:var(--mint);color:var(--green);padding:6px 9px;border-radius:6px;font-weight:700}
+    .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}.step{position:relative;border:1px solid var(--line);border-radius:8px;padding:14px;min-height:138px;background:#fff}.step:not(:last-child):after{content:'←';position:absolute;left:-16px;top:58px;color:var(--green);font-size:18px}.n{font-size:11px;color:var(--green);font-weight:800}.ico{font-size:24px;margin:15px 0 9px}.step h3{font-size:13px;margin:0 0 7px}.step p{font-size:11px;line-height:1.75;color:var(--muted);margin:0}
+    .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.metric{border-top:2px solid var(--ink);padding-top:10px}.metric b{display:block;font-size:22px}.metric span{font-size:11px;color:var(--muted)}
+    .service{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.service:last-child{border:0}.service b{font-size:13px}.service small{display:block;color:var(--muted);margin-top:4px}.badge{font-size:11px;padding:5px 8px;background:#eceee8;border-radius:6px;white-space:nowrap}.badge.ok{color:var(--green);background:var(--mint)}.badge.warn{background:#fff1d7;color:#9a6515}.badge.bad{background:#fae5e1;color:var(--red)}
+    .lifecycle{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}.lifecycle-actions{display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap}.lifecycle button{border:0;border-radius:7px;background:var(--green);color:white;font:800 12px Vazirmatn;padding:9px 11px;cursor:pointer}.lifecycle button:disabled{opacity:.6;cursor:wait}.lifecycle small{color:var(--muted);line-height:1.8}.life-steps{display:grid;gap:8px;margin-top:10px}.life-step{border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px}.life-step-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.life-step b{font-size:12px}.life-step p{font-size:11px;color:var(--muted);line-height:1.7;margin:6px 0 0}.life-step .badge{font-size:10px}.life-step .badge.bad{background:#fae5e1;color:var(--red)}.life-step .badge.warn{background:#fff1d7;color:#9a6515}.life-result{border:1px solid var(--line);border-radius:8px;background:#f8fbf7;padding:10px;margin-top:10px;font-size:12px;line-height:1.8}.life-result b{color:var(--green)}
+    .audit{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}.audit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.audit-card{border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px}.audit-card span{display:block;font-size:10px;color:var(--muted)}.audit-card b{font-size:18px}.audit-card.ok b{color:var(--green)}.audit-card.warn b{color:#9a6515}.audit-card.bad b{color:var(--red)}.audit-events{display:grid;gap:7px;margin-top:10px;max-height:190px;overflow:auto}.audit-event{border:1px solid var(--line);border-radius:8px;background:#fbfaf6;padding:9px;font-size:11px;line-height:1.7}.audit-event code{direction:ltr;display:block;text-align:left;margin-top:5px;color:#42524e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .demo{grid-column:1/-1;display:grid;grid-template-columns:.38fr .62fr;gap:16px}.ask{background:var(--ink);border-radius:8px;padding:18px;color:white}.ask label{display:block;font-size:12px;color:#c9d8d4;margin-bottom:8px}.ask textarea{width:100%;height:96px;background:#ffffff0d;border:1px solid #ffffff33;border-radius:8px;color:white;resize:vertical;outline:none;font:15px Vazirmatn,Tahoma;padding:12px;line-height:1.8}.toolbar{display:flex;gap:10px;align-items:center;margin-top:12px}.ask button,.sample{border:0;border-radius:7px;padding:10px 14px;background:var(--amber);font:800 13px Vazirmatn;cursor:pointer;color:#1d211e}.ask button:disabled{opacity:.65;cursor:wait}.hint{font-size:11px;color:#c9d8d4}
+    .samples{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}.sample{background:#ffffff14;color:white;border:1px solid #ffffff24;text-align:right;font-weight:600;padding:9px 10px}.sample:hover{background:#ffffff22}
+    .result{min-height:320px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:18px}.result.empty{display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted)}.empty b{color:var(--ink)}
+    .statusline{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.pill{font-size:11px;padding:6px 8px;border-radius:6px;background:#edf0ea;color:var(--muted);font-weight:700}.pill.ok{background:var(--mint);color:var(--green)}.pill.warn{background:#fff1d7;color:#9a6515}.pill.bad{background:#fae5e1;color:var(--red)}
+    .answer-card{border-right:4px solid var(--green);background:#f6fbf8;border-radius:8px;padding:14px 16px;margin-bottom:14px}.answer-title{font-size:12px;color:var(--green);font-weight:800;margin-bottom:6px}.answer{font-size:17px;line-height:2;color:var(--ink)}
+    .table-wrap{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:12px}.table-note{font-size:11px;color:var(--muted);margin-top:8px}.data-table{width:100%;border-collapse:collapse;font-size:12px}.data-table th,.data-table td{border-bottom:1px solid var(--line);padding:9px;text-align:right}.data-table th{background:#f2f5ef;color:var(--green);font-weight:800;position:sticky;top:0}.data-table tr:last-child td{border-bottom:0}
+    .insights{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.insight{background:#f8fbf7;border:1px solid var(--line);border-radius:8px;padding:12px}.insight span{display:block;font-size:11px;color:var(--muted)}.insight b{font-size:20px;color:var(--ink)}
+    .kpi-hero{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;background:linear-gradient(135deg,#e8f5ef,#fffdf8);border:1px solid #c9ddd3;border-radius:14px;padding:18px;margin:12px 0}.kpi-hero span{font-size:12px;color:var(--green);font-weight:900}.kpi-hero b{font-size:clamp(30px,5vw,50px);letter-spacing:-.03em}.kpi-hero small{color:var(--muted);line-height:1.8}.kpi-icon{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:var(--green);color:#fff;font-size:22px}
+    .result-summary{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.summary-chip{background:#f8fbf7;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:11px;color:var(--muted);font-weight:800}.summary-chip b{color:var(--ink)}
+    .ranking{display:grid;gap:8px;margin-top:12px}.rank-row{display:grid;grid-template-columns:32px minmax(90px,1fr) minmax(90px,auto);gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}.rank-no{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--mint);color:var(--green);font-size:11px;font-weight:900}.rank-name{font-weight:800}.rank-bars{grid-column:2/-1;display:grid;gap:5px}.bar{height:8px;border-radius:99px;background:#edf0ea;overflow:hidden}.bar i{display:block;height:100%;border-radius:99px;background:var(--green)}.bar.student i{background:var(--blue)}.rank-val{font-size:12px;color:var(--muted);white-space:nowrap}
+    details{margin-top:12px;border:1px solid var(--line);border-radius:8px;background:#fbfaf6}summary{cursor:pointer;padding:10px 12px;font-size:12px;font-weight:800;color:var(--green)}.sql{direction:ltr;text-align:left;background:#182521;color:#d9f4e8;padding:12px;border-radius:0 0 8px 8px;font:12px Consolas,monospace;overflow:auto;white-space:pre-wrap}
+    .trace{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}.trace span{font-size:10px;background:var(--mint);color:var(--green);padding:6px 8px;border-radius:6px;font-weight:700}.error{color:var(--red);line-height:1.9}
+    footer{margin-top:18px;text-align:left;color:var(--muted);font-size:11px;direction:ltr}
+    @media(min-width:1400px){.shell{max-width:1120px}.panel{padding:18px}}
+    @media(max-width:980px){header{flex-direction:column}.grid,.demo,.flow{grid-template-columns:1fr}.step{min-height:auto}.step:not(:last-child):after{content:'↓';top:auto;bottom:-22px;left:50%}.samples{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div>
+      <div class="eyebrow">Persian AI Data Analyst</div>
+      <h1>از سؤال فارسی تا پاسخ مدیریتی</h1>
+      <p class="lead">این دمو نشان می‌دهد سیستم چطور سؤال طبیعی مدیر را می‌فهمد، منبع درست را انتخاب می‌کند، SQL امن می‌سازد، داده را می‌خواند و نتیجه را قابل تصمیم‌گیری نمایش می‌دهد.</p>
+    </div>
+    <div class="live"><i class="dot" id="dot"></i><span id="health">در حال بررسی سامانه...</span></div>
+  </header>
+
+  <section class="grid">
+    <article class="panel">
+      <div class="head"><h2>جریان پردازش درخواست</h2><span class="tag">قابل نمایش به کارفرما</span></div>
+      <div class="flow">
+        <div class="step"><div class="n">۰۱</div><div class="ico">●</div><h3>سؤال فارسی</h3><p>کاربر سؤال کسب‌وکار را بدون دانستن SQL وارد می‌کند.</p></div>
+        <div class="step"><div class="n">۰۲</div><div class="ico">⌁</div><h3>تشخیص موضوع</h3><p>گروه، گزارش و نوع تحلیل از دانش سازمانی انتخاب می‌شود.</p></div>
+        <div class="step"><div class="n">۰۳</div><div class="ico">▦</div><h3>ساخت SQL</h3><p>یک پرس‌وجوی فقط خواندنی و محدود به schema مجاز تولید می‌شود.</p></div>
+        <div class="step"><div class="n">۰۴</div><div class="ico">◎</div><h3>خواندن داده</h3><p>SQL معتبر روی PostgreSQL اجرا و نتیجه ساخت‌یافته برگردانده می‌شود.</p></div>
+        <div class="step"><div class="n">۰۵</div><div class="ico">✓</div><h3>پاسخ مدیریتی</h3><p>خروجی فنی به پاسخ کوتاه، جدول و مسیر قابل ردیابی تبدیل می‌شود.</p></div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><b>۱۰۰٪</b><span>اجرای محلی و خصوصی</span></div>
+        <div class="metric"><b>۶۶/۶۶</b><span>سناریوی دستی پاس شده</span></div>
+        <div class="metric"><b>SQL</b><span>دسترسی فقط خواندنی</span></div>
+      </div>
+    </article>
+
+    <aside class="panel">
+      <div class="head"><h2>وضعیت اجزا</h2><span class="tag">زنده</span></div>
+      <div class="service"><div><b>هسته API</b><small>هماهنگ‌کننده کل جریان</small></div><span class="badge ok">فعال</span></div>
+      <div class="service"><div><b>مدل زبان Ollama</b><small>پردازش فارسی روی سیستم محلی</small></div><span class="badge" id="ollama">بررسی...</span></div>
+      <div class="service"><div><b>PostgreSQL</b><small>منبع داده سازمانی</small></div><span class="badge ok">آماده اتصال</span></div>
+      <div class="service"><div><b>دانش سازمان</b><small>گروه‌ها، گزارش‌ها و قواعد</small></div><span class="badge ok">بارگذاری شده</span></div>
+      <div class="lifecycle">
+        <div class="head"><h2>به‌روزرسانی هوشمند</h2><span class="tag">مرحله ۱۰</span></div>
+        <small>سیستم اول بررسی می‌کند دیتابیس تغییر کرده یا نه؛ فقط در صورت نیاز semantic layer را می‌سازد، فعال می‌کند و benchmark می‌گیرد.</small>
+        <div class="lifecycle-actions">
+          <button id="lifeRun" type="button">به‌روزرسانی کامل سیستم</button>
+          <button id="adminSyncDiscovery" type="button">خواندن اطلاعات دیتابیس</button>
+          <button id="adminQualityGate" type="button">بررسی سلامت دیتابیس</button>
+          <button id="adminSmokeSync" type="button">ساخت سؤال تستی</button>
+          <button id="adminSmokeRun" type="button">اجرای سؤال‌های تستی</button>
+          <button id="adminLightweightReadiness" type="button">آمادگی حالت سبک</button>
+          <button id="adminLightweightGaps" type="button">پیشنهاد رفع نیاز به مدل</button>
+          <button id="adminApplyLightweightGaps" type="button">اعمال پیشنهادها</button>
+          <button id="adminDataPolicy" type="button">بررسی اطلاعات حساس</button>
+          <button id="adminErrorTaxonomy" type="button">راهنمای خطاها</button>
+          <span class="badge" id="lifeStatus">آماده</span>
+        </div>
+        <div class="life-steps" id="lifeSteps"></div>
+        <div class="life-result" id="lifeResult">آخرین وضعیت هنوز اجرا نشده است.</div>
+        <div class="life-result">
+          <b>راهنمای ساده پنل ادمین</b><br>
+          این بخش برای مسئول سیستم است؛ وقتی اطلاعات دیتابیس تغییر می‌کند، جدول جدید اضافه می‌شود، یا جواب‌های سیستم نیاز به بهتر شدن دارند از این قسمت استفاده می‌شود.<br>
+          <small>۱) اول دکمه <b>خواندن اطلاعات دیتابیس</b> را بزنید تا سیستم بفهمد چه جدول‌ها و ستون‌هایی داخل دیتابیس وجود دارد.</small><br>
+          <small>۲) بعد دکمه <b>بررسی سلامت دیتابیس</b> را بزنید تا مشخص شود اطلاعات برای استفاده آماده است یا مشکل جدی دارد.</small><br>
+          <small>۳) سپس دکمه <b>ساخت سؤال تستی</b> را بزنید تا سیستم خودش چند سؤال نمونه از روی جدول‌ها آماده کند.</small><br>
+          <small>۴) با دکمه <b>اجرای سؤال‌های تستی</b> بررسی کنید سیستم سؤال‌های ساخته‌شده را درست می‌فهمد یا نه.</small><br>
+          <small>۵) اگر سیستم معنی یک جدول یا ستون را اشتباه فهمید، از بخش <b>اصلاح معنی توسط انسان</b> استفاده کنید.</small><br>
+          <small>۶) در پایان دکمه <b>به‌روزرسانی کامل سیستم</b> را بزنید تا تغییرات جدید وارد سیستم شود.</small>
+        </div>
+        <div class="life-result" id="adminResult">نتیجه کارهایی که از پنل ادمین انجام می‌دهید اینجا نمایش داده می‌شود.</div>
+        <div class="life-result">
+          <b>اصلاح معنی توسط انسان</b><br>
+          <small><b>نام جدول</b>: نام جدولی که می‌خواهید معنی آن را به سیستم یاد بدهید. اگر نمی‌دانید نام دقیق جدول چیست، ابتدا «خواندن اطلاعات دیتابیس» را بزنید و از نتیجه آن استفاده کنید.</small><br>
+          <small><b>نام ستون</b>: فقط وقتی پر شود که می‌خواهید معنی یک ستون خاص را اصلاح کنید. اگر خالی بماند، سیستم معنی کل جدول را اصلاح می‌کند.</small><br>
+          <small><b>عبارت فارسی</b>: کلمه‌ای که کاربران معمولاً در سؤال‌هایشان می‌گویند. مثال: «پست»، «سمت»، «درخواست آموزشی»، «هزینه».</small><br>
+          <input id="reviewTable" placeholder="نام جدول" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
+          <input id="reviewColumn" placeholder="نام ستون، اختیاری" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
+          <input id="reviewAlias" placeholder="عبارت فارسی" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
+          <div class="lifecycle-actions"><button id="adminReviewApply" type="button">ثبت اصلاح معنی</button></div>
+          <small>بعد از ثبت اصلاح، دوباره «بررسی سلامت دیتابیس» و سپس «به‌روزرسانی کامل سیستم» را اجرا کنید تا اصلاح جدید در پاسخ‌های سیستم اعمال شود.</small>
+        </div>
+        <div class="life-result" id="freshnessResult">وضعیت هماهنگی semantic با دیتابیس هنوز بررسی نشده است.</div>
+        <div class="life-result" id="versionResult">نسخه‌های قبلی semantic بررسی نشده‌اند.</div>
+      </div>
+      <div class="audit">
+        <div class="head"><h2>پایش اجرای SQL</h2><span class="tag">Audit</span></div>
+        <div class="audit-grid">
+          <div class="audit-card ok"><span>موفق</span><b id="auditSuccess">۰</b></div>
+          <div class="audit-card warn"><span>رد شده</span><b id="auditRejected">۰</b></div>
+          <div class="audit-card bad"><span>خطا</span><b id="auditError">۰</b></div>
+          <div class="audit-card"><span>کل رویداد</span><b id="auditTotal">۰</b></div>
+          <div class="audit-card"><span>میانگین زمان</span><b id="auditAvg">۰ms</b></div>
+          <div class="audit-card"><span>ردیف برگشتی</span><b id="auditRows">۰</b></div>
+        </div>
+        <div class="audit-events" id="auditEvents"><div class="audit-event">هنوز رویدادی برای نمایش وجود ندارد.</div></div>
+      </div>
+    </aside>
+
+    <article class="panel demo">
+      <div class="ask">
+        <label for="q">نمایش زنده جریان</label>
+        <textarea id="q">تعداد دانش‌آموزان فعال استان تهران چقدر است؟</textarea>
+        <div class="toolbar"><button id="run">اجرای سؤال</button><span class="hint">برای فیلم، از سؤال‌های آماده پایین استفاده کن.</span></div>
+        <div class="samples" id="samples"></div>
+      </div>
+      <div class="result empty" id="result">
+        <div><b>یک سؤال اجرا کنید</b><br><small>پاسخ، جدول نتیجه، SQL و مراحل پردازش اینجا نمایش داده می‌شود.</small></div>
+      </div>
+    </article>
+  </section>
+  <footer>LOCAL • PRIVATE • PERSIAN-FIRST</footer>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const demoQuestions=[
+  'تعداد دانش‌آموزان فعال استان تهران چقدر است؟',
+  'تعداد کارکنان و دانش‌آموزان هر استان',
+  'تعداد مدارس و دانش‌آموزان هر منطقه',
+  'تفاوت حقوق پایه و خالص پرداختی',
+  'برای کدام کارمند بیشترین سنوات پرداخت شده؟',
+  'آمار این منطقه را نشان بده'
+];
+const faDigits=s=>String(s??'').replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]).replace(/คน/g,'نفر');
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const labels={
+  province:'استان',city:'شهر',region:'منطقه',school_name:'مدرسه',name:'نام',
+  employee_count:'تعداد کارمند',student_count:'تعداد دانش‌آموز',school_count:'تعداد مدرسه',
+  total_students:'تعداد کل دانش‌آموزان',total_employees:'تعداد کل کارمندان',
+  first_name:'نام',last_name:'نام خانوادگی',national_id:'کد ملی',position:'شغل',status:'وضعیت',
+  grade:'پایه',school_type:'نوع مدرسه',phone:'تلفن',pension_amount:'سنوات/مستمری',
+  years_of_service:'سال خدمت',avg_base_salary:'میانگین حقوق پایه',avg_net_salary:'میانگین حقوق خالص',
+  avg_difference:'میانگین اختلاف',total_salary:'جمع پرداختی'
+};
+const label=c=>labels[c]||c.replaceAll('_',' ');
+const isNumericValue=v=>v!==null&&v!==''&&!Number.isNaN(Number(v));
+const formatValue=(key,value)=>{
+  if(value===null||value===undefined||value==='')return '—';
+  if(isNumericValue(value)&&!String(key).includes('national_id')){
+    return faDigits(Number(value).toLocaleString('en-US',{maximumFractionDigits:2}));
+  }
+  return faDigits(value);
+};
+function metricColumn(cols){
+  return cols.find(c=>/(count|total|avg|amount|salary|students|employees|schools)/i.test(c)&&c!=='national_id');
+}
+function dimensionColumn(cols){
+  return cols.find(c=>['province','city','region','school_name','name'].includes(c))||cols[0];
+}
+function renderKpi(rows,cols){
+  if(rows.length!==1)return '';
+  const metric=metricColumn(cols);
+  if(!metric||!isNumericValue(rows[0][metric]))return '';
+  const dim=cols.find(c=>c!==metric&&rows[0][c]);
+  return `<div class="kpi-hero">
+    <div><span>${esc(label(metric))}</span><b>${esc(formatValue(metric,rows[0][metric]))}</b><small>${dim?`${esc(label(dim))}: ${esc(formatValue(dim,rows[0][dim]))}`:'نتیجه محاسبه‌شده از دیتابیس'}</small></div>
+    <div class="kpi-icon">↗</div>
+  </div>`;
+}
+function renderGenericRanking(rows,cols){
+  const metric=metricColumn(cols), dim=dimensionColumn(cols);
+  if(!metric||!dim||rows.length<2||!rows.every(r=>isNumericValue(r[metric])))return '';
+  const sorted=[...rows].sort((a,b)=>Number(b[metric])-Number(a[metric]));
+  const max=Math.max(...sorted.map(r=>Number(r[metric])||0),1);
+  return `<div class="ranking">${sorted.map((r,i)=>{
+    const value=Number(r[metric])||0;
+    return `<div class="rank-row">
+      <div class="rank-no">${faDigits(i+1)}</div>
+      <div class="rank-name">${esc(formatValue(dim,r[dim]))}</div>
+      <div class="rank-val">${esc(label(metric))}: ${esc(formatValue(metric,value))}</div>
+      <div class="rank-bars"><div class="bar"><i style="width:${Math.max(4,value/max*100)}%"></i></div></div>
+    </div>`
+  }).join('')}</div>`;
+}
+function renderSummary(rows,cols){
+  if(!rows.length)return '';
+  const numericCols=cols.filter(c=>rows.some(r=>isNumericValue(r[c]))&&!c.includes('national_id')).slice(0,3);
+  if(!numericCols.length)return `<div class="result-summary"><span class="summary-chip">تعداد ردیف: <b>${faDigits(rows.length)}</b></span></div>`;
+  return `<div class="result-summary">
+    <span class="summary-chip">تعداد ردیف: <b>${faDigits(rows.length)}</b></span>
+    ${numericCols.map(c=>`<span class="summary-chip">${esc(label(c))}: <b>${esc(formatValue(c,rows.reduce((s,r)=>s+(Number(r[c])||0),0)))}</b></span>`).join('')}
+  </div>`;
+}
+function renderSamples(){
+  $('samples').innerHTML=demoQuestions.map(q=>`<button class="sample" type="button">${esc(q)}</button>`).join('');
+  document.querySelectorAll('.sample').forEach(btn=>btn.onclick=()=>{$('q').value=btn.textContent; runQuery();});
+}
+function renderRows(result){
+  const rows=result?.rows||[], cols=result?.columns||[];
+  if(!rows.length||!cols.length)return '';
+  const kpi=renderKpi(rows,cols);
+  if(kpi)return kpi;
+  if(cols.includes('province')&&cols.includes('employee_count')&&cols.includes('student_count')){
+    const sorted=[...rows].sort((a,b)=>(Number(b.student_count)||0)-(Number(a.student_count)||0));
+    const totalEmployees=rows.reduce((s,r)=>s+(Number(r.employee_count)||0),0);
+    const totalStudents=rows.reduce((s,r)=>s+(Number(r.student_count)||0),0);
+    const top=sorted[0]||{};
+    const maxEmployees=Math.max(...rows.map(r=>Number(r.employee_count)||0),1);
+    const maxStudents=Math.max(...rows.map(r=>Number(r.student_count)||0),1);
+    return `
+      <div class="insights">
+        <div class="insight"><span>کل کارکنان</span><b>${faDigits(totalEmployees.toLocaleString('en-US'))}</b></div>
+        <div class="insight"><span>کل دانش‌آموزان</span><b>${faDigits(totalStudents.toLocaleString('en-US'))}</b></div>
+        <div class="insight"><span>بیشترین دانش‌آموز</span><b>${esc(top.province||'-')}</b></div>
+      </div>
+      <div class="ranking">
+        ${sorted.map((r,i)=>{
+          const e=Number(r.employee_count)||0, s=Number(r.student_count)||0;
+          return `<div class="rank-row">
+            <div class="rank-no">${faDigits(i+1)}</div>
+            <div class="rank-name">${esc(r.province)}</div>
+            <div class="rank-val">کارکنان: ${faDigits(e.toLocaleString('en-US'))}</div>
+            <div class="rank-val">دانش‌آموز: ${faDigits(s.toLocaleString('en-US'))}</div>
+            <div class="rank-bars">
+              <div class="bar"><i style="width:${Math.max(4,e/maxEmployees*100)}%"></i></div>
+              <div class="bar student"><i style="width:${Math.max(4,s/maxStudents*100)}%"></i></div>
+            </div>
+          </div>`
+        }).join('')}
+      </div>`;
+  }
+  const genericRanking=renderGenericRanking(rows,cols);
+  if(genericRanking)return `${renderSummary(rows,cols)}${genericRanking}`;
+  return `${renderSummary(rows,cols)}<div class="table-wrap"><table class="data-table"><thead><tr>${cols.map(c=>`<th>${esc(label(c))}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(formatValue(c,r[c]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="table-note">همه ${faDigits(rows.length)} ردیف در جدول بالا نمایش داده شده است.</div>`;
+}
+function renderTrace(trace){
+  return (trace?.steps||[]).map(x=>`<span>${esc(x.name||'مرحله')} · ${faDigits(Math.round(x.duration_ms||0))}ms</span>`).join('');
+}
+function sourceLabel(source){
+  return {
+    template:'template/rules',
+    llm:'Ollama LLM',
+    llm_disabled:'lightweight: no LLM',
+    llm_failed:'LLM failed'
+  }[source]||source;
+}
+function renderExplanation(explanation){
+  if(!explanation)return '';
+  try{
+    const e=JSON.parse(explanation);
+    return `<details open><summary>چرا این پاسخ؟</summary><div class="life-result">
+      <b>${esc(e.summary||'')}</b><br>
+      جدول‌ها: ${esc((e.table_selection?.tables||[]).join(', ')||'—')}<br>
+      فیلترها: ${(e.filters||[]).map(f=>`${esc(f.column)} ${esc(f.operator)} ${esc(f.value)}`).join('، ')||'—'}<br>
+      Joinها: ${(e.joins||[]).map(j=>`${esc(j.from)} → ${esc(j.to)}`).join('، ')||'—'}<br>
+      ایمنی: ${e.safety?.validated?'SQL معتبر و فقط‌خواندنی':'نیازمند بررسی'}<br>
+      ${(e.result?.data_policy?.masked_columns||[]).length?`داده‌های حساس mask شدند: ${esc(e.result.data_policy.masked_columns.join(', '))}`:''}
+    </div></details>`;
+  }catch{
+    return `<details><summary>توضیح سیستم</summary><div class="life-result">${esc(explanation)}</div></details>`;
+  }
+}
+const stepLabels={
+  schema_discovery:'کشف ساختار دیتابیس',
+  semantic_suggestions:'تولید پیشنهاد معنایی',
+  semantic_activation:'فعال‌سازی semantic layer',
+  semantic_benchmark:'کنترل کیفیت و benchmark'
+};
+function renderLifecycle(d){
+  const statusClass=d.status==='ready'?'ok':d.status==='blocked'?'warn':'bad';
+  $('lifeStatus').className=`badge ${statusClass}`;
+  $('lifeStatus').textContent=d.status==='ready'?'آماده استفاده':d.status==='blocked'?'نیازمند بررسی':'ناموفق';
+  $('lifeSteps').innerHTML=(d.steps||[]).map(step=>{
+    const cls=step.status==='success'||step.status==='activated'||step.status==='passed'?'ok':step.status==='blocked'||step.status==='activated_with_warnings'?'warn':'bad';
+    return `<div class="life-step">
+      <div class="life-step-head"><b>${esc(stepLabels[step.name]||step.name)}</b><span class="badge ${cls}">${esc(step.status)}</span></div>
+      <p>${esc(faDigits(step.message||''))}</p>
+    </div>`;
+  }).join('');
+  const b=d.benchmark?.summary;
+  $('lifeResult').innerHTML=b
+    ? `وضعیت نهایی: <b>${esc(d.status)}</b><br>Benchmark: <b>${faDigits(b.passed)}/${faDigits(b.total)}</b> پاس شده، نرخ موفقیت <b>${faDigits(b.pass_rate)}٪</b><br>${d.benchmark.output_path?`فایل خروجی: <span style="direction:ltr;display:inline-block">${esc(d.benchmark.output_path)}</span>`:''}`
+    : `وضعیت نهایی: <b>${esc(d.status)}</b>`;
+}
+function setAdminBusy(label){
+  $('lifeStatus').className='badge warn';
+  $('lifeStatus').textContent=label||'در حال اجرا...';
+}
+function setAdminResult(html,status='ok'){
+  $('lifeStatus').className=`badge ${status==='ok'?'ok':status==='warn'?'warn':'bad'}`;
+  $('lifeStatus').textContent=status==='ok'?'آماده':status==='warn'?'نیازمند بررسی':'خطا';
+  $('adminResult').innerHTML=html;
+}
+async function adminPost(url,label){
+  setAdminBusy(label);
+  const r=await fetch(url,{method:'POST'});
+  const d=await r.json();
+  if(!r.ok)throw Error(d.detail||'درخواست ادمین ناموفق بود');
+  return d;
+}
+async function runDiscoverySync(){
+  try{
+    const d=await adminPost('/database/discovery/sync','Sync schema...');
+    setAdminResult(`Schema sync انجام شد.<br>جدول‌ها: <b>${faDigits(d.tables_discovered)}</b> · رابطه‌ها: <b>${faDigits(d.relationships_found)}</b><br><small>${esc(d.output_path||'')}</small>`);
+    await loadSemanticFreshness();
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function runQualityGate(){
+  try{
+    setAdminBusy('Quality gate...');
+    const d=await fetch('/database/schema-quality-gate').then(r=>r.json());
+    const cls=d.status==='passed'?'ok':d.status==='passed_with_warnings'?'warn':'bad';
+    setAdminResult(`Schema quality gate: <span class="badge ${cls}">${esc(d.status)}</span><br>هشدار: <b>${faDigits(d.warnings?.length||0)}</b> · blocker: <b>${faDigits(d.blockers?.length||0)}</b><br>${(d.recommended_actions||[]).slice(0,3).map(x=>`<small>• ${esc(x)}</small>`).join('<br>')}`,cls==='bad'?'bad':cls==='warn'?'warn':'ok');
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function runSmokeSync(){
+  try{
+    const d=await adminPost('/semantic/smoke-tests/sync','ساخت smoke-test...');
+    setAdminResult(`Smoke-test ساخته شد.<br>تعداد تست‌ها: <b>${faDigits(d.cases?.length||0)}</b><br><small>${esc(d.output_path||'')}</small>`);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function runSmokeTests(){
+  try{
+    const d=await adminPost('/semantic/smoke-tests/run?limit=20','اجرای smoke-test...');
+    const s=d.summary||{};
+    const cls=d.status==='passed'?'ok':'warn';
+    const failed=(d.results||[]).filter(x=>!x.passed).slice(0,3);
+    setAdminResult(`Smoke-test: <span class="badge ${cls}">${esc(d.status)}</span><br>Pass: <b>${faDigits(s.passed||0)}/${faDigits(s.total||0)}</b> · نرخ موفقیت: <b>${faDigits(s.pass_rate||0)}٪</b><br>${failed.map(x=>`<small>• ${esc(x.id)} — ${esc(x.failure_stage||'failed')}</small>`).join('<br>')}<br><small>${esc(d.output_path||'')}</small>`,cls);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function checkLightweightReadiness(){
+  try{
+    setAdminBusy('بررسی آمادگی حالت سبک...');
+    const d=await fetch('/semantic/lightweight-readiness?limit=20').then(r=>r.json());
+    const s=d.summary||{};
+    const cls=(s.llm_required||0)>0?'warn':'ok';
+    const needs=(d.results||[]).filter(x=>x.error_code==='sql.llm_disabled'||x.response?.generation_source==='llm_disabled').slice(0,4);
+    setAdminResult(`آمادگی حالت سبک: <span class="badge ${cls}">${faDigits(s.lightweight_ready_rate||0)}٪</span><br>پوشش قطعی بدون Ollama: <b>${faDigits(s.lightweight_ready||0)}/${faDigits(s.total||0)}</b><br>نیازمند مدل زبانی یا الگوی جدید: <b>${faDigits(s.llm_required||0)}</b><br>SQL قطعی ساخته‌شده: <b>${faDigits(s.deterministic_sql||0)}</b> · SQL با LLM: <b>${faDigits(s.llm_sql||0)}</b><br>${needs.map(x=>`<small>• ${esc(x.question)} — ${esc(x.error_code||'needs LLM')}</small>`).join('<br>')}`,cls);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function loadLightweightGapSuggestions(){
+  try{
+    setAdminBusy('ساخت پیشنهادهای رفع gap...');
+    const d=await fetch('/semantic/lightweight-gap-suggestions?limit=20').then(r=>r.json());
+    const cls=d.gap_count?'warn':'ok';
+    const items=d.suggestions||[];
+    setAdminResult(`پیشنهادهای حالت سبک: <span class="badge ${cls}">${esc(d.status)}</span><br>تعداد مورد نیازمند اصلاح: <b>${faDigits(d.gap_count||0)}</b><br>آمادگی فعلی: <b>${faDigits(d.lightweight_ready_rate||0)}٪</b><br>${items.slice(0,5).map(x=>`<small>• ${esc(x.table)} / ${esc(x.kind)}: ${esc(x.recommended_action)}<br>سؤال: ${esc(x.question)}<br>پیشنهاد فرم ادمین: <code>${esc(JSON.stringify(x.suggested_review_payload||{}))}</code></small>`).join('<br>')}`,cls);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function applyLightweightGapSuggestions(){
+  try{
+    const d=await adminPost('/semantic/lightweight-gap-suggestions/apply?limit=20','اعمال پیشنهادهای حالت سبک...');
+    const cls=d.failed?'warn':'ok';
+    setAdminResult(`اعمال پیشنهادها: <span class="badge ${cls}">${esc(d.status)}</span><br>اعمال‌شده: <b>${faDigits(d.applied||0)}</b> · ناموفق: <b>${faDigits(d.failed||0)}</b><br>Validation: <b>${esc(d.validation_status||'اجرا نشد')}</b> · خطا: <b>${faDigits(d.validation_errors||0)}</b> · هشدار: <b>${faDigits(d.validation_warnings||0)}</b><br>${(d.results||[]).slice(0,5).map(x=>`<small>• ${esc(x.table)}${x.column?'.'+esc(x.column):''}: ${esc(x.status)} — ${esc(x.message||'')}</small>`).join('<br>')}<br><small>${esc(d.next_action||'بعد از این مرحله «بررسی سلامت دیتابیس» و «به‌روزرسانی کامل سیستم» را اجرا کنید.')}</small>`,cls);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function applySemanticReview(){
+  try{
+    const table=$('reviewTable').value.trim();
+    const column=$('reviewColumn').value.trim();
+    const alias=$('reviewAlias').value.trim();
+    if(!table||!alias)throw Error('table و alias لازم است.');
+    setAdminBusy('ثبت review...');
+    const body={
+      target_type:column?'column':'table',
+      table,
+      column:column||null,
+      aliases_fa:[alias],
+      display_name_fa:alias,
+      approved:true
+    };
+    const r=await fetch('/semantic/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok)throw Error(d.detail||'ثبت review ناموفق بود');
+    setAdminResult(`Review ثبت شد: <b>${esc(table)}${column?'.'+esc(column):''}</b><br><small>${esc(d.message||'')}</small>`);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function loadDataPolicy(){
+  try{
+    setAdminBusy('Data policy...');
+    const d=await fetch('/security/data-policy').then(r=>r.json());
+    const cols=d.sensitive_columns||[];
+    setAdminResult(`Data policy: <span class="badge ok">${esc(d.default_action||'mask')}</span><br>ستون حساس: <b>${faDigits(cols.length)}</b><br>${cols.slice(0,6).map(x=>`<small>• ${esc(x.table)}.${esc(x.column)} — ${esc(x.reason)}</small>`).join('<br>')}`);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function loadErrorTaxonomy(){
+  try{
+    setAdminBusy('Error codes...');
+    const d=await fetch('/errors/taxonomy').then(r=>r.json());
+    const codes=d.codes||[];
+    setAdminResult(`Error taxonomy آماده است.<br>تعداد codeها: <b>${faDigits(codes.length)}</b><br>${codes.slice(0,8).map(x=>`<small>• ${esc(x.code)} — ${esc(x.user_message)}</small>`).join('<br>')}`);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function runLifecycle(){
+  $('lifeRun').disabled=true;
+  $('lifeStatus').className='badge warn';
+  $('lifeStatus').textContent='در حال اجرا...';
+  $('lifeSteps').innerHTML='<div class="life-step"><div class="life-step-head"><b>بررسی هوشمند</b><span class="badge warn">running</span></div><p>ابتدا هماهنگی دیتابیس و semantic بررسی می‌شود؛ در صورت نیاز چرخه کامل اجرا خواهد شد...</p></div>';
+  $('lifeResult').textContent='اگر دیتابیس تغییر نکرده باشد، سیستم بدون rebuild رد می‌شود.';
+  try{
+    const r=await fetch('/semantic/auto-update?min_pass_rate=95',{method:'POST'});
+    const d=await r.json();
+    if(!r.ok)throw Error(d.detail||'آپدیت خودکار semantic اجرا نشد');
+    if(d.lifecycle){
+      renderLifecycle(d.lifecycle);
+    }else{
+      $('lifeStatus').className='badge ok';
+      $('lifeStatus').textContent='بدون نیاز به آپدیت';
+      $('lifeSteps').innerHTML='<div class="life-step"><div class="life-step-head"><b>بررسی هماهنگی</b><span class="badge ok">skipped</span></div><p>semantic layer با دیتابیس فعلی هماهنگ است و چرخه کامل اجرا نشد.</p></div>';
+      $('lifeResult').innerHTML=`وضعیت نهایی: <b>${esc(d.status)}</b><br>${esc(d.message||'')}`;
+    }
+    await loadSemanticFreshness();
+    await loadSemanticVersions();
+  }catch(e){
+    $('lifeStatus').className='badge bad';
+    $('lifeStatus').textContent='خطا';
+    $('lifeResult').innerHTML=`<span class="error">${esc(e.message)}</span>`;
+  }finally{$('lifeRun').disabled=false;}
+}
+async function loadSemanticFreshness(){
+  try{
+    const d=await fetch('/semantic/freshness').then(r=>r.json());
+    const cls=d.status==='up_to_date'?'ok':d.status==='stale'?'warn':'bad';
+    const title=d.status==='up_to_date'?'هماهنگ با دیتابیس':d.status==='stale'?'نیازمند به‌روزرسانی':'نیازمند راه‌اندازی';
+    $('freshnessResult').innerHTML=`وضعیت semantic: <span class="badge ${cls}">${esc(title)}</span><br>${esc(d.message||'')}<br><small>${esc(d.recommended_action||'')}</small>`;
+  }catch{
+    $('freshnessResult').textContent='امکان بررسی هماهنگی semantic با دیتابیس وجود ندارد.';
+  }
+}
+async function loadSemanticVersions(){
+  try{
+    const versions=await fetch('/semantic/versions').then(r=>r.json());
+    if(!Array.isArray(versions)||!versions.length){
+      $('versionResult').textContent='هنوز نسخه قبلی برای rollback ذخیره نشده است.';
+      return;
+    }
+    const latest=versions[0];
+    $('versionResult').innerHTML=`نسخه‌های قابل rollback: <b>${faDigits(versions.length)}</b><br>آخرین نسخه: <span style="direction:ltr;display:inline-block">${esc(latest.version_id)}</span>`;
+  }catch{
+    $('versionResult').textContent='امکان دریافت نسخه‌های قبلی وجود ندارد.';
+  }
+}
+function auditStatusLabel(status){
+  return status==='success'?'موفق':status==='rejected'?'رد شده':status==='error'?'خطا':status||'نامشخص';
+}
+function renderAuditSummary(d){
+  $('auditSuccess').textContent=faDigits(d.success_count||0);
+  $('auditRejected').textContent=faDigits(d.rejected_count||0);
+  $('auditError').textContent=faDigits(d.error_count||0);
+  $('auditTotal').textContent=faDigits(d.total_events||0);
+  $('auditAvg').textContent=`${faDigits(d.avg_execution_time_ms||0)}ms`;
+  $('auditRows').textContent=faDigits(Number(d.total_rows_returned||0).toLocaleString('en-US'));
+  const events=(d.recent_events||[]).slice().reverse();
+  $('auditEvents').innerHTML=events.length?events.map(e=>{
+    const cls=e.status==='success'?'ok':e.status==='rejected'?'warn':'bad';
+    return `<div class="audit-event">
+      <span class="badge ${cls}">${esc(auditStatusLabel(e.status))}</span>
+      <span>${faDigits(e.execution_time_ms??0)}ms · ${faDigits(e.row_count??0)} ردیف</span>
+      <code>${esc(e.sql||'')}</code>
+    </div>`;
+  }).join(''):'<div class="audit-event">هنوز رویدادی برای نمایش وجود ندارد.</div>';
+}
+async function loadAuditSummary(){
+  try{
+    const d=await fetch('/sql/audit/summary?limit=1000').then(r=>r.json());
+    renderAuditSummary(d);
+  }catch{
+    $('auditEvents').innerHTML='<div class="audit-event"><span class="badge bad">خطا</span> امکان دریافت خلاصه audit وجود ندارد.</div>';
+  }
+}
+function renderResponse(d){
+  const status=d.rejected?'رد شده':d.unsupported?'خارج از محدوده':d.needs_clarification?'نیازمند شفاف‌سازی':d.valid?'موفق':'نامعتبر';
+  const cls=d.rejected||d.unsupported?'bad':d.needs_clarification?'warn':'ok';
+  const firstError=(d.errors||[])[0]||'پردازش کامل نشد. لطفاً سؤال را کمی دقیق‌تر وارد کنید.';
+  const longTable=d.result&&Array.isArray(d.result.rows)&&d.result.rows.length>10;
+  const answer=longTable
+    ? `تعداد ردیف‌ها: ${faDigits(d.result.row_count)}. خروجی کامل در جدول پایین نمایش داده شده است.`
+    : d.clarification_question||d.unsupported_reason||d.rejection_reason||d.answer||(d.success===false?firstError:'نتیجه آماده شد.');
+  $('result').className='result';
+  $('result').innerHTML=`
+    <div class="statusline">
+      <span class="pill ${cls}">${esc(status)}</span>
+      ${d.group?`<span class="pill">گروه: ${esc(d.group)}</span>`:''}
+      ${d.report?`<span class="pill">گزارش: ${esc(d.report)}</span>`:''}
+      ${d.result?`<span class="pill">ردیف: ${faDigits(d.result.row_count)}</span>`:''}
+      ${d.generation_source?`<span class="pill">SQL source: ${esc(sourceLabel(d.generation_source))}</span>`:''}
+    </div>
+    <div class="answer-card"><div class="answer-title">پاسخ سیستم</div><div class="answer">${esc(faDigits(answer))}</div></div>
+    ${renderExplanation(d.explanation)}
+    ${renderRows(d.result)}
+    ${d.sql?`<details><summary>نمایش SQL تولید شده</summary><div class="sql">${esc(d.sql)}</div></details>`:''}
+    <div class="trace">${renderTrace(d.trace)}</div>`;
+}
+async function checkHealth(){
+  try{
+    const d=await fetch('/health').then(r=>r.json());
+    $('dot').className='dot ok';$('health').textContent='سامانه آنلاین است';
+    if(d.llm_enabled===false){
+      $('ollama').textContent='اختیاری / حالت سبک';
+      $('ollama').className='badge ok';
+    }else{
+      $('ollama').textContent=d.ollama_connected?'متصل':'نیازمند اجرا';
+      $('ollama').className=d.ollama_connected?'badge ok':'badge';
+    }
+  }catch{
+    $('dot').className='dot bad';$('health').textContent='ارتباط برقرار نیست';
+  }
+}
+async function runQuery(){
+  const q=$('q').value.trim(); if(!q)return;
+  $('run').disabled=true;
+  $('result').className='result';
+  $('result').innerHTML='<div class="answer-card"><div class="answer-title">در حال پردازش</div><div class="answer">درک سؤال، انتخاب گزارش و ساخت SQL در حال انجام است...</div></div><div class="trace"><span>تشخیص موضوع</span><span>بازیابی دانش</span><span>ساخت SQL</span><span>اعتبارسنجی</span></div>';
+  try{
+    const r=await fetch('/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,execute:true})});
+    const d=await r.json();
+    if(!r.ok)throw Error(d.detail||'خطا در پردازش');
+    renderResponse(d);
+    await loadAuditSummary();
+  }catch(e){
+    $('result').innerHTML=`<div class="error"><b>دمو اجرا نشد:</b> ${esc(e.message)}<br><small>API و PostgreSQL را بررسی کنید. Ollama فقط در حالت مدل زبانی لازم است.</small></div>`;
+    await loadAuditSummary();
+  }finally{$('run').disabled=false;}
+}
+renderSamples(); checkHealth(); loadSemanticFreshness(); loadSemanticVersions(); loadAuditSummary(); $('run').onclick=runQuery; $('lifeRun').onclick=runLifecycle; $('adminSyncDiscovery').onclick=runDiscoverySync; $('adminQualityGate').onclick=runQualityGate; $('adminSmokeSync').onclick=runSmokeSync; $('adminSmokeRun').onclick=runSmokeTests; $('adminLightweightReadiness').onclick=checkLightweightReadiness; $('adminLightweightGaps').onclick=loadLightweightGapSuggestions; $('adminApplyLightweightGaps').onclick=applyLightweightGapSuggestions; $('adminReviewApply').onclick=applySemanticReview; $('adminDataPolicy').onclick=loadDataPolicy; $('adminErrorTaxonomy').onclick=loadErrorTaxonomy;
+</script>
+</body>
+</html>

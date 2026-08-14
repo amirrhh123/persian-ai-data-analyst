@@ -1,0 +1,36 @@
+id: organization_structure
+name: ساختار سازمانی
+description: گزارش ساختار تشکیلاتی و واحدهای سازمانی
+linked_table: organization_units
+group_id: organization
+allowed_metrics:
+  - تعداد_کارکنان
+business_rules: []
+example_questions:
+  - نمودار ساختار سازمانی
+  - واحدهای زیرمجموعه
+  - تعداد واحدها به تفکیک نوع
+important_columns:
+  name:
+    meaning: نام واحد
+    persian_name: نام واحد
+    data_type: varchar
+  unit_type:
+    meaning: نوع واحد
+    persian_name: نوع
+    data_type: varchar
+  parent_id:
+    meaning: واحد والد
+    persian_name: واحد بالادست
+    data_type: integer
+  province:
+    meaning: استان
+    persian_name: استان
+    data_type: varchar
+sql_hints:
+  default_filters: []
+  preferred_joins: []
+  aggregate_columns: []
+  group_by_columns:
+    - unit_type
+    - province

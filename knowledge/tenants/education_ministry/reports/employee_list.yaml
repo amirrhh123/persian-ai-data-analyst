@@ -1,0 +1,46 @@
+id: employee_list
+name: لیست کارکنان
+description: گزارش لیست تمام کارکنان با اطلاعات پایه
+linked_table: employees
+group_id: employee
+allowed_metrics:
+  - تعداد_کارکنان
+business_rules:
+  - قانون_بازنشستگی
+example_questions:
+  - لیست کارکنان فعال
+  - تعداد کارکنان هر بخش
+  - کارکنان جدید
+important_columns:
+  national_id:
+    meaning: کد ملی
+    persian_name: کد ملی
+    data_type: varchar
+  first_name:
+    meaning: نام
+    persian_name: نام
+    data_type: varchar
+  last_name:
+    meaning: نام خانوادگی
+    persian_name: نام خانوادگی
+    data_type: varchar
+  organization_unit_id:
+    meaning: شناسه واحد سازمانی
+    persian_name: واحد سازمانی
+    data_type: integer
+  position:
+    meaning: سمت شغلی
+    persian_name: سمت
+    data_type: varchar
+  status:
+    meaning: وضعیت employment
+    persian_name: وضعیت
+    data_type: varchar
+sql_hints:
+  default_filters:
+    - "status = 'active'"
+  preferred_joins:
+    - "employees.organization_unit_id = organization_units.id"
+  aggregate_columns: []
+  group_by_columns:
+    - organization_units.name

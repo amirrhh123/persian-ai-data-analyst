@@ -1,0 +1,35 @@
+metrics:
+  - id: تعداد_کارکنان
+    name: تعداد کارکنان
+    formula: COUNT(employees)
+    unit: نفر
+    target: متغیر
+    frequency: ماهانه
+    
+  - id: میانگین_حقوق
+    name: میانگین حقوق
+    formula: AVG(net_salary)
+    unit: ریال
+    target: متغیر
+    frequency: ماهانه
+    
+  - id: نرخ_ارتقا
+    name: نرخ ارتقا
+    formula: (تعداد ارتقا / تعداد درخواست) × ۱۰۰
+    unit: درصد
+    target: ۷۰٪
+    frequency: ماهانه
+    
+  - id: تعداد_دانش_آموز
+    name: تعداد دانش‌آموز
+    formula: COUNT(students)
+    unit: نفر
+    target: متغیر
+    frequency: سالانه
+    
+  - id: نرخ_ثبت_نام
+    name: نرخ ثبت‌نام جدید
+    formula: (تعداد ثبت‌نام جدید / ظرفیت کل) × ۱۰۰
+    unit: درصد
+    target: ۹۰٪
+    frequency: سالانه
