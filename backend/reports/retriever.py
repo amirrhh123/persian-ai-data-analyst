@@ -3,6 +3,7 @@ from backend.knowledge.loader import KnowledgeLoader
 from backend.knowledge.models import Report, MetricDefinition, BusinessRule
 from backend.reports.embedding import embedding_service
 from backend.reports.hybrid_retrieval import HybridCandidate, hybrid_retriever
+from backend.reports.reranker import retrieval_reranker
 from backend.reports.vector_store import vector_store
 from pathlib import Path
 
@@ -128,30 +129,40 @@ class ReportRetriever:
                 )
             )
 
-        ranked = hybrid_retriever.rank(question, candidates, vector_scores)
+        hybrid_ranked = hybrid_retriever.rank(question, candidates, vector_scores)
+        ranked = retrieval_reranker.rerank(question, hybrid_ranked)
         if not ranked:
             return self._empty_result()
 
         best = ranked[0]
-        report_name = str(best.candidate.metadata.get("report_name", ""))
+        report_name = str(best.source.candidate.metadata.get("report_name", ""))
         return {
-            "report_id": best.candidate.id,
+            "report_id": best.source.candidate.id,
             "report_name": report_name,
             "confidence": round(best.final_score, 2),
             "reason": (
                 f"گزارش '{report_name}' با بازیابی ترکیبی و اطمینان "
                 f"{best.final_score:.2f} یافت شد"
             ),
-            "retrieval_mode": "hybrid",
-            "vector_score": best.vector_score,
-            "lexical_score": best.lexical_score,
+            "retrieval_mode": "hybrid_reranked",
+            "vector_score": best.source.vector_score,
+            "lexical_score": best.source.lexical_score,
+            "hybrid_score": best.source.final_score,
+            "reranker_score": best.reranker_score,
             "top_candidates": [
                 {
-                    "report_id": item.candidate.id,
-                    "report_name": item.candidate.metadata.get("report_name", ""),
-                    "vector_score": item.vector_score,
-                    "lexical_score": item.lexical_score,
+                    "report_id": item.source.candidate.id,
+                    "report_name": item.source.candidate.metadata.get("report_name", ""),
+                    "vector_score": item.source.vector_score,
+                    "lexical_score": item.source.lexical_score,
+                    "hybrid_score": item.source.final_score,
+                    "reranker_score": item.reranker_score,
                     "final_score": item.final_score,
+                    "rerank_features": {
+                        "token_coverage": item.features.token_coverage,
+                        "exact_phrase": item.features.exact_phrase,
+                        "metadata_match": item.features.metadata_match,
+                    },
                 }
                 for item in ranked[:n_results]
             ],
@@ -165,9 +176,11 @@ class ReportRetriever:
             "report_name": "",
             "confidence": 0.0,
             "reason": "هیچ گزارشی یافت نشد",
-            "retrieval_mode": "hybrid",
+            "retrieval_mode": "hybrid_reranked",
             "vector_score": 0.0,
             "lexical_score": 0.0,
+            "hybrid_score": 0.0,
+            "reranker_score": 0.0,
             "top_candidates": [],
         }
 

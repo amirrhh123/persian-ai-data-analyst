@@ -20,6 +20,7 @@ into validated, read-only SQL and a structured Persian answer.
 - Automatic PostgreSQL schema discovery
 - Versioned semantic catalog with human review
 - Hybrid retrieval: dense embeddings plus lexical BM25-style ranking
+- Explainable second-stage reranking with phrase, token, and metadata evidence
 - Generic Value Index for discovering filters from database values
 - Deterministic SQL planning with optional Ollama fallback
 - Join-path, aggregate, identifier, and result-shape validation
@@ -35,7 +36,8 @@ into validated, read-only SQL and a structured Persian answer.
 flowchart LR
     U["Persian question"] --> I["Intent and ambiguity detection"]
     I --> R["Hybrid retrieval"]
-    R --> S["Semantic catalog and Value Index"]
+    R --> RR["Explainable reranker"]
+    RR --> S["Semantic catalog and Value Index"]
     S --> P["Deterministic SQL planner"]
     P --> V["Safety and SQL validation"]
     V --> DB[(PostgreSQL)]
@@ -52,7 +54,7 @@ ChromaDB stores embeddings and retrieval metadata. PostgreSQL remains the source
 |---|---|
 | API | Python 3.12, FastAPI, Pydantic |
 | Database | PostgreSQL 16, SQLAlchemy |
-| Retrieval | ChromaDB, sentence-transformers, hybrid lexical scoring |
+| Retrieval | ChromaDB, sentence-transformers, hybrid lexical scoring, second-stage reranking |
 | Local LLM | Ollama with `qwen2.5:7b` (optional) |
 | UI | RTL HTML/CSS/JavaScript, Vazirmatn |
 | Testing | pytest, semantic smoke tests, regression benchmarks |
@@ -145,7 +147,7 @@ This keeps database content in PostgreSQL while regenerating only the metadata r
 Run focused unit and regression tests:
 
 ```powershell
-python -m pytest tests/test_hybrid_retrieval.py tests/test_value_index.py -v
+python -m pytest tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
 python -m pytest tests/test_regression_benchmark.py -v
 ```
 

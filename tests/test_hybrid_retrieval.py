@@ -125,7 +125,8 @@ def test_group_retriever_uses_hybrid_ranking(monkeypatch) -> None:
     result = GroupRetriever().search_groups("tenant", "کد پرسنلی")
 
     assert result["group_id"] == "employee"
-    assert result["retrieval_mode"] == "hybrid"
+    assert result["retrieval_mode"] == "hybrid_reranked"
+    assert result["reranker_score"] > 0
     assert result["top_candidates"][0]["lexical_score"] > 0
 
 
@@ -181,5 +182,6 @@ def test_report_retriever_uses_hybrid_ranking(monkeypatch) -> None:
     result = ReportRetriever().search_reports("tenant", "کد پرسنلی کارمند")
 
     assert result["report_id"] == "employee_list"
-    assert result["retrieval_mode"] == "hybrid"
+    assert result["retrieval_mode"] == "hybrid_reranked"
+    assert result["reranker_score"] > 0
     assert result["lexical_score"] > 0

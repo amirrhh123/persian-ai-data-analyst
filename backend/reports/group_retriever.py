@@ -4,6 +4,7 @@ from backend.reports.group_models import ReportGroup, EntityTerm
 from backend.reports.group_loader import GroupLoader
 from backend.reports.embedding import embedding_service
 from backend.reports.hybrid_retrieval import HybridCandidate, hybrid_retriever
+from backend.reports.reranker import retrieval_reranker
 from backend.reports.vector_store import vector_store
 
 
@@ -157,30 +158,40 @@ class GroupRetriever:
             )
             for group in groups
         ]
-        ranked = hybrid_retriever.rank(question, candidates, vector_scores)
+        hybrid_ranked = hybrid_retriever.rank(question, candidates, vector_scores)
+        ranked = retrieval_reranker.rerank(question, hybrid_ranked)
         if not ranked:
             return self._empty_result()
 
         best = ranked[0]
-        group_name = str(best.candidate.metadata.get("group_name", ""))
+        group_name = str(best.source.candidate.metadata.get("group_name", ""))
         return {
-            "group_id": best.candidate.id,
+            "group_id": best.source.candidate.id,
             "group_name": group_name,
             "confidence": round(best.final_score, 2),
             "reason": (
                 f"گروه '{group_name}' با بازیابی ترکیبی و اطمینان "
                 f"{best.final_score:.2f} یافت شد"
             ),
-            "retrieval_mode": "hybrid",
-            "vector_score": best.vector_score,
-            "lexical_score": best.lexical_score,
+            "retrieval_mode": "hybrid_reranked",
+            "vector_score": best.source.vector_score,
+            "lexical_score": best.source.lexical_score,
+            "hybrid_score": best.source.final_score,
+            "reranker_score": best.reranker_score,
             "top_candidates": [
                 {
-                    "group_id": item.candidate.id,
-                    "group_name": item.candidate.metadata.get("group_name", ""),
-                    "vector_score": item.vector_score,
-                    "lexical_score": item.lexical_score,
+                    "group_id": item.source.candidate.id,
+                    "group_name": item.source.candidate.metadata.get("group_name", ""),
+                    "vector_score": item.source.vector_score,
+                    "lexical_score": item.source.lexical_score,
+                    "hybrid_score": item.source.final_score,
+                    "reranker_score": item.reranker_score,
                     "final_score": item.final_score,
+                    "rerank_features": {
+                        "token_coverage": item.features.token_coverage,
+                        "exact_phrase": item.features.exact_phrase,
+                        "metadata_match": item.features.metadata_match,
+                    },
                 }
                 for item in ranked[:n_results]
             ],
@@ -194,9 +205,11 @@ class GroupRetriever:
             "group_name": "",
             "confidence": 0.0,
             "reason": "هیچ گروهی یافت نشد",
-            "retrieval_mode": "hybrid",
+            "retrieval_mode": "hybrid_reranked",
             "vector_score": 0.0,
             "lexical_score": 0.0,
+            "hybrid_score": 0.0,
+            "reranker_score": 0.0,
             "top_candidates": [],
         }
 
