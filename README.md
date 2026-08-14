@@ -21,6 +21,7 @@ into validated, read-only SQL and a structured Persian answer.
 - Versioned semantic catalog with human review
 - Hybrid retrieval: dense embeddings plus lexical BM25-style ranking
 - Explainable second-stage reranking with phrase, token, and metadata evidence
+- Confidence gating for weak, unsupported, or ambiguous retrieval results
 - Generic Value Index for discovering filters from database values
 - Deterministic SQL planning with optional Ollama fallback
 - Join-path, aggregate, identifier, and result-shape validation
@@ -37,7 +38,8 @@ flowchart LR
     U["Persian question"] --> I["Intent and ambiguity detection"]
     I --> R["Hybrid retrieval"]
     R --> RR["Explainable reranker"]
-    RR --> S["Semantic catalog and Value Index"]
+    RR --> G["Confidence gate"]
+    G --> S["Semantic catalog and Value Index"]
     S --> P["Deterministic SQL planner"]
     P --> V["Safety and SQL validation"]
     V --> DB[(PostgreSQL)]
@@ -147,7 +149,7 @@ This keeps database content in PostgreSQL while regenerating only the metadata r
 Run focused unit and regression tests:
 
 ```powershell
-python -m pytest tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
+python -m pytest tests/test_confidence_gate.py tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
 python -m pytest tests/test_regression_benchmark.py -v
 ```
 

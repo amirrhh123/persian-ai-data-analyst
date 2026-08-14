@@ -4,6 +4,7 @@ from backend.knowledge.models import Report, MetricDefinition, BusinessRule
 from backend.reports.embedding import embedding_service
 from backend.reports.hybrid_retrieval import HybridCandidate, hybrid_retriever
 from backend.reports.reranker import retrieval_reranker
+from backend.reports.confidence_gate import confidence_gate
 from backend.reports.vector_store import vector_store
 from pathlib import Path
 
@@ -135,10 +136,13 @@ class ReportRetriever:
             return self._empty_result()
 
         best = ranked[0]
+        gate = confidence_gate.evaluate(ranked)
         report_name = str(best.source.candidate.metadata.get("report_name", ""))
         return {
-            "report_id": best.source.candidate.id,
-            "report_name": report_name,
+            "report_id": best.source.candidate.id if gate.accepted else "",
+            "report_name": report_name if gate.accepted else "",
+            "suggested_report_id": best.source.candidate.id,
+            "suggested_report_name": report_name,
             "confidence": round(best.final_score, 2),
             "reason": (
                 f"گزارش '{report_name}' با بازیابی ترکیبی و اطمینان "
@@ -149,6 +153,12 @@ class ReportRetriever:
             "lexical_score": best.source.lexical_score,
             "hybrid_score": best.source.final_score,
             "reranker_score": best.reranker_score,
+            "confidence_gate": {
+                "accepted": gate.accepted,
+                "reason_code": gate.reason_code,
+                "margin": gate.margin,
+                "evidence_score": gate.evidence_score,
+            },
             "top_candidates": [
                 {
                     "report_id": item.source.candidate.id,
@@ -174,6 +184,8 @@ class ReportRetriever:
         return {
             "report_id": "",
             "report_name": "",
+            "suggested_report_id": "",
+            "suggested_report_name": "",
             "confidence": 0.0,
             "reason": "هیچ گزارشی یافت نشد",
             "retrieval_mode": "hybrid_reranked",
@@ -181,6 +193,12 @@ class ReportRetriever:
             "lexical_score": 0.0,
             "hybrid_score": 0.0,
             "reranker_score": 0.0,
+            "confidence_gate": {
+                "accepted": False,
+                "reason_code": "no_candidates",
+                "margin": 0.0,
+                "evidence_score": 0.0,
+            },
             "top_candidates": [],
         }
 
