@@ -5,6 +5,7 @@ from backend.reports.embedding import embedding_service
 from backend.reports.hybrid_retrieval import HybridCandidate, hybrid_retriever
 from backend.reports.reranker import retrieval_reranker
 from backend.reports.confidence_gate import confidence_gate
+from backend.reports.query_decomposition import query_decomposer, fuse_vector_scores
 from backend.reports.vector_store import vector_store
 from pathlib import Path
 
@@ -103,18 +104,22 @@ class ReportRetriever:
 
         collection = vector_store.get_collection(tenant_id)
         where_filter = {"group_id": group_filter} if group_filter else None
-        results = collection.query(
-            query_embeddings=[embedding_service.embed_text(question)],
-            n_results=len(reports),
-            where=where_filter,
-        )
-        vector_scores: Dict[str, float] = {}
-        metadatas = (results.get("metadatas") or [[]])[0]
-        distances = (results.get("distances") or [[]])[0]
-        for index, metadata in enumerate(metadatas):
-            report_id = metadata.get("report_id", "")
-            distance = distances[index] if index < len(distances) else 1.0
-            vector_scores[report_id] = max(0.0, min(1.0, 1.0 - distance))
+        decomposition = query_decomposer.decompose(question)
+        score_maps: List[Dict[str, float]] = []
+        for retrieval_query in decomposition.queries:
+            results = collection.query(
+                query_embeddings=[embedding_service.embed_text(retrieval_query)],
+                n_results=len(reports), where=where_filter,
+            )
+            query_scores: Dict[str, float] = {}
+            metadatas = (results.get("metadatas") or [[]])[0]
+            distances = (results.get("distances") or [[]])[0]
+            for index, metadata in enumerate(metadatas):
+                report_id = metadata.get("report_id", "")
+                distance = distances[index] if index < len(distances) else 1.0
+                query_scores[report_id] = max(0.0, min(1.0, 1.0 - distance))
+            score_maps.append(query_scores)
+        vector_scores = fuse_vector_scores(score_maps)
 
         all_metrics = loader.load_metrics()
         all_rules = loader.load_rules()
@@ -159,6 +164,11 @@ class ReportRetriever:
                 "margin": gate.margin,
                 "evidence_score": gate.evidence_score,
             },
+            "query_decomposition": {
+                "decomposed": decomposition.decomposed,
+                "reason": decomposition.reason,
+                "queries": list(decomposition.queries),
+            },
             "top_candidates": [
                 {
                     "report_id": item.source.candidate.id,
@@ -198,6 +208,11 @@ class ReportRetriever:
                 "reason_code": "no_candidates",
                 "margin": 0.0,
                 "evidence_score": 0.0,
+            },
+            "query_decomposition": {
+                "decomposed": False,
+                "reason": "empty_query_or_no_candidates",
+                "queries": [],
             },
             "top_candidates": [],
         }

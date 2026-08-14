@@ -128,6 +128,7 @@ def test_group_retriever_uses_hybrid_ranking(monkeypatch) -> None:
     assert result["retrieval_mode"] == "hybrid_reranked"
     assert result["reranker_score"] > 0
     assert result["confidence_gate"]["accepted"] is True
+    assert result["query_decomposition"]["decomposed"] is False
     assert result["top_candidates"][0]["lexical_score"] > 0
 
 
@@ -186,4 +187,5 @@ def test_report_retriever_uses_hybrid_ranking(monkeypatch) -> None:
     assert result["retrieval_mode"] == "hybrid_reranked"
     assert result["reranker_score"] > 0
     assert result["confidence_gate"]["accepted"] is True
+    assert result["query_decomposition"]["decomposed"] is False
     assert result["lexical_score"] > 0

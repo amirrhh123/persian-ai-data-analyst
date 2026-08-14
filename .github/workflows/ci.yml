@@ -39,6 +39,7 @@ jobs:
       - name: Run offline regression tests
         run: >-
           python -m pytest
+          tests/test_query_decomposition.py
           tests/test_confidence_gate.py
           tests/test_reranker.py
           tests/test_hybrid_retrieval.py

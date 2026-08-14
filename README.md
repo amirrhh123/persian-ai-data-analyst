@@ -22,6 +22,7 @@ into validated, read-only SQL and a structured Persian answer.
 - Hybrid retrieval: dense embeddings plus lexical BM25-style ranking
 - Explainable second-stage reranking with phrase, token, and metadata evidence
 - Confidence gating for weak, unsupported, or ambiguous retrieval results
+- Safe query decomposition with multi-query vector-score fusion
 - Generic Value Index for discovering filters from database values
 - Deterministic SQL planning with optional Ollama fallback
 - Join-path, aggregate, identifier, and result-shape validation
@@ -36,7 +37,8 @@ into validated, read-only SQL and a structured Persian answer.
 ```mermaid
 flowchart LR
     U["Persian question"] --> I["Intent and ambiguity detection"]
-    I --> R["Hybrid retrieval"]
+    I --> QD["Query decomposition"]
+    QD --> R["Hybrid retrieval"]
     R --> RR["Explainable reranker"]
     RR --> G["Confidence gate"]
     G --> S["Semantic catalog and Value Index"]
@@ -149,7 +151,7 @@ This keeps database content in PostgreSQL while regenerating only the metadata r
 Run focused unit and regression tests:
 
 ```powershell
-python -m pytest tests/test_confidence_gate.py tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
+python -m pytest tests/test_query_decomposition.py tests/test_confidence_gate.py tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
 python -m pytest tests/test_regression_benchmark.py -v
 ```
 
