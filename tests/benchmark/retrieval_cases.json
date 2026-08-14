@@ -1,0 +1,11 @@
+[
+  {"id":"student-count","question":"تعداد دانش‌آموزان استان تهران","expected_group":"student","expected_report":"student_list","tags":["count","province"]},
+  {"id":"student-profile","question":"اطلاعات دانش‌آموز با کد ملی 3489881390","expected_group":"student","expected_report":"student_list","tags":["identity"]},
+  {"id":"employee-profile","question":"اطلاعات کارمند با کد ملی 4871587050","expected_group":"employee","expected_report":"employee_list","tags":["identity"]},
+  {"id":"employee-stats","question":"تعداد کارمندان هر استان","expected_group":"employee","expected_report":"employee_statistics","tags":["aggregate"]},
+  {"id":"salary-summary","question":"میانگین حقوق خالص کارمندان چقدر است؟","expected_group":"salary","expected_report":"salary_summary","tags":["aggregate"]},
+  {"id":"salary-compare","question":"حقوق کارمندان استان‌ها را مقایسه کن","expected_group":"salary","expected_report":"salary_comparison","tags":["comparison"]},
+  {"id":"organization","question":"ساختار واحدهای سازمانی استان تهران","expected_group":"organization","expected_report":"organization_structure","tags":["organization"]},
+  {"id":"ranking","question":"وضعیت درخواست‌های ارتقای رتبه","expected_group":"ranking","expected_report":"ranking_summary","tags":["status"]},
+  {"id":"school-stats","question":"تعداد مدارس هر استان","expected_group":"student","expected_report":"school_statistics","tags":["school","aggregate"]}
+]

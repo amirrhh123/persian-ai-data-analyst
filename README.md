@@ -27,6 +27,7 @@ into validated, read-only SQL and a structured Persian answer.
 - Query-level source citations derived from SQL and pipeline trace evidence
 - Incremental table-level auto-sync for semantic metadata and the Value Index
 - Privacy-aware user feedback loop with bounded retrieval adjustments
+- Versioned retrieval benchmark with Top-1, Top-k, MRR, latency, and CI quality gates
 - Generic Value Index for discovering filters from database values
 - Deterministic SQL planning with optional Ollama fallback
 - Join-path, aggregate, identifier, and result-shape validation
@@ -162,6 +163,8 @@ This keeps database content in PostgreSQL while regenerating only the metadata r
 Run focused unit and regression tests:
 
 ```powershell
+python scripts/run_retrieval_benchmark.py --minimum-top1 0.80
+python -m pytest tests/test_retrieval_benchmark.py -v
 python -m pytest tests/test_incremental_auto_sync.py tests/test_citation_service.py tests/test_sql_repair_loop.py tests/test_query_decomposition.py tests/test_confidence_gate.py tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
 python -m pytest tests/test_regression_benchmark.py -v
 ```

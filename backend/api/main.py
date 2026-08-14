@@ -61,6 +61,8 @@ from backend.pipeline.error_taxonomy import pipeline_error_taxonomy
 from backend.value_index.service import value_index_service
 from backend.feedback.models import FeedbackRequest, FeedbackResponse, FeedbackSummary
 from backend.feedback.service import feedback_service
+from backend.retrieval_benchmark.models import RetrievalBenchmarkRequest, RetrievalBenchmarkResult
+from backend.retrieval_benchmark.service import retrieval_benchmark_service
 from pathlib import Path
 
 settings = get_settings()
@@ -670,6 +672,14 @@ async def get_feedback_summary():
         return feedback_service.summary(settings.tenant_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading feedback: {str(e)}")
+
+
+@app.post("/retrieval/benchmark", response_model=RetrievalBenchmarkResult)
+async def run_retrieval_benchmark(request: RetrievalBenchmarkRequest):
+    try:
+        return retrieval_benchmark_service.run(settings.tenant_id, top_k=request.top_k, minimum_top1=request.minimum_top1)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error running retrieval benchmark: {str(e)}")
 
 
 @app.post("/llm/chat", response_model=ChatResponse)
