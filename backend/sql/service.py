@@ -4,6 +4,7 @@ from backend.sql.generator import sql_generator
 from backend.sql.validator import sql_validator
 from backend.sql.prompt_builder import prompt_builder
 from backend.sql.models import SQLPlan, GeneratedSQL, ValidationResult, SQLResponse
+from backend.sql.repair_loop import sql_repair_loop
 from backend.database.sync_service import schema_sync_service
 from backend.knowledge.loader import KnowledgeLoader
 from backend.knowledge.models import Report
@@ -61,6 +62,10 @@ class SQLService:
         generated = await sql_generator.generate(plan, schema, report=report, tenant_id=tenant_id)
         
         validation = sql_validator.validate(generated.sql, schema)
+        if not validation.is_valid:
+            repair = sql_repair_loop.repair(generated.sql, schema, report=report)
+            generated.sql = repair.sql
+            validation = repair.validation
         
         return SQLResponse(
             plan=plan,

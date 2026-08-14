@@ -23,6 +23,7 @@ into validated, read-only SQL and a structured Persian answer.
 - Explainable second-stage reranking with phrase, token, and metadata evidence
 - Confidence gating for weak, unsupported, or ambiguous retrieval results
 - Safe query decomposition with multi-query vector-score fusion
+- Bounded, schema-grounded SQL repair with validation after every attempt
 - Generic Value Index for discovering filters from database values
 - Deterministic SQL planning with optional Ollama fallback
 - Join-path, aggregate, identifier, and result-shape validation
@@ -44,6 +45,8 @@ flowchart LR
     G --> S["Semantic catalog and Value Index"]
     S --> P["Deterministic SQL planner"]
     P --> V["Safety and SQL validation"]
+    V -->|"invalid"| SR["Bounded SQL repair"]
+    SR --> V
     V --> DB[(PostgreSQL)]
     DB --> A["Persian answer formatter"]
     C[(ChromaDB)] --> R
@@ -151,7 +154,7 @@ This keeps database content in PostgreSQL while regenerating only the metadata r
 Run focused unit and regression tests:
 
 ```powershell
-python -m pytest tests/test_query_decomposition.py tests/test_confidence_gate.py tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
+python -m pytest tests/test_sql_repair_loop.py tests/test_query_decomposition.py tests/test_confidence_gate.py tests/test_reranker.py tests/test_hybrid_retrieval.py tests/test_value_index.py -v
 python -m pytest tests/test_regression_benchmark.py -v
 ```
 

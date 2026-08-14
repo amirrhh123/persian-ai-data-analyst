@@ -28,6 +28,22 @@ class ValidationResult(BaseModel):
     warnings: List[str] = []
 
 
+class SQLRepairAttempt(BaseModel):
+    attempt: int
+    sql: str
+    strategies: List[str] = []
+    validation: ValidationResult
+
+
+class SQLRepairResult(BaseModel):
+    sql: str
+    repaired: bool = False
+    valid: bool = False
+    stopped_reason: str = ""
+    attempts: List[SQLRepairAttempt] = []
+    validation: ValidationResult
+
+
 class JoinVerificationResult(BaseModel):
     is_valid: bool = True
     errors: List[str] = []

@@ -2278,6 +2278,18 @@ class QueryPipeline:
             ) else report_obj
             validation_intent = None if (semantic_table_plan or multi_intent.get("is_composable")) else intent
             validation = sql_validator.validate(sql, scoped_schema, report=validation_report, intent=validation_intent)
+            if not validation.is_valid:
+                from backend.sql.repair_loop import sql_repair_loop
+
+                repair = sql_repair_loop.repair(
+                    sql, scoped_schema, report=validation_report, intent=validation_intent,
+                )
+                sql = repair.sql
+                validation = repair.validation
+                tracer.add_step(
+                    "sql_repair", "success" if repair.valid else "error",
+                    0.0, data=repair.model_dump(),
+                )
             valid = validation.is_valid
             errors.extend(validation.errors)
             for validation_error in validation.errors:
