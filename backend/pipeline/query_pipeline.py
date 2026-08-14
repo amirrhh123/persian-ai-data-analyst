@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from backend.answer.service import answer_service
+from backend.citations.service import citation_service
 from backend.config import get_settings
 from backend.database.models import DatabaseSchema, RelationshipInfo, SchemaDiscoverySnapshot
 from backend.database.sync_service import schema_sync_service
@@ -2052,7 +2053,14 @@ class QueryPipeline:
                 report_id = f"semantic_table_{semantic_table_name}"
                 report_name = "درخواست‌های آموزشی" if semantic_table_name == "demo_training_requests" else semantic_table_name
                 report_obj = None
-            tracer.add_step("report_retrieval", "success", (time.time() - step_start) * 1000, data={"report_id": report_id, "report_name": report_name})
+            tracer.add_step(
+                "report_retrieval", "success", (time.time() - step_start) * 1000,
+                data={
+                    **report_result,
+                    "selected_report_id": report_id,
+                    "selected_report_name": report_name,
+                },
+            )
         except Exception as exc:
             errors.append(str(exc))
             error_details.append(pipeline_error_taxonomy.detail("retrieval.report_error", "report_retrieval", str(exc), severity="warning"))
@@ -2359,6 +2367,17 @@ class QueryPipeline:
                 generator_explanation=explanation,
             )
 
+        trace = tracer.get_trace()
+        citations = citation_service.build(
+            database=self.settings.database_name,
+            tenant_id=tenant_id,
+            sql=sql,
+            group_id=group_id,
+            report_id=report_id,
+            generation_source=generation_source,
+            trace=trace,
+        )
+
         total_time = (time.time() - start_time) * 1000
         return PipelineResponse(
             question=request.question,
@@ -2380,7 +2399,8 @@ class QueryPipeline:
             explanation=explanation,
             confidence=confidence,
             generation_source=generation_source,
-            trace=tracer.get_trace(),
+            citations=citations,
+            trace=trace,
             execution_time_ms=round(total_time, 2),
         )
 

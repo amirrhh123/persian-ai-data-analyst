@@ -32,6 +32,7 @@
     .result-summary{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.summary-chip{background:#f8fbf7;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:11px;color:var(--muted);font-weight:800}.summary-chip b{color:var(--ink)}
     .ranking{display:grid;gap:8px;margin-top:12px}.rank-row{display:grid;grid-template-columns:32px minmax(90px,1fr) minmax(90px,auto);gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}.rank-no{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--mint);color:var(--green);font-size:11px;font-weight:900}.rank-name{font-weight:800}.rank-bars{grid-column:2/-1;display:grid;gap:5px}.bar{height:8px;border-radius:99px;background:#edf0ea;overflow:hidden}.bar i{display:block;height:100%;border-radius:99px;background:var(--green)}.bar.student i{background:var(--blue)}.rank-val{font-size:12px;color:var(--muted);white-space:nowrap}
     details{margin-top:12px;border:1px solid var(--line);border-radius:8px;background:#fbfaf6}summary{cursor:pointer;padding:10px 12px;font-size:12px;font-weight:800;color:var(--green)}.sql{direction:ltr;text-align:left;background:#182521;color:#d9f4e8;padding:12px;border-radius:0 0 8px 8px;font:12px Consolas,monospace;overflow:auto;white-space:pre-wrap}
+    .citation-view{padding:12px;display:grid;gap:10px}.citation-head{display:flex;gap:7px;flex-wrap:wrap}.citation-chip{font-size:11px;padding:6px 9px;border-radius:999px;background:var(--mint);color:var(--green);font-weight:800}.citation-list{display:grid;gap:7px}.citation-item{border:1px solid var(--line);border-radius:7px;background:#fff;padding:9px 11px}.citation-item b{font-size:12px}.citation-item small{display:block;color:var(--muted);margin-top:3px;direction:ltr;text-align:left}.citation-columns{font-size:11px;color:var(--muted);line-height:1.9}.citation-sql{direction:ltr;text-align:left;background:#eef3ef;padding:9px;border-radius:7px;font:11px Consolas,monospace;overflow:auto;white-space:pre-wrap}
     .trace{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}.trace span{font-size:10px;background:var(--mint);color:var(--green);padding:6px 8px;border-radius:6px;font-weight:700}.error{color:var(--red);line-height:1.9}
     footer{margin-top:18px;text-align:left;color:var(--muted);font-size:11px;direction:ltr}
     @media(min-width:1400px){.shell{max-width:1120px}.panel{padding:18px}}
@@ -283,6 +284,32 @@ function renderExplanation(explanation){
     return `<details><summary>توضیح سیستم</summary><div class="life-result">${esc(explanation)}</div></details>`;
   }
 }
+function citationTypeLabel(type){
+  return {
+    database_table:'جدول دیتابیس', semantic_group:'گروه معنایی',
+    semantic_report:'گزارش معنایی', sql_generation:'روش تولید SQL',
+    retrieval_evidence:'شواهد بازیابی'
+  }[type]||type;
+}
+function renderCitations(citations){
+  if(!citations)return '';
+  const tables=citations.tables||[];
+  const columns=citations.columns||[];
+  const sources=citations.sources||[];
+  return `<details class="citations"><summary>منابع پاسخ و مسیر داده</summary><div class="citation-view">
+    <div class="citation-head">
+      <span class="citation-chip">دیتابیس: ${esc(citations.database||'—')}</span>
+      <span class="citation-chip">محیط داده: ${esc(citations.tenant_id||'—')}</span>
+      <span class="citation-chip">سطح استناد: کل پرس‌وجو</span>
+    </div>
+    <div class="citation-list">${sources.map(source=>`<div class="citation-item">
+      <b>${esc(citationTypeLabel(source.source_type))}: ${esc(source.identifier||source.label||'—')}</b>
+      <small>${esc(source.label||'')}</small>
+    </div>`).join('')}</div>
+    <div class="citation-columns"><b>جدول‌ها:</b> ${tables.map(esc).join('، ')||'—'}<br><b>ستون‌ها:</b> ${columns.map(esc).join('، ')||'—'}</div>
+    ${citations.sql_preview?`<div><b>SQL منبع با مقادیر حساس پوشانده‌شده:</b><div class="citation-sql">${esc(citations.sql_preview)}</div></div>`:''}
+  </div></details>`;
+}
 const stepLabels={
   schema_discovery:'کشف ساختار دیتابیس',
   semantic_suggestions:'تولید پیشنهاد معنایی',
@@ -510,6 +537,7 @@ function renderResponse(d){
     </div>
     <div class="answer-card"><div class="answer-title">پاسخ سیستم</div><div class="answer">${esc(faDigits(answer))}</div></div>
     ${renderExplanation(d.explanation)}
+    ${renderCitations(d.citations)}
     ${renderRows(d.result)}
     ${d.sql?`<details><summary>نمایش SQL تولید شده</summary><div class="sql">${esc(d.sql)}</div></details>`:''}
     <div class="trace">${renderTrace(d.trace)}</div>`;

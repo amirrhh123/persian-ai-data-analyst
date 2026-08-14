@@ -23,6 +23,23 @@ class PipelineTrace(BaseModel):
     success: bool = True
 
 
+class SourceCitation(BaseModel):
+    source_type: str
+    label: str
+    identifier: str
+    details: Dict[str, Any] = {}
+
+
+class CitationView(BaseModel):
+    scope: str = "query_level"
+    database: str
+    tenant_id: str
+    tables: List[str] = []
+    columns: List[str] = []
+    sql_preview: Optional[str] = None
+    sources: List[SourceCitation] = []
+
+
 class PipelineErrorDetail(BaseModel):
     code: str
     stage: str
@@ -54,5 +71,6 @@ class PipelineResponse(BaseModel):
     explanation: Optional[str] = None
     confidence: Optional[float] = None
     generation_source: Optional[str] = None
+    citations: Optional[CitationView] = None
     trace: PipelineTrace = PipelineTrace()
     execution_time_ms: float = 0.0
