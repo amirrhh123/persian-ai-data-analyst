@@ -1255,16 +1255,37 @@ class QueryPipeline:
                 plan.aggregations = [{"function": "SUM", "column": "salary_items.net_salary"}]
                 plan.order_by = f"total_salary {intent.sorting.direction}"
                 plan.limit = 1
-            else:
-                plan.selected_columns = [
-                    "AVG(salary_items.base_salary) AS avg_base_salary",
-                    "AVG(salary_items.net_salary) AS avg_net_salary",
-                    "AVG(salary_items.net_salary - salary_items.base_salary) AS avg_difference",
-                ]
+            elif intent.aggregation in {"COUNT", "SUM", "AVG"}:
+                function = intent.aggregation
+                salary_columns = {
+                    "base_salary", "allowances", "deductions", "net_salary",
+                }
+                requested_metric = next(
+                    (column for column in intent.requested_columns if column in salary_columns),
+                    "net_salary",
+                )
+                metric_column = "salary_items.id" if function == "COUNT" else f"salary_items.{requested_metric}"
+                plan.selected_columns = ["SALARY_AGGREGATE"]
+                plan.aggregations = [{"function": function, "column": metric_column}]
+                plan.group_by = list(intent.grouping)
+                plan.order_by = None
+                plan.limit = None
+            elif {"base_salary", "net_salary"}.issubset(set(intent.requested_columns)):
+                plan.selected_columns = ["SALARY_COMPARISON"]
                 plan.aggregations = [
                     {"function": "AVG", "column": "salary_items.base_salary"},
                     {"function": "AVG", "column": "salary_items.net_salary"},
                 ]
+                plan.group_by = []
+                plan.order_by = None
+                plan.limit = None
+            else:
+                requested = list(intent.requested_columns) or [
+                    "year", "month", "base_salary", "allowances", "deductions", "net_salary",
+                ]
+                plan.selected_columns = ["SALARY_LIST", *requested]
+                plan.aggregations = []
+                plan.group_by = []
                 plan.order_by = None
                 plan.limit = None
             plan.filters = []
@@ -2054,7 +2075,9 @@ class QueryPipeline:
                 report_name = "درخواست‌های آموزشی" if semantic_table_name == "demo_training_requests" else semantic_table_name
                 report_obj = None
             tracer.add_step(
-                "report_retrieval", "success", (time.time() - step_start) * 1000,
+                "report_retrieval",
+                "success",
+                (time.time() - step_start) * 1000,
                 data={
                     **report_result,
                     "selected_report_id": report_id,
@@ -2290,13 +2313,18 @@ class QueryPipeline:
                 from backend.sql.repair_loop import sql_repair_loop
 
                 repair = sql_repair_loop.repair(
-                    sql, scoped_schema, report=validation_report, intent=validation_intent,
+                    sql,
+                    scoped_schema,
+                    report=validation_report,
+                    intent=validation_intent,
                 )
                 sql = repair.sql
                 validation = repair.validation
                 tracer.add_step(
-                    "sql_repair", "success" if repair.valid else "error",
-                    0.0, data=repair.model_dump(),
+                    "sql_repair",
+                    "success" if repair.valid else "error",
+                    0.0,
+                    data=repair.model_dump(),
                 )
             valid = validation.is_valid
             errors.extend(validation.errors)

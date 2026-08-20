@@ -1315,7 +1315,7 @@ def retirement_pension_amount_by_employee(plan: SQLPlan) -> Optional[str]:
 def salary_base_net_average(plan: SQLPlan) -> Optional[str]:
     if set(plan.required_tables) not in ({"salary_items", "employees"}, {"salary_items", "employees", "organization_units"}):
         return None
-    if not any("BASE_SALARY" in column.upper() for column in plan.selected_columns):
+    if "SALARY_COMPARISON" not in _selected(plan):
         return None
     return (
         "SELECT "
@@ -1328,13 +1328,61 @@ def salary_base_net_average(plan: SQLPlan) -> Optional[str]:
     )
 
 
+def salary_aggregate(plan: SQLPlan) -> Optional[str]:
+    if "SALARY_AGGREGATE" not in _selected(plan) or len(plan.aggregations) != 1:
+        return None
+    aggregation = plan.aggregations[0]
+    function = aggregation.get("function", "").upper()
+    column = aggregation.get("column", "")
+    allowed = {
+        "salary_items.id", "salary_items.base_salary", "salary_items.allowances",
+        "salary_items.deductions", "salary_items.net_salary",
+    }
+    if function not in {"COUNT", "SUM", "AVG"} or column not in allowed:
+        return None
+    alias_column = column.split(".")[-1]
+    alias = "salary_count" if function == "COUNT" else f"{function.lower()}_{alias_column}"
+    dimensions = []
+    for dimension in plan.group_by:
+        if dimension in {"province", "city"} and "organization_units" in plan.required_tables:
+            dimensions.append(f"organization_units.{dimension}")
+    projection = [*dimensions, f"{function}({column}) AS {alias}"]
+    group_by = f" GROUP BY {', '.join(dimensions)}" if dimensions else ""
+    order_by = f" ORDER BY {alias} DESC" if dimensions else ""
+    return (
+        f"SELECT {', '.join(projection)} FROM salary_items "
+        f"{salary_joins(plan)}{salary_where_clause(plan)}{group_by}{order_by}"
+    )
+
+
+def salary_list(plan: SQLPlan) -> Optional[str]:
+    if "SALARY_LIST" not in _selected(plan):
+        return None
+    salary_table = semantic_catalog.table("salary_items")
+    allowed = {column.name for column in salary_table.columns} if salary_table else {
+        "year", "month", "base_salary", "allowances", "deductions", "net_salary",
+    }
+    requested = [column for column in plan.selected_columns if column != "SALARY_LIST" and column in allowed]
+    if not requested:
+        requested = ["year", "month", "base_salary", "allowances", "deductions", "net_salary"]
+    projection = [
+        "employees.first_name", "employees.last_name", "employees.national_id",
+        *[f"salary_items.{column}" for column in requested],
+    ]
+    return (
+        f"SELECT {', '.join(projection)} FROM salary_items "
+        f"{salary_joins(plan)}{salary_where_clause(plan)}"
+        "ORDER BY salary_items.year DESC, salary_items.month DESC, employees.id"
+    )
+
+
 def salary_total_by_employee(plan: SQLPlan) -> Optional[str]:
     if set(plan.required_tables) not in ({"salary_items", "employees"}, {"salary_items", "employees", "organization_units"}) or plan.limit != 1:
         return None
     direction = "ASC" if plan.order_by and "ASC" in plan.order_by.upper() else "DESC"
     return (
         "SELECT employees.first_name, employees.last_name, "
-        "SUM(salary_items.allowances) AS total_salary "
+        "SUM(salary_items.net_salary) AS total_salary "
         "FROM salary_items "
         f"{salary_joins(plan)}"
         f"{salary_where_clause(plan)}"
@@ -1421,6 +1469,8 @@ TEMPLATES: list[TemplateFn] = [
     employee_pension_amount_by_national_id,
     retirement_pension_amount_by_employee,
     employee_by_national_id,
+    salary_aggregate,
+    salary_list,
     salary_base_net_average,
     salary_total_by_employee,
     pending_ranking_requests,
