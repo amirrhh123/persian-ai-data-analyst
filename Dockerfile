@@ -6,12 +6,15 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 COPY requirements.txt docker-constraints.txt ./
 COPY docker_wheels/torch-2.12.1+cpu-cp312-cp312-manylinux_2_28_x86_64.whl /tmp/wheels/
 ENV PIP_DEFAULT_TIMEOUT=300 PIP_RETRIES=10
-RUN pip install --no-cache-dir /tmp/wheels/torch-2.12.1+cpu-cp312-cp312-manylinux_2_28_x86_64.whl \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install --upgrade pip \
+    && pip install /tmp/wheels/torch-2.12.1+cpu-cp312-cp312-manylinux_2_28_x86_64.whl \
     && rm -rf /tmp/wheels
 
-RUN apt-get update \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    apt-get update \
     && apt-get install -y --no-install-recommends build-essential \
-    && pip install --no-cache-dir --retries 10 --timeout 300 -c docker-constraints.txt -r requirements.txt \
+    && pip install --retries 10 --timeout 300 --index-url https://pypi.org/simple -c docker-constraints.txt -r requirements.txt \
     && apt-get purge -y --auto-remove build-essential \
     && rm -rf /var/lib/apt/lists/*
 
