@@ -1,10 +1,14 @@
 import httpx
+from time import perf_counter
+from uuid import uuid4
 from typing import Optional
 from backend.config import get_settings
 from backend.llm.context_budget import ContextBudget
 from backend.llm.models import TokenUsage
 from backend.llm.token_counter import create_token_counter
 from backend.llm.router import ModelRouter
+from backend.observability.llm_events import LLMEvent, event_store
+from backend.observability.cost_calculator import ModelPricing, estimate_cost
 
 
 class LLMService:
@@ -49,9 +53,19 @@ class LLMService:
         
         payload["messages"].append({"role": "user", "content": message})
         
+        started = perf_counter()
         provider = self.router.select()
-        output = await provider.chat(message, system_prompt)
+        try:
+            output = await provider.chat(message, system_prompt)
+        except Exception:
+            event_store.record(LLMEvent(str(uuid4()), self.settings.llm_provider, self.settings.ollama_model,
+                                        0, 0, (perf_counter()-started)*1000, 0.0, False))
+            raise
         self.last_usage = getattr(provider, "last_usage", None)
+        usage = self.last_usage or TokenUsage(self.token_counter.count(message), self.token_counter.count(output), 0)
+        event_store.record(LLMEvent(str(uuid4()), self.settings.llm_provider, self.settings.ollama_model,
+                                    usage.input_tokens, usage.output_tokens, (perf_counter()-started)*1000,
+                                    estimate_cost(usage.input_tokens, usage.output_tokens, ModelPricing()), True))
         return output
     
     async def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
@@ -73,9 +87,19 @@ class LLMService:
         if system_prompt:
             payload["system"] = system_prompt
         
+        started = perf_counter()
         provider = self.router.select()
-        output = await provider.generate(prompt, system_prompt)
+        try:
+            output = await provider.generate(prompt, system_prompt)
+        except Exception:
+            event_store.record(LLMEvent(str(uuid4()), self.settings.llm_provider, self.settings.ollama_model,
+                                        0, 0, (perf_counter()-started)*1000, 0.0, False))
+            raise
         self.last_usage = getattr(provider, "last_usage", None)
+        usage = self.last_usage or TokenUsage(self.token_counter.count(prompt), self.token_counter.count(output), 0)
+        event_store.record(LLMEvent(str(uuid4()), self.settings.llm_provider, self.settings.ollama_model,
+                                    usage.input_tokens, usage.output_tokens, (perf_counter()-started)*1000,
+                                    estimate_cost(usage.input_tokens, usage.output_tokens, ModelPricing()), True))
         return output
     
     async def is_connected(self) -> bool:
