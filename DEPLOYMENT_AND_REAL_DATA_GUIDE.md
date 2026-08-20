@@ -249,6 +249,8 @@ knowledge/tenants/<TENANT_ID>/reports/
 
 `TENANT_ID` در `.env` باید دقیقاً با نام پوشه tenant برابر باشد. در Docker پوشه `knowledge` به کانتینر mount شده تا اصلاحات semantic بعد از restart از بین نروند.
 
+پوشه `schema` نیز به `/app/schema` mount می‌شود؛ بنابراین discovery، value index، semantic فعال و نسخه‌های rollback پس از recreate شدن کانتینر باقی می‌مانند. تغییر فایل‌های `knowledge` و `schema` به build مجدد نیاز ندارد و recreate کردن API کافی است.
+
 پس از ایجاد یا ویرایش گروه/گزارش، sync گروه‌ها و گزارش‌ها را اجرا و سپس Retrieval Benchmark را بررسی کنید.
 
 ## ۵) انتخاب Provider مدل

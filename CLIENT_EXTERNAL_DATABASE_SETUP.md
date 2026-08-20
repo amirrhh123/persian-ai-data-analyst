@@ -561,3 +561,20 @@ It deletes Docker volumes and may remove local PostgreSQL and ChromaDB data.
 The software provider does not require the organization's database password. Authorized client IT personnel must create the read-only account and enter all credentials locally on the deployment host.
 
 The client database administrator or business data owner is responsible for confirming table meanings, relationships, sensitive fields, and official report definitions.
+
+## Persisted Knowledge and Schema Files
+
+The Compose configuration mounts both directories into the API container:
+
+```text
+./knowledge → /app/knowledge
+./schema    → /app/schema
+```
+
+Files added or updated in these host directories do not require rebuilding the API image. Recreate the API container to reload them:
+
+```powershell
+docker compose up -d --force-recreate api
+```
+
+The `schema` mount preserves discovery results, value indexes, active semantics, feedback, and rollback versions when the API container is recreated.
