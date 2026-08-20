@@ -25,13 +25,59 @@ copy .env.example .env     # Windows
 cp .env.example .env      # Linux/macOS
 ```
 
-3. مقادیر `.env` را برای محیط مقصد تنظیم کنید؛ رمزها را در Git commit نکنید.
+3. مقادیر `.env` را برای محیط مقصد تنظیم کنید؛ رمزها را در Git commit نکنید. نمونه کامل برای اجرای Docker محلی:
+
+```env
+APP_NAME=Persian AI Data Analyst
+APP_VERSION=0.1.0
+DEBUG=false
+
+DATABASE_NAME=persian_ai_db
+DATABASE_USER=postgres
+DATABASE_PASSWORD=یک_رمز_قوی
+DATABASE_PORT=5433
+
+CHROMA_PORT=8001
+
+LLM_ENABLED=true
+LLM_PROVIDER=ollama
+OLLAMA_HOST=http://host.docker.internal
+OLLAMA_PORT=11434
+OLLAMA_MODEL=qwen2.5:7b
+OLLAMA_TIMEOUT=120
+OLLAMA_TEMPERATURE=0.1
+OLLAMA_TOP_P=0.9
+LLM_CONTEXT_MAX_TOKENS=8192
+LLM_RESERVED_OUTPUT_TOKENS=1024
+LLM_TOKENIZER_MODEL_PATH=
+
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_URL=https://api.openai.com/v1/chat/completions
+
+TENANT_ID=education_ministry
+EMBEDDING_MODEL_PATH=./models/paraphrase-multilingual-mpnet-base-v2
+EMBEDDING_DEVICE=cpu
+
+API_HOST=0.0.0.0
+API_PORT=8080
+```
+
+در حالت Docker، Compose آدرس داخلی صحیح را خودش به API می‌دهد: PostgreSQL با `postgres:5432` و ChromaDB با `chromadb:8000`. مقادیر `localhost:5433` و `localhost:8001` فقط برای دسترسی از خود ویندوز هستند.
 
 4. سرویس‌ها را build و اجرا کنید:
 
 ```bash
 docker compose up -d --build
 ```
+
+قبل از build مطمئن شوید پوشه مدل وجود دارد:
+
+```text
+models/paraphrase-multilingual-mpnet-base-v2/
+```
+
+این پوشه به‌صورت read-only داخل کانتینر در `/app/models` mount می‌شود و وزن مدل وارد GitHub نمی‌شود.
 
 5. وضعیت سرویس‌ها را بررسی کنید:
 
@@ -92,6 +138,31 @@ DATABASE_PASSWORD=یک_رمز_قوی
 DATABASE_URL=postgresql://readonly_analyst:رمز@db.company.local:5432/production_db
 ```
 
+نکته: Compose اصلی برای دیتابیس آزمایشی داخلی طراحی شده و `DATABASE_URL` داخلی تولید می‌کند. برای دیتابیس واقعی یک فایل `docker-compose.production.yml` بسازید:
+
+```yaml
+services:
+  api:
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    depends_on:
+      chromadb:
+        condition: service_healthy
+```
+
+سپس اجرا کنید:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.production.yml up -d --build api chromadb
+```
+
+اگر رمز شامل `@`، `:`، `/` یا `#` است، آن را در `DATABASE_URL` به‌شکل URL-encoded وارد کنید.
+
 برای امنیت، کاربر فقط خواندنی بسازید:
 
 ```sql
@@ -106,7 +177,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 اتصال را از داخل کانتینر تست کنید:
 
 ```bash
-docker compose exec api python -c "from sqlalchemy import create_engine; print(create_engine('$DATABASE_URL').connect())"
+docker compose exec api python -c "from backend.database.connection import engine; c=engine.connect(); print('database connected'); c.close()"
 ```
 
 ### نکات امنیتی دیتابیس
@@ -132,6 +203,19 @@ docker compose exec api python -c "from sqlalchemy import create_engine; print(c
 
 7. freshness را بررسی کنید و فقط پس از `up_to_date` بودن پاسخ‌گویی را شروع کنید.
 
+در UI ادمین ترتیب دکمه‌ها باید این باشد:
+
+```text
+خواندن اطلاعات دیتابیس
+→ بررسی/اصلاح معنی جدول و ستون
+→ ثبت اصلاح معنی
+→ بررسی سلامت دیتابیس
+→ به‌روزرسانی کامل سیستم
+→ بررسی وضعیت semantic
+```
+
+اگر فقط داده‌های ردیف‌ها تغییر کرده‌اند و ساختار جدول ثابت است، به‌روزرسانی افزایشی کافی است. اگر جدول، ستون، foreign key یا معنی جدید اضافه شده، به‌روزرسانی کامل اجرا شود.
+
 ## ۴) اتصال گروه‌ها، گزارش‌ها و دانش سازمانی واقعی
 
 ### گروه‌ها
@@ -141,6 +225,61 @@ docker compose exec api python -c "from sqlalchemy import create_engine; print(c
 ### گزارش‌ها
 
 گزارش‌ها باید تعریف دقیق KPI، فیلترهای اجباری، ستون‌های خروجی و محدودیت دسترسی داشته باشند. گزارش را به جدول واقعی و query contract متصل کنید؛ از متن آزاد بدون منبع استفاده نکنید.
+
+فایل‌های tenant در این مسیر نگهداری می‌شوند:
+
+```text
+knowledge/tenants/<TENANT_ID>/groups/
+knowledge/tenants/<TENANT_ID>/reports/
+```
+
+`TENANT_ID` در `.env` باید دقیقاً با نام پوشه tenant برابر باشد. در Docker پوشه `knowledge` به کانتینر mount شده تا اصلاحات semantic بعد از restart از بین نروند.
+
+پس از ایجاد یا ویرایش گروه/گزارش، sync گروه‌ها و گزارش‌ها را اجرا و سپس Retrieval Benchmark را بررسی کنید.
+
+## ۵) انتخاب Provider مدل
+
+برای Ollama محلی:
+
+```env
+LLM_ENABLED=true
+LLM_PROVIDER=ollama
+OLLAMA_HOST=http://host.docker.internal
+OLLAMA_MODEL=qwen2.5:7b
+OPENAI_API_KEY=
+```
+
+برای OpenAI:
+
+```env
+LLM_ENABLED=true
+LLM_PROVIDER=openai
+OPENAI_API_KEY=کلید_واقعی
+OPENAI_MODEL=gpt-4o-mini
+```
+
+داده حساس طبق Model Routing باید به provider محلی هدایت شود. کلید API را هرگز در فایل commit‌شده یا تصویر Docker قرار ندهید.
+
+## ۶) عیب‌یابی و عملیات روزانه
+
+```bash
+docker compose ps
+docker compose logs -f api
+docker compose restart api
+docker stats --no-stream
+```
+
+پس از تغییر کد Python، image را دوباره بسازید:
+
+```bash
+docker compose up -d --build api
+```
+
+پس از تغییر فقط `.env`، ایجاد مجدد کانتینر کافی است:
+
+```bash
+docker compose up -d --force-recreate api
+```
 
 ### Semantic layer
 
@@ -165,7 +304,7 @@ docker compose exec api python -c "from sqlalchemy import create_engine; print(c
 → اجرای Regression و Retrieval Benchmark
 ```
 
-## ۵) چک‌لیست قبل از تحویل به کارفرما
+## ۷) چک‌لیست قبل از تحویل به کارفرما
 
 - [ ] API و dependencyها داخل Docker اجرا می‌شوند.
 - [ ] PostgreSQL واقعی با حساب read-only متصل است.
@@ -177,4 +316,7 @@ docker compose exec api python -c "from sqlalchemy import create_engine; print(c
 - [ ] Token، latency، خطا و هزینه ثبت می‌شوند.
 - [ ] backup و روش restore مستند شده است.
 - [ ] `.env` و داده محرمانه در GitHub قرار نگرفته‌اند.
-
+- [ ] مسیر مدل embedding روی سیستم مقصد موجود و داخل کانتینر mount شده است.
+- [ ] `TENANT_ID` با پوشه دانش سازمانی برابر است.
+- [ ] تست اتصال از داخل کانتینر API موفق است.
+- [ ] پورت‌های 8080، 5433، 8001 و 11434 تداخل ندارند.
