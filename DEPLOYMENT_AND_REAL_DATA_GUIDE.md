@@ -247,6 +247,54 @@ knowledge/tenants/<TENANT_ID>/reports/
 
 ## ۵) انتخاب Provider مدل
 
+### انتخاب مدل Ollama بر اساس RAM
+
+| RAM سیستم | مدل پیشنهادی | کاربرد |
+|---|---|---|
+| ۸GB | `qwen2.5:3b` | دمو، تست و درخواست‌های سبک |
+| ۱۶GB یا بیشتر | `qwen2.5:7b` | دقت بهتر و استفاده عادی |
+| کمتر از ۸GB | OpenAI یا `LLM_ENABLED=false` | جلوگیری از فشار حافظه |
+
+مدل 7B همراه با Windows، Docker، PostgreSQL، ChromaDB و API ممکن است روی سیستم ۸GB باعث کندی شدید یا استفاده زیاد از Page File شود. برای چنین سیستمی مدل 3B انتخاب مناسب‌تری است.
+
+دانلود مدل 3B:
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+دانلود مدل 7B:
+
+```bash
+ollama pull qwen2.5:7b
+```
+
+مدل‌های نصب‌شده را ببینید:
+
+```bash
+ollama list
+```
+
+برای تغییر مدل، مقدار زیر را در `.env` عوض کنید:
+
+```env
+LLM_PROVIDER=ollama
+OLLAMA_MODEL=qwen2.5:3b
+```
+
+سپس کانتینر API را با تنظیمات جدید دوباره ایجاد کنید:
+
+```bash
+docker compose up -d --force-recreate api
+```
+
+برای اطمینان از اعمال تنظیم، لاگ و health را بررسی کنید:
+
+```bash
+docker compose logs --tail 100 api
+curl http://localhost:8080/health
+```
+
 برای Ollama محلی:
 
 ```env
