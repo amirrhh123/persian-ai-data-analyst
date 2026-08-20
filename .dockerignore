@@ -1,0 +1,9 @@
+.git
+.venv
+__pycache__
+*.pyc
+tests
+models
+docker_wheels
+.env
+

@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  api:
+    build: .
+    container_name: persian_ai_api
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal}
+      OLLAMA_PORT: ${OLLAMA_PORT:-11434}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-alpine
     container_name: persian_ai_postgres
