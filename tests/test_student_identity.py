@@ -18,3 +18,17 @@ async def test_student_identity_by_quoted_national_id():
     assert "FROM students" in response.sql
     assert "students.national_id = '3489881390'" in response.sql
     assert "students.national_id = 3489881390" not in response.sql
+def test_student_school_name_lookup_uses_school_id_join():
+    # The national-id lookup must resolve students.school_id through schools.id.
+    from backend.sql.models import SQLPlan
+    from backend.sql.templates import render_template_sql
+
+    plan = SQLPlan(
+        required_tables=["students", "schools"],
+        selected_columns=["STUDENT_BY_NATIONAL_ID", "first_name", "last_name", "school_name"],
+        filters=[{"column": "national_id", "operator": "=", "value": "1034567890"}],
+    )
+    sql = render_template_sql(plan) or ""
+    assert "JOIN schools ON students.school_id = schools.id" in sql
+    assert "schools.name AS school_name" in sql
+    assert "students.national_id = '1034567890'" in sql

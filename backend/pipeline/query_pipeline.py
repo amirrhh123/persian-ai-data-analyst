@@ -293,6 +293,9 @@ class QueryPipeline:
         return best_table
 
     def _is_training_request_question(self, question: str, catalog: SemanticCatalog) -> bool:
+        text = self._normalize_text(question)
+        if any(term in text for term in ["رتبه بندی", "رتبه‌بندی", "رتبه", "ارتقا"]):
+            return False
         table = self._semantic_target_table(question, catalog)
         if not table:
             table = self._semantic_target_table_by_labeled_sample_values(question, catalog)
@@ -300,8 +303,7 @@ class QueryPipeline:
             table = self._semantic_target_table_by_sample_values(question, catalog)
         if table and table.name == "demo_training_requests":
             return True
-        text = self._normalize_text(question)
-        return any(alias in text for alias in ["درخواست", "دوره", "کارگاه"])
+        return any(alias in text for alias in ["درخواست آموزشی", "دوره", "کارگاه", "آموزش"])
 
     def _extract_value_after_any(self, text: str, labels: list[str], allowed_values: list[str]) -> Optional[str]:
         normalized = text.replace("‌", " ")
@@ -1357,7 +1359,20 @@ class QueryPipeline:
                     selected_columns.insert(0, "last_name")
                 if "first_name" not in selected_columns:
                     selected_columns.insert(0, "first_name")
-                plan.required_tables = ["students"]
+                if intent.wants_school_name:
+                    selected_columns = [
+                        column for column in selected_columns if column != "school_id"
+                    ]
+                    selected_columns.append("school_name")
+                    plan.required_tables = ["students", "schools"]
+                    plan.joins = [{
+                        "from_table": "students",
+                        "from_column": "school_id",
+                        "to_table": "schools",
+                        "to_column": "id",
+                    }]
+                else:
+                    plan.required_tables = ["students"]
                 plan.selected_columns = ["STUDENT_BY_NATIONAL_ID", *selected_columns]
                 plan.filters = [{"column": "national_id", "operator": "=", "value": intent.national_id}]
             elif intent.named_school:

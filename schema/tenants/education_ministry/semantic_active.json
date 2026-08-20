@@ -1,0 +1,1334 @@
+{
+  "version": 1,
+  "language": "fa",
+  "tables": [
+    {
+      "name": "demo_training_requests",
+      "entity": "training_request",
+      "description": "درخواست‌های آموزشی، دوره‌ها و کارگاه‌های ثبت‌شده توسط مدارس، معلمان و واحدهای سازمانی.",
+      "aliases": [
+        "درخواست آموزشی",
+        "درخواست‌های آموزشی",
+        "درخواست های آموزشی",
+        "درخواست دوره",
+        "درخواست‌های دوره",
+        "دوره آموزشی",
+        "دوره‌های آموزشی",
+        "کارگاه آموزشی",
+        "کارگاه هوش مصنوعی",
+        "آموزش ضمن خدمت"
+      ],
+      "primary_key": "id",
+      "default_display_columns": [
+        "requester_name",
+        "request_type",
+        "province",
+        "priority",
+        "status",
+        "estimated_cost"
+      ],
+      "profile_columns": [
+        "id",
+        "requester_name",
+        "requester_role",
+        "request_type",
+        "province",
+        "city",
+        "priority",
+        "status",
+        "assigned_unit",
+        "estimated_cost",
+        "requested_at",
+        "created_at"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "description": "شناسه داخلی رکورد.",
+          "aliases": [
+            "شناسه",
+            "آیدی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "requester_name",
+          "data_type": "character varying",
+          "description": "نام شخصی که درخواست آموزشی را ثبت کرده است.",
+          "aliases": [
+            "نام درخواست‌دهنده",
+            "درخواست‌دهنده",
+            "ثبت‌کننده درخواست",
+            "نام متقاضی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "requester_role",
+          "data_type": "character varying",
+          "description": "نقش یا سمت شخص درخواست‌دهنده مانند مدیر مدرسه، معلم یا کارمند اداری.",
+          "aliases": [
+            "نقش درخواست‌دهنده",
+            "سمت درخواست‌دهنده",
+            "نقش متقاضی",
+            "سمت متقاضی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "request_type",
+          "data_type": "character varying",
+          "description": "نوع یا موضوع درخواست آموزشی مانند کارگاه هوش مصنوعی یا دوره ضمن خدمت معلمان.",
+          "aliases": [
+            "نوع درخواست",
+            "نوع دوره",
+            "موضوع دوره",
+            "عنوان دوره",
+            "کارگاه",
+            "دوره"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "province",
+          "data_type": "character varying",
+          "description": "نام استان.",
+          "aliases": [
+            "استان"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "city",
+          "data_type": "character varying",
+          "description": "نام شهر یا منطقه.",
+          "aliases": [
+            "شهر",
+            "منطقه"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "priority",
+          "data_type": "character varying",
+          "description": "اولویت رسیدگی به درخواست آموزشی؛ مانند high، normal یا low.",
+          "aliases": [
+            "اولویت",
+            "فوریت",
+            "میزان اهمیت",
+            "اولویت بالا",
+            "کم‌اولویت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "description": "وضعیت رکورد مانند active یا inactive.",
+          "aliases": [
+            "وضعیت",
+            "فعال",
+            "غیرفعال"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "assigned_unit",
+          "data_type": "character varying",
+          "description": "واحد سازمانی مسئول رسیدگی به درخواست آموزشی.",
+          "aliases": [
+            "واحد مسئول",
+            "واحد رسیدگی‌کننده",
+            "اداره مسئول",
+            "مرکز مسئول"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "estimated_cost",
+          "data_type": "bigint",
+          "description": "هزینه یا بودجه برآوردشده برای درخواست آموزشی.",
+          "aliases": [
+            "هزینه",
+            "هزینه برآوردی",
+            "مبلغ",
+            "بودجه",
+            "هزینه تخمینی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "requested_at",
+          "data_type": "date",
+          "description": "تاریخ ثبت درخواست آموزشی.",
+          "aliases": [
+            "تاریخ درخواست",
+            "زمان درخواست",
+            "تاریخ ثبت درخواست"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "description": "زمان ایجاد رکورد.",
+          "aliases": [
+            "تاریخ ایجاد",
+            "زمان ثبت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        }
+      ]
+    },
+    {
+      "name": "employees",
+      "entity": "employee",
+      "description": "اطلاعات پایه کارمندان و پرسنل سازمان.",
+      "aliases": [
+        "کارمند",
+        "کارمندان",
+        "کارکنان",
+        "پرسنل",
+        "معلم",
+        "دبیر"
+      ],
+      "primary_key": "id",
+      "default_display_columns": [
+        "first_name",
+        "last_name",
+        "position",
+        "status"
+      ],
+      "profile_columns": [
+        "id",
+        "national_id",
+        "first_name",
+        "last_name",
+        "position",
+        "status",
+        "organization_unit_id",
+        "hire_date",
+        "created_at"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "description": "شناسه داخلی رکورد.",
+          "aliases": [
+            "شناسه",
+            "آیدی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "national_id",
+          "data_type": "character varying",
+          "description": "شناسه ملی شخص؛ مقدار متنی است و باید در SQL داخل کوتیشن بیاید.",
+          "aliases": [
+            "کد ملی",
+            "شناسه ملی",
+            "شماره ملی"
+          ],
+          "examples": [],
+          "value_type": "text_identifier",
+          "pii": true
+        },
+        {
+          "name": "first_name",
+          "data_type": "character varying",
+          "description": "نام کوچک شخص.",
+          "aliases": [
+            "نام",
+            "اسم"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "last_name",
+          "data_type": "character varying",
+          "description": "نام خانوادگی شخص.",
+          "aliases": [
+            "نام خانوادگی",
+            "فامیل"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "organization_unit_id",
+          "data_type": "integer",
+          "description": "شناسه واحد سازمانی مرتبط.",
+          "aliases": [
+            "واحد سازمانی",
+            "محل خدمت",
+            "منطقه"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "position",
+          "data_type": "character varying",
+          "description": "عنوان شغلی کارمند.",
+          "aliases": [
+            "شغل",
+            "سمت",
+            "عنوان شغلی",
+            "پست"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "hire_date",
+          "data_type": "date",
+          "description": "تاریخ استخدام کارمند.",
+          "aliases": [
+            "تاریخ استخدام",
+            "شروع کار"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "description": "وضعیت رکورد مانند active یا inactive.",
+          "aliases": [
+            "وضعیت",
+            "فعال",
+            "غیرفعال"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "description": "زمان ایجاد رکورد.",
+          "aliases": [
+            "تاریخ ایجاد",
+            "زمان ثبت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        }
+      ]
+    },
+    {
+      "name": "organization_units",
+      "entity": "organization_unit",
+      "description": "واحدهای سازمانی مانند اداره کل، استان و منطقه آموزشی.",
+      "aliases": [
+        "واحد سازمانی",
+        "اداره",
+        "اداره کل",
+        "استان",
+        "شهر",
+        "منطقه"
+      ],
+      "primary_key": "id",
+      "default_display_columns": [
+        "name",
+        "unit_type",
+        "province",
+        "city"
+      ],
+      "profile_columns": [
+        "id",
+        "name",
+        "unit_type",
+        "parent_id",
+        "province",
+        "city"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "description": "شناسه داخلی رکورد.",
+          "aliases": [
+            "شناسه",
+            "آیدی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "description": "نام رکورد یا موجودیت.",
+          "aliases": [
+            "نام",
+            "اسم"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "unit_type",
+          "data_type": "character varying",
+          "description": "نوع واحد سازمانی مانند province یا district.",
+          "aliases": [
+            "نوع واحد",
+            "نوع"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "parent_id",
+          "data_type": "integer",
+          "description": "شناسه واحد سازمانی بالادستی.",
+          "aliases": [
+            "والد",
+            "واحد بالادستی",
+            "زیرمجموعه"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "province",
+          "data_type": "character varying",
+          "description": "نام استان.",
+          "aliases": [
+            "استان"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "city",
+          "data_type": "character varying",
+          "description": "نام شهر یا منطقه.",
+          "aliases": [
+            "شهر",
+            "منطقه"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "description": "زمان ایجاد رکورد.",
+          "aliases": [
+            "تاریخ ایجاد",
+            "زمان ثبت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        }
+      ]
+    },
+    {
+      "name": "ranking_requests",
+      "entity": "ranking_request",
+      "description": "درخواست‌های رتبه‌بندی یا ارتقای کارمندان.",
+      "aliases": [
+        "رتبه‌بندی",
+        "رتبه بندی",
+        "ارتقا",
+        "درخواست رتبه"
+      ],
+      "primary_key": "id",
+      "default_display_columns": [
+        "employee_id",
+        "ranking_type",
+        "current_rank",
+        "requested_rank",
+        "status"
+      ],
+      "profile_columns": [
+        "id",
+        "employee_id",
+        "request_date",
+        "ranking_type",
+        "current_rank",
+        "requested_rank",
+        "status",
+        "review_date"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "description": "شناسه داخلی رکورد.",
+          "aliases": [
+            "شناسه",
+            "آیدی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "description": "ستون employee_id از نوع integer.",
+          "aliases": [
+            "employee id"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "request_date",
+          "data_type": "date",
+          "description": "تاریخ ثبت درخواست.",
+          "aliases": [
+            "تاریخ درخواست"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "ranking_type",
+          "data_type": "character varying",
+          "description": "نوع رتبه‌بندی یا ارتقا.",
+          "aliases": [
+            "نوع رتبه",
+            "نوع رتبه‌بندی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "current_rank",
+          "data_type": "character varying",
+          "description": "رتبه فعلی کارمند.",
+          "aliases": [
+            "رتبه فعلی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "requested_rank",
+          "data_type": "character varying",
+          "description": "رتبه درخواستی کارمند.",
+          "aliases": [
+            "رتبه درخواستی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "description": "وضعیت رکورد مانند active یا inactive.",
+          "aliases": [
+            "وضعیت",
+            "فعال",
+            "غیرفعال"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "review_date",
+          "data_type": "date",
+          "description": "تاریخ بررسی درخواست.",
+          "aliases": [
+            "تاریخ بررسی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "description": "زمان ایجاد رکورد.",
+          "aliases": [
+            "تاریخ ایجاد",
+            "زمان ثبت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        }
+      ]
+    },
+    {
+      "name": "retirement_records",
+      "entity": "retirement_record",
+      "description": "سوابق بازنشستگی، سنوات خدمت و مبلغ مستمری کارمندان.",
+      "aliases": [
+        "بازنشستگی",
+        "بازنشسته",
+        "سوابق بازنشستگی",
+        "مستمری"
+      ],
+      "primary_key": "id",
+      "default_display_columns": [
+        "employee_id",
+        "retirement_date",
+        "retirement_type",
+        "years_of_service",
+        "pension_amount"
+      ],
+      "profile_columns": [
+        "id",
+        "employee_id",
+        "retirement_date",
+        "retirement_type",
+        "years_of_service",
+        "pension_amount",
+        "reason"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "description": "شناسه داخلی رکورد.",
+          "aliases": [
+            "شناسه",
+            "آیدی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "description": "ستون employee_id از نوع integer.",
+          "aliases": [
+            "employee id"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "retirement_date",
+          "data_type": "date",
+          "description": "تاریخ بازنشستگی کارمند.",
+          "aliases": [
+            "تاریخ بازنشستگی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "retirement_type",
+          "data_type": "character varying",
+          "description": "نوع بازنشستگی.",
+          "aliases": [
+            "نوع بازنشستگی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "years_of_service",
+          "data_type": "integer",
+          "description": "تعداد سال‌های خدمت کارمند.",
+          "aliases": [
+            "سابقه خدمت",
+            "سال خدمت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "pension_amount",
+          "data_type": "numeric",
+          "description": "مبلغ سنوات/مستمری پرداخت‌شده به کارمند.",
+          "aliases": [
+            "سنوات",
+            "مبلغ سنوات",
+            "سنوات پرداخت شده",
+            "مستمری"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "reason",
+          "data_type": "text",
+          "description": "علت یا توضیح رکورد.",
+          "aliases": [
+            "علت",
+            "دلیل"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "description": "زمان ایجاد رکورد.",
+          "aliases": [
+            "تاریخ ایجاد",
+            "زمان ثبت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        }
+      ]
+    },
+    {
+      "name": "salary_items",
+      "entity": "salary",
+      "description": "اقلام حقوقی، پرداختی، مزایا، کسورات و حقوق خالص کارمندان.",
+      "aliases": [
+        "حقوق",
+        "پرداختی",
+        "فیش حقوقی",
+        "دستمزد",
+        "مزایا",
+        "کسورات"
+      ],
+      "primary_key": "id",
+      "default_display_columns": [
+        "employee_id",
+        "year",
+        "month",
+        "base_salary",
+        "net_salary"
+      ],
+      "profile_columns": [
+        "id",
+        "employee_id",
+        "year",
+        "month",
+        "base_salary",
+        "allowances",
+        "deductions",
+        "net_salary",
+        "payment_date"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "description": "شناسه داخلی رکورد.",
+          "aliases": [
+            "شناسه",
+            "آیدی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "description": "ستون employee_id از نوع integer.",
+          "aliases": [
+            "employee id"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "year",
+          "data_type": "integer",
+          "description": "سال مربوط به رکورد.",
+          "aliases": [
+            "سال"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "month",
+          "data_type": "integer",
+          "description": "ماه مربوط به رکورد.",
+          "aliases": [
+            "ماه"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "base_salary",
+          "data_type": "numeric",
+          "description": "مبلغ حقوق پایه.",
+          "aliases": [
+            "حقوق پایه",
+            "پایه حقوق"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "allowances",
+          "data_type": "numeric",
+          "description": "مبلغ مزایا.",
+          "aliases": [
+            "مزایا",
+            "فوق‌العاده"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "deductions",
+          "data_type": "numeric",
+          "description": "مبلغ کسورات.",
+          "aliases": [
+            "کسورات",
+            "کسر"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "net_salary",
+          "data_type": "numeric",
+          "description": "حقوق خالص پرداختی.",
+          "aliases": [
+            "حقوق خالص",
+            "پرداختی خالص"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "payment_date",
+          "data_type": "date",
+          "description": "تاریخ پرداخت حقوق.",
+          "aliases": [
+            "تاریخ پرداخت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "description": "زمان ایجاد رکورد.",
+          "aliases": [
+            "تاریخ ایجاد",
+            "زمان ثبت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        }
+      ]
+    },
+    {
+      "name": "schools",
+      "entity": "school",
+      "description": "اطلاعات مدارس، دبستان‌ها، دبیرستان‌ها و هنرستان‌ها.",
+      "aliases": [
+        "مدرسه",
+        "مدارس",
+        "دبستان",
+        "دبیرستان",
+        "هنرستان",
+        "آموزشگاه"
+      ],
+      "primary_key": "id",
+      "default_display_columns": [
+        "name",
+        "school_type",
+        "phone",
+        "capacity"
+      ],
+      "profile_columns": [
+        "id",
+        "name",
+        "school_type",
+        "phone",
+        "address",
+        "capacity",
+        "established_year",
+        "organization_unit_id"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "description": "شناسه داخلی رکورد.",
+          "aliases": [
+            "شناسه",
+            "آیدی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "description": "نام رکورد یا موجودیت.",
+          "aliases": [
+            "نام",
+            "اسم"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "school_type",
+          "data_type": "character varying",
+          "description": "نوع مدرسه مانند دبستان، دبیرستان یا هنرستان.",
+          "aliases": [
+            "نوع مدرسه",
+            "مقطع مدرسه"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "organization_unit_id",
+          "data_type": "integer",
+          "description": "شناسه واحد سازمانی مرتبط.",
+          "aliases": [
+            "واحد سازمانی",
+            "محل خدمت",
+            "منطقه"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "capacity",
+          "data_type": "integer",
+          "description": "ظرفیت مدرسه.",
+          "aliases": [
+            "ظرفیت",
+            "گنجایش"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "established_year",
+          "data_type": "integer",
+          "description": "سال تأسیس مدرسه.",
+          "aliases": [
+            "سال تأسیس",
+            "سال تاسیس"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "address",
+          "data_type": "text",
+          "description": "آدرس یا نشانی مدرسه.",
+          "aliases": [
+            "آدرس",
+            "نشانی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "phone",
+          "data_type": "character varying",
+          "description": "شماره تلفن یا تماس.",
+          "aliases": [
+            "تلفن",
+            "شماره تلفن",
+            "شماره تماس"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "description": "زمان ایجاد رکورد.",
+          "aliases": [
+            "تاریخ ایجاد",
+            "زمان ثبت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        }
+      ]
+    },
+    {
+      "name": "students",
+      "entity": "student",
+      "description": "اطلاعات پایه دانش‌آموزان ثبت‌شده در مدارس.",
+      "aliases": [
+        "دانش‌آموز",
+        "دانش آموز",
+        "دانش‌آموزان",
+        "محصل",
+        "شاگرد"
+      ],
+      "primary_key": "id",
+      "default_display_columns": [
+        "first_name",
+        "last_name",
+        "grade",
+        "status"
+      ],
+      "profile_columns": [
+        "id",
+        "national_id",
+        "first_name",
+        "last_name",
+        "grade",
+        "status",
+        "school_id",
+        "enrollment_year",
+        "created_at"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "description": "شناسه داخلی رکورد.",
+          "aliases": [
+            "شناسه",
+            "آیدی"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "national_id",
+          "data_type": "character varying",
+          "description": "شناسه ملی شخص؛ مقدار متنی است و باید در SQL داخل کوتیشن بیاید.",
+          "aliases": [
+            "کد ملی",
+            "شناسه ملی",
+            "شماره ملی"
+          ],
+          "examples": [],
+          "value_type": "text_identifier",
+          "pii": true
+        },
+        {
+          "name": "first_name",
+          "data_type": "character varying",
+          "description": "نام کوچک شخص.",
+          "aliases": [
+            "نام",
+            "اسم"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "last_name",
+          "data_type": "character varying",
+          "description": "نام خانوادگی شخص.",
+          "aliases": [
+            "نام خانوادگی",
+            "فامیل"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "school_id",
+          "data_type": "integer",
+          "description": "شناسه مدرسه دانش‌آموز.",
+          "aliases": [
+            "مدرسه",
+            "نام مدرسه"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "grade",
+          "data_type": "character varying",
+          "description": "پایه یا مقطع تحصیلی دانش‌آموز.",
+          "aliases": [
+            "پایه",
+            "مقطع",
+            "کلاس"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "enrollment_year",
+          "data_type": "integer",
+          "description": "سال ثبت‌نام دانش‌آموز.",
+          "aliases": [
+            "سال ثبت‌نام",
+            "سال ثبت نام"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "description": "وضعیت رکورد مانند active یا inactive.",
+          "aliases": [
+            "وضعیت",
+            "فعال",
+            "غیرفعال"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "description": "زمان ایجاد رکورد.",
+          "aliases": [
+            "تاریخ ایجاد",
+            "زمان ثبت"
+          ],
+          "examples": [],
+          "value_type": null,
+          "pii": false
+        }
+      ]
+    }
+  ],
+  "joins": [
+    {
+      "from_table": "employees",
+      "from_column": "organization_unit_id",
+      "to_table": "organization_units",
+      "to_column": "id",
+      "description": "هر کارمند به یک واحد سازمانی وصل است.",
+      "cardinality": "many_to_one"
+    },
+    {
+      "from_table": "organization_units",
+      "from_column": "parent_id",
+      "to_table": "organization_units",
+      "to_column": "id",
+      "description": "هر واحد سازمانی می‌تواند زیرمجموعه یک واحد بالادستی باشد.",
+      "cardinality": "many_to_one"
+    },
+    {
+      "from_table": "ranking_requests",
+      "from_column": "employee_id",
+      "to_table": "employees",
+      "to_column": "id",
+      "description": "هر درخواست رتبه‌بندی مربوط به یک کارمند است.",
+      "cardinality": "many_to_one"
+    },
+    {
+      "from_table": "retirement_records",
+      "from_column": "employee_id",
+      "to_table": "employees",
+      "to_column": "id",
+      "description": "هر سابقه بازنشستگی مربوط به یک کارمند است.",
+      "cardinality": "many_to_one"
+    },
+    {
+      "from_table": "salary_items",
+      "from_column": "employee_id",
+      "to_table": "employees",
+      "to_column": "id",
+      "description": "هر آیتم حقوقی مربوط به یک کارمند است.",
+      "cardinality": "many_to_one"
+    },
+    {
+      "from_table": "schools",
+      "from_column": "organization_unit_id",
+      "to_table": "organization_units",
+      "to_column": "id",
+      "description": "هر مدرسه به یک واحد یا منطقه سازمانی وصل است.",
+      "cardinality": "many_to_one"
+    },
+    {
+      "from_table": "students",
+      "from_column": "school_id",
+      "to_table": "schools",
+      "to_column": "id",
+      "description": "هر دانش‌آموز به یک مدرسه وصل است.",
+      "cardinality": "many_to_one"
+    }
+  ],
+  "rules": [
+    {
+      "name": "national_id_is_text",
+      "description": "کد ملی در جدول‌های employees و students متنی است و حتی اگر عددی باشد باید در SQL داخل کوتیشن بیاید.",
+      "applies_to": [
+        "employees.national_id",
+        "students.national_id"
+      ]
+    },
+    {
+      "name": "student_province_join_path",
+      "description": "برای فیلتر استان دانش‌آموز باید مسیر students -> schools -> organization_units استفاده شود.",
+      "applies_to": [
+        "students",
+        "schools",
+        "organization_units"
+      ]
+    },
+    {
+      "name": "school_province_join_path",
+      "description": "برای فیلتر استان مدرسه باید schools به organization_units وصل شود.",
+      "applies_to": [
+        "schools",
+        "organization_units"
+      ]
+    },
+    {
+      "name": "employee_province_join_path",
+      "description": "برای فیلتر استان کارمند باید employees به organization_units وصل شود.",
+      "applies_to": [
+        "employees",
+        "organization_units"
+      ]
+    },
+    {
+      "name": "business_term_retirement_records_pension_amount",
+      "description": "سنوات: در این سیستم منظور کاربر از سنوات، ستون pension_amount در جدول retirement_records است. maps_to=retirement_records.pension_amount; aliases=سنوات پرداخت‌شده, مبلغ سنوات, مستمری",
+      "applies_to": [
+        "retirement_records.pension_amount"
+      ]
+    },
+    {
+      "name": "business_term_retirement_records_years_of_service",
+      "description": "سابقه خدمت: برای تعداد سال‌های خدمت از years_of_service استفاده شود، نه pension_amount. maps_to=retirement_records.years_of_service; aliases=سال خدمت, تعداد سال خدمت",
+      "applies_to": [
+        "retirement_records.years_of_service"
+      ]
+    },
+    {
+      "name": "value_mapping_employees_status_active",
+      "description": "فعال: کلمه فعال در سؤال کاربر به مقدار دیتابیسی active تبدیل شود. value=active; aliases=اکتیو, active, در حال فعالیت",
+      "applies_to": [
+        "employees.status"
+      ]
+    },
+    {
+      "name": "value_mapping_students_status_active",
+      "description": "فعال: کلمه فعال در سؤال کاربر به مقدار دیتابیسی active تبدیل شود. value=active; aliases=اکتیو, active, در حال فعالیت",
+      "applies_to": [
+        "students.status"
+      ]
+    },
+    {
+      "name": "value_mapping_demo_training_requests_status_active",
+      "description": "فعال: درخواست آموزشی فعال یا باز به مقدار active نگاشت شود. value=active; aliases=active, باز, در حال رسیدگی",
+      "applies_to": [
+        "demo_training_requests.status"
+      ]
+    },
+    {
+      "name": "value_mapping_demo_training_requests_status_approved",
+      "description": "تایید شده: درخواست آموزشی تایید شده به مقدار approved نگاشت شود. value=approved; aliases=تأیید شده, approved, مصوب, قبول شده",
+      "applies_to": [
+        "demo_training_requests.status"
+      ]
+    },
+    {
+      "name": "value_mapping_demo_training_requests_status_pending",
+      "description": "در انتظار بررسی: درخواست آموزشی در انتظار بررسی به مقدار pending نگاشت شود. value=pending; aliases=pending, منتظر بررسی, در انتظار, بررسی نشده",
+      "applies_to": [
+        "demo_training_requests.status"
+      ]
+    },
+    {
+      "name": "value_mapping_demo_training_requests_status_rejected",
+      "description": "رد شده: درخواست آموزشی رد شده به مقدار rejected نگاشت شود. value=rejected; aliases=rejected, مردود, ردشده",
+      "applies_to": [
+        "demo_training_requests.status"
+      ]
+    },
+    {
+      "name": "value_mapping_demo_training_requests_priority_high",
+      "description": "اولویت بالا: اولویت بالا یا فوری به مقدار high نگاشت شود. value=high; aliases=high, فوری, مهم, با اولویت بالا",
+      "applies_to": [
+        "demo_training_requests.priority"
+      ]
+    },
+    {
+      "name": "value_mapping_demo_training_requests_priority_normal",
+      "description": "اولویت عادی: اولویت عادی به مقدار normal نگاشت شود. value=normal; aliases=normal, معمولی, عادی",
+      "applies_to": [
+        "demo_training_requests.priority"
+      ]
+    },
+    {
+      "name": "value_mapping_demo_training_requests_priority_low",
+      "description": "کم‌اولویت: کم‌اولویت یا اولویت پایین به مقدار low نگاشت شود. value=low; aliases=low, اولویت پایین, کم اهمیت",
+      "applies_to": [
+        "demo_training_requests.priority"
+      ]
+    }
+  ]
+}

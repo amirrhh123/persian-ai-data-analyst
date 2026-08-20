@@ -1,0 +1,1872 @@
+{
+  "tenant_id": "education_ministry",
+  "database_name": "persian_ai_db",
+  "schema_name": "public",
+  "generated_at": "2026-08-21T01:51:55",
+  "fingerprint": "9bedda2e39e8facd27b7d3cf5045cf16dce63e1d387852bf82bd4530fd7093bf",
+  "tables": [
+    {
+      "schema_name": "public",
+      "name": "employees",
+      "comment": null,
+      "row_count": 20008,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": "nextval('employees_id_seq'::regclass)",
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": true,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "national_id",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 10,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": true,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "first_name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "آریا",
+              "count": 638
+            },
+            {
+              "value": "امیر",
+              "count": 627
+            },
+            {
+              "value": "parsa",
+              "count": 602
+            },
+            {
+              "value": "احمد",
+              "count": 600
+            },
+            {
+              "value": "امید",
+              "count": 598
+            },
+            {
+              "value": "آرش",
+              "count": 578
+            },
+            {
+              "value": "بهنام",
+              "count": 561
+            },
+            {
+              "value": "الناز",
+              "count": 407
+            }
+          ]
+        },
+        {
+          "name": "last_name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "احمدی",
+              "count": 993
+            },
+            {
+              "value": "جعفری",
+              "count": 988
+            },
+            {
+              "value": "abdollahi",
+              "count": 968
+            },
+            {
+              "value": "خسروی",
+              "count": 967
+            },
+            {
+              "value": "بهرامی",
+              "count": 965
+            },
+            {
+              "value": "رحمانی",
+              "count": 119
+            }
+          ]
+        },
+        {
+          "name": "organization_unit_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "position",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "دبیر تربیت بدنی",
+              "count": 1349
+            },
+            {
+              "value": "دبیر ادبیات",
+              "count": 1347
+            },
+            {
+              "value": "دبیر تاریخ",
+              "count": 1325
+            },
+            {
+              "value": "دبیر جغرافیا",
+              "count": 979
+            }
+          ]
+        },
+        {
+          "name": "hire_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": "'active'::character varying",
+          "max_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "active",
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "is_nullable": true,
+          "column_default": "CURRENT_TIMESTAMP",
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "table_name": "employees",
+          "column_name": "organization_unit_id",
+          "foreign_table_name": "organization_units",
+          "foreign_column_name": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "employees_national_id_key",
+          "definition": "CREATE UNIQUE INDEX employees_national_id_key ON public.employees USING btree (national_id)"
+        },
+        {
+          "name": "employees_pkey",
+          "definition": "CREATE UNIQUE INDEX employees_pkey ON public.employees USING btree (id)"
+        }
+      ],
+      "sample_rows": [
+        {
+          "id": 1,
+          "national_id": "0012345678",
+          "first_name": "علی",
+          "last_name": "احمدی",
+          "organization_unit_id": 4,
+          "position": "مدیر مدرسه",
+          "hire_date": "2010-09-01",
+          "status": "active",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 2,
+          "national_id": "0023456789",
+          "first_name": "فاطمه",
+          "last_name": "محمدی",
+          "organization_unit_id": 4,
+          "position": "دبیر ریاضی",
+          "hire_date": "2012-03-15",
+          "status": "active",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 3,
+          "national_id": "0034567890",
+          "first_name": "محمد",
+          "last_name": "رضایی",
+          "organization_unit_id": 5,
+          "position": "دبیر فیزیک",
+          "hire_date": "2008-09-01",
+          "status": "active",
+          "created_at": "2026-07-11T14:36:33.451329"
+        }
+      ]
+    },
+    {
+      "schema_name": "public",
+      "name": "organization_units",
+      "comment": null,
+      "row_count": 129,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": "nextval('organization_units_id_seq'::regclass)",
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": true,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "اداره کل آموزش و پرورش اصفهان",
+              "count": 4
+            },
+            {
+              "value": "اداره کل آموزش و پرورش تهران",
+              "count": 4
+            },
+            {
+              "value": "وزارت آموزش و پرورش",
+              "count": 4
+            },
+            {
+              "value": "اداره آموزش و پرورش آبادان",
+              "count": 3
+            },
+            {
+              "value": "اداره آموزش و پرورش آمل",
+              "count": 3
+            },
+            {
+              "value": "اداره آموزش و پرورش اصفهان",
+              "count": 3
+            },
+            {
+              "value": "اداره آموزش و پرورش انزلی",
+              "count": 3
+            },
+            {
+              "value": "اداره آموزش و پرورش اهر",
+              "count": 3
+            }
+          ]
+        },
+        {
+          "name": "unit_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "district",
+              "count": 93
+            },
+            {
+              "value": "province",
+              "count": 32
+            },
+            {
+              "value": "ministry",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "name": "parent_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "province",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "تهران",
+              "count": 19
+            },
+            {
+              "value": "اصفهان",
+              "count": 14
+            },
+            {
+              "value": "آذربایجان شرقی",
+              "count": 12
+            },
+            {
+              "value": "خراسان رضوی",
+              "count": 12
+            },
+            {
+              "value": "خوزستان",
+              "count": 12
+            },
+            {
+              "value": "سیستان و بلوچستان",
+              "count": 12
+            },
+            {
+              "value": "فارس",
+              "count": 12
+            },
+            {
+              "value": "مازندران",
+              "count": 12
+            }
+          ]
+        },
+        {
+          "name": "city",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "تهران",
+              "count": 13
+            },
+            {
+              "value": "اصفهان",
+              "count": 8
+            },
+            {
+              "value": "اهواز",
+              "count": 6
+            },
+            {
+              "value": "تبریز",
+              "count": 6
+            },
+            {
+              "value": "رشت",
+              "count": 6
+            },
+            {
+              "value": "زاهدان",
+              "count": 6
+            },
+            {
+              "value": "ساری",
+              "count": 6
+            },
+            {
+              "value": "شیراز",
+              "count": 6
+            }
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "is_nullable": true,
+          "column_default": "CURRENT_TIMESTAMP",
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "table_name": "organization_units",
+          "column_name": "parent_id",
+          "foreign_table_name": "organization_units",
+          "foreign_column_name": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "organization_units_pkey",
+          "definition": "CREATE UNIQUE INDEX organization_units_pkey ON public.organization_units USING btree (id)"
+        }
+      ],
+      "sample_rows": [
+        {
+          "id": 1,
+          "name": "وزارت آموزش و پرورش",
+          "unit_type": "ministry",
+          "parent_id": null,
+          "province": "تهران",
+          "city": "تهران",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 2,
+          "name": "اداره کل آموزش و پرورش تهران",
+          "unit_type": "province",
+          "parent_id": 1,
+          "province": "تهران",
+          "city": "تهران",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 3,
+          "name": "اداره کل آموزش و پرورش اصفهان",
+          "unit_type": "province",
+          "parent_id": 1,
+          "province": "اصفهان",
+          "city": "اصفهان",
+          "created_at": "2026-07-11T14:36:33.451329"
+        }
+      ]
+    },
+    {
+      "schema_name": "public",
+      "name": "ranking_requests",
+      "comment": null,
+      "row_count": 5004,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": "nextval('ranking_requests_id_seq'::regclass)",
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": true,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "request_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "ranking_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "انتقال",
+              "count": 1708
+            },
+            {
+              "value": "ارتقای رتبه",
+              "count": 1693
+            },
+            {
+              "value": "تغییر سمت",
+              "count": 1599
+            }
+          ]
+        },
+        {
+          "name": "current_rank",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "کارشناس",
+              "count": 1023
+            },
+            {
+              "value": "معلم درجه ۱",
+              "count": 1021
+            },
+            {
+              "value": "معلم درجه ۲",
+              "count": 999
+            },
+            {
+              "value": "کارشناس ارشد",
+              "count": 991
+            },
+            {
+              "value": "معلم",
+              "count": 966
+            }
+          ]
+        },
+        {
+          "name": "requested_rank",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "کارشناس",
+              "count": 1020
+            },
+            {
+              "value": "کارشناس ارشد",
+              "count": 1019
+            },
+            {
+              "value": "معلم درجه ۱",
+              "count": 999
+            },
+            {
+              "value": "سرپرست",
+              "count": 995
+            },
+            {
+              "value": "معلم درجه ۲",
+              "count": 967
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": "'pending'::character varying",
+          "max_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "pending",
+              "count": 2024
+            },
+            {
+              "value": "approved",
+              "count": 1997
+            },
+            {
+              "value": "rejected",
+              "count": 979
+            }
+          ]
+        },
+        {
+          "name": "review_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "is_nullable": true,
+          "column_default": "CURRENT_TIMESTAMP",
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "table_name": "ranking_requests",
+          "column_name": "employee_id",
+          "foreign_table_name": "employees",
+          "foreign_column_name": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ranking_requests_pkey",
+          "definition": "CREATE UNIQUE INDEX ranking_requests_pkey ON public.ranking_requests USING btree (id)"
+        }
+      ],
+      "sample_rows": [
+        {
+          "id": 1,
+          "employee_id": 1,
+          "request_date": "1403-01-15",
+          "ranking_type": "ارتقای رتبه",
+          "current_rank": "کارشناس",
+          "requested_rank": "کارشناس ارشد",
+          "status": "approved",
+          "review_date": "1403-02-01",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 2,
+          "employee_id": 2,
+          "request_date": "1403-02-01",
+          "ranking_type": "ارتقای رتبه",
+          "current_rank": "معلم",
+          "requested_rank": "معلم درجه ۲",
+          "status": "pending",
+          "review_date": null,
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 3,
+          "employee_id": 3,
+          "request_date": "1402-11-20",
+          "ranking_type": "ارتقای رتبه",
+          "current_rank": "کارشناس ارشد",
+          "requested_rank": "سرپرست",
+          "status": "rejected",
+          "review_date": "1403-01-10",
+          "created_at": "2026-07-11T14:36:33.451329"
+        }
+      ]
+    },
+    {
+      "schema_name": "public",
+      "name": "retirement_records",
+      "comment": null,
+      "row_count": 2002,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": "nextval('retirement_records_id_seq'::regclass)",
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": true,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "retirement_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "retirement_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "بازنشستگی پیش از موعد",
+              "count": 678
+            },
+            {
+              "value": "بازنشستگی استعلاجی",
+              "count": 667
+            },
+            {
+              "value": "بازنشستگی عادی",
+              "count": 657
+            }
+          ]
+        },
+        {
+          "name": "years_of_service",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "33",
+              "count": 148
+            },
+            {
+              "value": "32",
+              "count": 143
+            },
+            {
+              "value": "26",
+              "count": 142
+            },
+            {
+              "value": "29",
+              "count": 136
+            },
+            {
+              "value": "30",
+              "count": 133
+            },
+            {
+              "value": "21",
+              "count": 132
+            },
+            {
+              "value": "20",
+              "count": 131
+            },
+            {
+              "value": "35",
+              "count": 131
+            }
+          ]
+        },
+        {
+          "name": "pension_amount",
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 15,
+          "numeric_scale": 2,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "reason",
+          "data_type": "text",
+          "udt_name": "text",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "بازنشستگی پس از اتمام سنوات خدمت",
+              "count": 2000
+            },
+            {
+              "value": "بازنشستگی درخواستی",
+              "count": 1
+            },
+            {
+              "value": "بازنشستگی پس از ۲۵ سال خدمت",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "is_nullable": true,
+          "column_default": "CURRENT_TIMESTAMP",
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "table_name": "retirement_records",
+          "column_name": "employee_id",
+          "foreign_table_name": "employees",
+          "foreign_column_name": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "retirement_records_pkey",
+          "definition": "CREATE UNIQUE INDEX retirement_records_pkey ON public.retirement_records USING btree (id)"
+        }
+      ],
+      "sample_rows": [
+        {
+          "id": 1,
+          "employee_id": 8,
+          "retirement_date": "1403-03-01",
+          "retirement_type": "بازنشستگی عادی",
+          "years_of_service": 25,
+          "pension_amount": 35000000.0,
+          "reason": "بازنشستگی پس از ۲۵ سال خدمت",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 2,
+          "employee_id": 5,
+          "retirement_date": "1404-06-01",
+          "retirement_type": "بازنشستگی پیش از موعد",
+          "years_of_service": 30,
+          "pension_amount": 42000000.0,
+          "reason": "بازنشستگی درخواستی",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 3,
+          "employee_id": 2912,
+          "retirement_date": "1403-03-12",
+          "retirement_type": "بازنشستگی استعلاجی",
+          "years_of_service": 23,
+          "pension_amount": 32580763.0,
+          "reason": "بازنشستگی پس از اتمام سنوات خدمت",
+          "created_at": "2026-07-11T14:49:58.875348"
+        }
+      ]
+    },
+    {
+      "schema_name": "public",
+      "name": "salary_items",
+      "comment": null,
+      "row_count": 1000008,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": "nextval('salary_items_id_seq'::regclass)",
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": true,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "year",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "1400",
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "name": "month",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "1",
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "name": "base_salary",
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 15,
+          "numeric_scale": 2,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "allowances",
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 15,
+          "numeric_scale": 2,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "deductions",
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 15,
+          "numeric_scale": 2,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "net_salary",
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 15,
+          "numeric_scale": 2,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "payment_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "is_nullable": true,
+          "column_default": "CURRENT_TIMESTAMP",
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "table_name": "salary_items",
+          "column_name": "employee_id",
+          "foreign_table_name": "employees",
+          "foreign_column_name": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "salary_items_pkey",
+          "definition": "CREATE UNIQUE INDEX salary_items_pkey ON public.salary_items USING btree (id)"
+        }
+      ],
+      "sample_rows": [
+        {
+          "id": 1,
+          "employee_id": 1,
+          "year": 1403,
+          "month": 1,
+          "base_salary": 45000000.0,
+          "allowances": 15000000.0,
+          "deductions": 5000000.0,
+          "net_salary": 55000000.0,
+          "payment_date": "1403-01-28",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 2,
+          "employee_id": 1,
+          "year": 1403,
+          "month": 2,
+          "base_salary": 45000000.0,
+          "allowances": 15000000.0,
+          "deductions": 5000000.0,
+          "net_salary": 55000000.0,
+          "payment_date": "1403-02-28",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 3,
+          "employee_id": 2,
+          "year": 1403,
+          "month": 1,
+          "base_salary": 38000000.0,
+          "allowances": 12000000.0,
+          "deductions": 4000000.0,
+          "net_salary": 46000000.0,
+          "payment_date": "1403-01-28",
+          "created_at": "2026-07-11T14:36:33.451329"
+        }
+      ]
+    },
+    {
+      "schema_name": "public",
+      "name": "schools",
+      "comment": null,
+      "row_count": 1505,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": "nextval('schools_id_seq'::regclass)",
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": true,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "دبیرستان نمونه دولتی کاشان",
+              "count": 18
+            },
+            {
+              "value": "دبستان امید خرمشهر",
+              "count": 15
+            },
+            {
+              "value": "دبیرستان شهید بهشتی مراغه",
+              "count": 15
+            },
+            {
+              "value": "دبیرستان فرزانگان اصفهان",
+              "count": 15
+            },
+            {
+              "value": "دبیرستان فرزانگان ساری",
+              "count": 15
+            },
+            {
+              "value": "دبیرستان فرزانگان مشهد",
+              "count": 15
+            },
+            {
+              "value": "دبیرستان نمونه دولتی نائین",
+              "count": 15
+            },
+            {
+              "value": "پیش دانشگاهی جهرم",
+              "count": 15
+            }
+          ]
+        },
+        {
+          "name": "school_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "دبستان",
+              "count": 402
+            },
+            {
+              "value": "دبیرستان",
+              "count": 395
+            },
+            {
+              "value": "هنرستان",
+              "count": 378
+            },
+            {
+              "value": "نمونه دولتی",
+              "count": 330
+            }
+          ]
+        },
+        {
+          "name": "organization_unit_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "capacity",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "401",
+              "count": 21
+            },
+            {
+              "value": "499",
+              "count": 21
+            },
+            {
+              "value": "227",
+              "count": 15
+            },
+            {
+              "value": "307",
+              "count": 15
+            },
+            {
+              "value": "399",
+              "count": 15
+            },
+            {
+              "value": "439",
+              "count": 15
+            },
+            {
+              "value": "500",
+              "count": 15
+            },
+            {
+              "value": "213",
+              "count": 12
+            }
+          ]
+        },
+        {
+          "name": "established_year",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "1361",
+              "count": 69
+            },
+            {
+              "value": "1368",
+              "count": 66
+            },
+            {
+              "value": "1377",
+              "count": 54
+            },
+            {
+              "value": "1382",
+              "count": 54
+            },
+            {
+              "value": "1373",
+              "count": 51
+            },
+            {
+              "value": "1378",
+              "count": 51
+            },
+            {
+              "value": "1360",
+              "count": 48
+            },
+            {
+              "value": "1363",
+              "count": 48
+            }
+          ]
+        },
+        {
+          "name": "address",
+          "data_type": "text",
+          "udt_name": "text",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "خراسان رضوی، مشهد",
+              "count": 78
+            },
+            {
+              "value": "فارس، شیراز",
+              "count": 66
+            },
+            {
+              "value": "مازندران، ساری",
+              "count": 66
+            },
+            {
+              "value": "خراسان رضوی، نیشابور",
+              "count": 63
+            },
+            {
+              "value": "فارس، مرودشت",
+              "count": 63
+            },
+            {
+              "value": "مازندران، آمل",
+              "count": 63
+            },
+            {
+              "value": "آذربایجان شرقی، اهر",
+              "count": 57
+            },
+            {
+              "value": "اصفهان، اصفهان",
+              "count": 57
+            }
+          ]
+        },
+        {
+          "name": "phone",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "021-2171488",
+              "count": 3
+            },
+            {
+              "value": "021-4586111",
+              "count": 3
+            },
+            {
+              "value": "021-5131928",
+              "count": 3
+            },
+            {
+              "value": "021-6492224",
+              "count": 3
+            },
+            {
+              "value": "021-7099343",
+              "count": 3
+            },
+            {
+              "value": "021-9512345",
+              "count": 3
+            },
+            {
+              "value": "022-1390266",
+              "count": 3
+            },
+            {
+              "value": "022-1556531",
+              "count": 3
+            }
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "is_nullable": true,
+          "column_default": "CURRENT_TIMESTAMP",
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "table_name": "schools",
+          "column_name": "organization_unit_id",
+          "foreign_table_name": "organization_units",
+          "foreign_column_name": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "schools_pkey",
+          "definition": "CREATE UNIQUE INDEX schools_pkey ON public.schools USING btree (id)"
+        }
+      ],
+      "sample_rows": [
+        {
+          "id": 1,
+          "name": "دبیرستان شهید بهشتی",
+          "school_type": "دبیرستان",
+          "organization_unit_id": 4,
+          "capacity": 400,
+          "established_year": 1370,
+          "address": "تهران، خیابان ولیعصر، کوچه ۱۲",
+          "phone": "021-88776655",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 2,
+          "name": "دبیرستان فرزانگان",
+          "school_type": "دبیرستان",
+          "organization_unit_id": 4,
+          "capacity": 350,
+          "established_year": 1385,
+          "address": "تهران، خیابان آزادی، پلاک ۴۵",
+          "phone": "021-66443322",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 3,
+          "name": "دبیرستان امام خمینی",
+          "school_type": "دبیرستان",
+          "organization_unit_id": 5,
+          "capacity": 380,
+          "established_year": 1365,
+          "address": "تهران، خیابان انقلاب، کوچه ۸",
+          "phone": "021-77554433",
+          "created_at": "2026-07-11T14:36:33.451329"
+        }
+      ]
+    },
+    {
+      "schema_name": "public",
+      "name": "students",
+      "comment": null,
+      "row_count": 300010,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": false,
+          "column_default": "nextval('students_id_seq'::regclass)",
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": true,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "national_id",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 10,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": true,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "first_name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "parsa",
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "name": "last_name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": false,
+          "column_default": null,
+          "max_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "abdollahi",
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "name": "school_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        },
+        {
+          "name": "grade",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "دهم",
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "name": "enrollment_year",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "is_nullable": true,
+          "column_default": null,
+          "max_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "1398",
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "is_nullable": true,
+          "column_default": "'active'::character varying",
+          "max_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": [
+            {
+              "value": "active",
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "is_nullable": true,
+          "column_default": "CURRENT_TIMESTAMP",
+          "max_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "comment": null,
+          "sample_values": []
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "table_name": "students",
+          "column_name": "school_id",
+          "foreign_table_name": "schools",
+          "foreign_column_name": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "students_national_id_key",
+          "definition": "CREATE UNIQUE INDEX students_national_id_key ON public.students USING btree (national_id)"
+        },
+        {
+          "name": "students_pkey",
+          "definition": "CREATE UNIQUE INDEX students_pkey ON public.students USING btree (id)"
+        }
+      ],
+      "sample_rows": [
+        {
+          "id": 1,
+          "national_id": "1012345678",
+          "first_name": "امیر",
+          "last_name": "سعیدی",
+          "school_id": 1,
+          "grade": "دهم",
+          "enrollment_year": 1401,
+          "status": "active",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 2,
+          "national_id": "1023456789",
+          "first_name": "نیلوفر",
+          "last_name": "شریفی",
+          "school_id": 1,
+          "grade": "یازدهم",
+          "enrollment_year": 1400,
+          "status": "active",
+          "created_at": "2026-07-11T14:36:33.451329"
+        },
+        {
+          "id": 3,
+          "national_id": "1034567890",
+          "first_name": "پوریا",
+          "last_name": "هاشمی",
+          "school_id": 2,
+          "grade": "دهم",
+          "enrollment_year": 1401,
+          "status": "active",
+          "created_at": "2026-07-11T14:36:33.451329"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "source_table": "employees",
+      "source_column": "organization_unit_id",
+      "target_table": "organization_units",
+      "target_column": "id",
+      "relationship_type": "many_to_one"
+    },
+    {
+      "source_table": "organization_units",
+      "source_column": "parent_id",
+      "target_table": "organization_units",
+      "target_column": "id",
+      "relationship_type": "many_to_one"
+    },
+    {
+      "source_table": "ranking_requests",
+      "source_column": "employee_id",
+      "target_table": "employees",
+      "target_column": "id",
+      "relationship_type": "many_to_one"
+    },
+    {
+      "source_table": "retirement_records",
+      "source_column": "employee_id",
+      "target_table": "employees",
+      "target_column": "id",
+      "relationship_type": "many_to_one"
+    },
+    {
+      "source_table": "salary_items",
+      "source_column": "employee_id",
+      "target_table": "employees",
+      "target_column": "id",
+      "relationship_type": "many_to_one"
+    },
+    {
+      "source_table": "schools",
+      "source_column": "organization_unit_id",
+      "target_table": "organization_units",
+      "target_column": "id",
+      "relationship_type": "many_to_one"
+    },
+    {
+      "source_table": "students",
+      "source_column": "school_id",
+      "target_table": "schools",
+      "target_column": "id",
+      "relationship_type": "many_to_one"
+    }
+  ]
+}

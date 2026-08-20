@@ -601,7 +601,7 @@ def student_list_by_status(plan: SQLPlan) -> Optional[str]:
 
 
 def student_by_national_id(plan: SQLPlan) -> Optional[str]:
-    if set(plan.required_tables) != {"students"}:
+    if set(plan.required_tables) not in ({"students"}, {"students", "schools"}):
         return None
     if "STUDENT_BY_NATIONAL_ID" not in _selected(plan):
         return None
@@ -609,10 +609,19 @@ def student_by_national_id(plan: SQLPlan) -> Optional[str]:
     requested_columns = [
         column for column in plan.selected_columns if column != "STUDENT_BY_NATIONAL_ID"
     ]
-    projection = _projection("students", requested_columns)
+    preferred = ["first_name", "last_name", "national_id", "grade", "status"]
+    requested_columns = [
+        *[column for column in preferred if column in requested_columns],
+        *[column for column in requested_columns if column not in preferred],
+    ]
+    wants_school_name = "school_name" in requested_columns and "schools" in plan.required_tables
+    projection_columns = [column for column in requested_columns if column != "school_name"]
+    projection = _projection("students", projection_columns)
+    if wants_school_name:
+        projection = f"{projection}, schools.name AS school_name"
+    join_sql = "JOIN schools ON students.school_id = schools.id " if "schools" in plan.required_tables else ""
     return (
-        f"SELECT {projection} "
-        "FROM students "
+        f"SELECT {projection} FROM students {join_sql}"
         f"WHERE students.national_id = {sql_literal(national_id)}"
     )
 

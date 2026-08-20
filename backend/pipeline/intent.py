@@ -304,7 +304,7 @@ def _extract_limit(q: str) -> Optional[int]:
 
 
 def _extract_person_name_filters(q: str, entity: Optional[str]) -> tuple[Optional[str], Optional[str]]:
-    if entity not in {"student", "employee"}:
+    if entity not in {"student", "employee", "salary", "retirement", "ranking"}:
         return None, None
 
     first_name = None
@@ -325,6 +325,23 @@ def _extract_person_name_filters(q: str, entity: Optional[str]) -> tuple[Optiona
     if full_name_match and not any(term in full_name_match.group(1) for term in {"استان", "شهر", "مدرسه"}):
         first_name = first_name or full_name_match.group(1)
         last_name = last_name or full_name_match.group(2)
+
+    by_name_match = re.search(
+        r"(?:با|برای)\s+(?:نام|اسم)\s+([\u0600-\u06FF]{2,})\s+([\u0600-\u06FF]{2,})(?:\s+را|\s+رو|\s+بده|\s+نشان|\s+نمایش|$)",
+        q,
+    )
+    if by_name_match:
+        first_name = first_name or by_name_match.group(1)
+        last_name = last_name or by_name_match.group(2)
+
+    if entity == "ranking":
+        ranking_name_match = re.search(
+            r"(?:رتبه\s*بندی|رتبه‌بندی)\s+([\u0600-\u06FF]{2,})\s+([\u0600-\u06FF]{2,})",
+            q,
+        )
+        if ranking_name_match:
+            first_name = first_name or ranking_name_match.group(1)
+            last_name = last_name or ranking_name_match.group(2)
 
     return first_name, last_name
 

@@ -1,4 +1,8 @@
+import pytest
+
 from backend.pipeline.intent import extract_intent
+from backend.pipeline.models import PipelineRequest
+from backend.pipeline.query_pipeline import QueryPipeline
 from backend.sql.models import SQLPlan
 from backend.sql.templates import render_template_sql
 
@@ -7,6 +11,20 @@ def test_salary_base_column_is_detected_without_forcing_average():
     intent = extract_intent("پایه حقوق کارمند با کد ملی 4871587050")
     assert intent.aggregation is None
     assert intent.requested_columns == ["base_salary"]
+
+
+def test_salary_name_phrase_extracts_both_employee_name_parts():
+    intent = extract_intent("اطلاعات حقوق با نام زهرا کریمی")
+    assert intent.requested_entity == "salary"
+    assert intent.first_name == "زهرا"
+    assert intent.last_name == "کریمی"
+
+
+def test_ranking_name_phrase_is_not_training_request():
+    intent = extract_intent("درخواست رتبه بندی کامران محمدی")
+    assert intent.requested_entity == "ranking"
+    assert intent.first_name == "کامران"
+    assert intent.last_name == "محمدی"
 
 
 def test_salary_list_template_returns_requested_column():
@@ -30,3 +48,19 @@ def test_salary_aggregate_uses_requested_metric_only():
     sql = render_template_sql(plan) or ""
     assert "AVG(salary_items.base_salary) AS avg_base_salary" in sql
     assert "avg_difference" not in sql
+
+
+@pytest.mark.asyncio
+async def test_salary_base_by_national_id_pipeline_does_not_average():
+    response = await QueryPipeline().execute(
+        PipelineRequest(
+            question="پایه حقوق کارمند با کد ملی 4871587050",
+            execute=False,
+        )
+    )
+
+    assert response.valid is True
+    assert "salary_items.base_salary" in (response.sql or "")
+    assert "employees.national_id = '4871587050'" in (response.sql or "")
+    assert "AVG(" not in (response.sql or "")
+    assert "avg_difference" not in (response.sql or "")
