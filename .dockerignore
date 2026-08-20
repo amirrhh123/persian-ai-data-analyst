@@ -4,6 +4,6 @@ __pycache__
 *.pyc
 tests
 models
-docker_wheels
+docker_wheels/*
+!docker_wheels/torch-2.12.1+cpu-cp312-cp312-manylinux_2_28_x86_64.whl
 .env
-

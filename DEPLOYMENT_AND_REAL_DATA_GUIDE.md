@@ -79,6 +79,14 @@ models/paraphrase-multilingual-mpnet-base-v2/
 
 این پوشه به‌صورت read-only داخل کانتینر در `/app/models` mount می‌شود و وزن مدل وارد GitHub نمی‌شود.
 
+برای جلوگیری از دانلود بسته‌های CUDA، build محلی از wheel نسخه CPU استفاده می‌کند. قبل از build این فایل باید موجود باشد:
+
+```text
+docker_wheels/torch-2.12.1+cpu-cp312-cp312-manylinux_2_28_x86_64.whl
+```
+
+این فایل حجیم در GitHub نگهداری نمی‌شود. در سیستم مقصد یا آن را از سیستم مبدأ کپی کنید، یا نسخه CPU سازگار با Python 3.12 و Linux را از منبع رسمی PyTorch دریافت و نام/مسیر Dockerfile را متناسب با آن اصلاح کنید.
+
 5. وضعیت سرویس‌ها را بررسی کنید:
 
 ```bash
