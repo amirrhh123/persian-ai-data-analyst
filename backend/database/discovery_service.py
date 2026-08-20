@@ -234,6 +234,7 @@ class SchemaDiscoveryService:
             f"SELECT {quoted_column}::text AS value "
             f"FROM {self._qualified_table(schema_name, table_name)} "
             f"WHERE {quoted_column} IS NOT NULL "
+            f"ORDER BY {quoted_column} ASC "
             "LIMIT :max_scan_rows"
             ") sampled_values "
             "GROUP BY value "

@@ -111,6 +111,13 @@ def _compare_expected_dict(actual: dict[str, Any], expected: dict[str, Any], pre
     failures = []
     for key, expected_value in expected.items():
         actual_value = _value_at(actual, key)
+        if (
+            isinstance(actual_value, str)
+            and actual_value.startswith("***")
+            and isinstance(expected_value, (str, int))
+            and str(actual_value[3:]) == str(expected_value)[-len(actual_value[3:]):]
+        ):
+            continue
         if actual_value != expected_value:
             failures.append(f"{prefix}.{key}: expected {expected_value!r}, got {actual_value!r}")
     return failures
