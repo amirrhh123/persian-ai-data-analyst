@@ -89,6 +89,8 @@ docker_wheels/torch-2.12.1+cpu-cp312-cp312-manylinux_2_28_x86_64.whl
 
 فایل `docker-constraints.txt` نسخه‌های `torch` و `torchvision` را با هم قفل می‌کند. این فایل را حذف نکنید؛ در غیر این صورت pip ممکن است `torchvision` جدید را انتخاب کند، PyTorch را ارتقا دهد و دوباره بسته‌های حجیم CUDA/NVIDIA را دانلود کند.
 
+نسخه فعلی `chroma-hnswlib` برای Python 3.12 ممکن است wheel آماده نداشته باشد. Dockerfile به‌طور موقت `build-essential` را برای کامپایل آن نصب می‌کند و بعد از نصب حذف می‌کند؛ بنابراین compiler وارد image نهایی نمی‌شود. نصب PyTorch در یک Docker layer جداست تا اگر مرحله Chroma خطا داد، دانلود و نصب Torch در build بعدی از cache تکرار نشود.
+
 5. وضعیت سرویس‌ها را بررسی کنید:
 
 ```bash
