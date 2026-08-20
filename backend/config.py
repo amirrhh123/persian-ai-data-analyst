@@ -24,10 +24,13 @@ class Settings(BaseSettings):
     ollama_temperature: float = 0.1
     ollama_top_p: float = 0.9
     llm_enabled: bool = True
+    llm_context_max_tokens: int = 8192
+    llm_reserved_output_tokens: int = 1024
+    llm_tokenizer_model_path: str = ""
     
     tenant_id: str = "education_ministry"
     
-    embedding_model_path: str = "./models/paraphrase-multilingual-mpnet-base-v2"
+    embedding_model_path: str = "D:/projects/LLM Database/models/paraphrase-multilingual-mpnet-base-v2"
     embedding_device: str = "cpu"
     
     api_host: str = "0.0.0.0"
