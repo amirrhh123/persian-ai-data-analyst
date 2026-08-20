@@ -3,11 +3,11 @@ FROM python:3.12-slim
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 
-COPY requirements.txt .
+COPY requirements.txt docker-constraints.txt ./
 COPY docker_wheels/torch-2.12.1+cpu-cp312-cp312-manylinux_2_28_x86_64.whl /tmp/wheels/
 ENV PIP_DEFAULT_TIMEOUT=300 PIP_RETRIES=10
 RUN pip install --no-cache-dir /tmp/wheels/torch-2.12.1+cpu-cp312-cp312-manylinux_2_28_x86_64.whl \
-    && pip install --no-cache-dir --retries 10 --timeout 300 -r requirements.txt \
+    && pip install --no-cache-dir --retries 10 --timeout 300 -c docker-constraints.txt -r requirements.txt \
     && rm -rf /tmp/wheels
 
 COPY backend ./backend
