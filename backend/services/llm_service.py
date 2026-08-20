@@ -4,6 +4,7 @@ from backend.config import get_settings
 from backend.llm.context_budget import ContextBudget
 from backend.llm.models import TokenUsage
 from backend.llm.token_counter import create_token_counter
+from backend.llm.router import ModelRouter
 
 
 class LLMService:
@@ -13,6 +14,7 @@ class LLMService:
         self.token_counter = create_token_counter(self.settings.llm_tokenizer_model_path)
         self.context_budget = ContextBudget(self.settings.llm_context_max_tokens, self.settings.llm_reserved_output_tokens)
         self.last_usage: TokenUsage | None = None
+        self.router = ModelRouter(self.settings)
 
     def _fit_prompts(self, prompt: str, system_prompt: Optional[str]) -> tuple[str, Optional[str]]:
         system = system_prompt or ""
@@ -47,13 +49,10 @@ class LLMService:
         
         payload["messages"].append({"role": "user", "content": message})
         
-        async with httpx.AsyncClient(timeout=self.settings.ollama_timeout) as client:
-            response = await client.post(f"{self.base_url}/api/chat", json=payload)
-            response.raise_for_status()
-            data = response.json()
-            output = data["message"]["content"]
-            self._record_usage(data, message, output)
-            return output
+        provider = self.router.select()
+        output = await provider.chat(message, system_prompt)
+        self.last_usage = getattr(provider, "last_usage", None)
+        return output
     
     async def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         if not self.settings.llm_enabled:
@@ -74,13 +73,10 @@ class LLMService:
         if system_prompt:
             payload["system"] = system_prompt
         
-        async with httpx.AsyncClient(timeout=self.settings.ollama_timeout) as client:
-            response = await client.post(f"{self.base_url}/api/generate", json=payload)
-            response.raise_for_status()
-            data = response.json()
-            output = data["response"]
-            self._record_usage(data, prompt, output)
-            return output
+        provider = self.router.select()
+        output = await provider.generate(prompt, system_prompt)
+        self.last_usage = getattr(provider, "last_usage", None)
+        return output
     
     async def is_connected(self) -> bool:
         if not self.settings.llm_enabled:

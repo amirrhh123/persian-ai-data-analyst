@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     llm_context_max_tokens: int = 8192
     llm_reserved_output_tokens: int = 1024
     llm_tokenizer_model_path: str = ""
+    llm_provider: str = "ollama"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
+    openai_url: str = "https://api.openai.com/v1/chat/completions"
     
     tenant_id: str = "education_ministry"
     
