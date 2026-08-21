@@ -14,6 +14,7 @@ from backend.semantic.models import (
     SemanticCatalog,
     SemanticColumnSuggestion,
     SemanticJoinSuggestion,
+    SemanticMetricSuggestion,
     SemanticRuleSuggestion,
     SemanticSuggestionSet,
     SemanticTableSuggestion,
@@ -385,12 +386,20 @@ class SemanticSuggestionService:
     def _suggest_column(self, column: DiscoveredColumnInfo) -> SemanticColumnSuggestion:
         known = KNOWN_COLUMNS.get(column.name, {})
         confidence, reasons = self._column_confidence(column, known)
+        comment = (column.comment or "").strip()
+        value_aliases = []
+        if any(token in column.name.lower() for token in ("role", "position", "status", "type", "category")):
+            value_aliases = [sample.value for sample in column.sample_values[:8] if sample.value]
+        aliases = self._merge_unique(
+            known.get("aliases_fa", [self._fallback_display_name(column.name)]),
+            ([comment] if comment else []) + value_aliases,
+        )
         return SemanticColumnSuggestion(
             name=column.name,
             data_type=column.data_type,
-            display_name_fa=known.get("display_name_fa", self._fallback_display_name(column.name)),
-            description_fa=known.get("description_fa", f"ستون {column.name} از نوع {column.data_type}."),
-            aliases_fa=known.get("aliases_fa", [self._fallback_display_name(column.name)]),
+            display_name_fa=known.get("display_name_fa") or comment or self._fallback_display_name(column.name),
+            description_fa=known.get("description_fa") or (f"{comment}." if comment else f"ستون {column.name} از نوع {column.data_type}."),
+            aliases_fa=aliases,
             value_type=known.get("value_type"),
             pii=bool(known.get("pii", False)),
             confidence=confidence,
@@ -461,6 +470,41 @@ class SemanticSuggestionService:
                     column_suggestion.value_type = existing_column.value_type
                 if existing_column.pii:
                     column_suggestion.pii = True
+
+        existing_terms = {item.get("term_fa"): item for item in existing_catalog.business_terms}
+        generated_terms = {item.term_fa for item in suggestions.business_terms}
+        for term_fa, payload in existing_terms.items():
+            if term_fa and term_fa not in generated_terms:
+                suggestions.business_terms.append(SemanticBusinessTermSuggestion.model_validate(payload))
+
+        existing_values = {item.get("term_fa"): item for item in existing_catalog.value_mappings}
+        generated_values = {item.term_fa for item in suggestions.value_mappings}
+        for term_fa, payload in existing_values.items():
+            if term_fa and term_fa not in generated_values:
+                suggestions.value_mappings.append(SemanticValueMappingSuggestion.model_validate(payload))
+
+        existing_join_keys = {
+            (item.from_table, item.from_column, item.to_table, item.to_column)
+            for item in suggestions.joins
+        }
+        for join in existing_catalog.joins:
+            key = (join.from_table, join.from_column, join.to_table, join.to_column)
+            if key not in existing_join_keys:
+                suggestions.joins.append(SemanticJoinSuggestion(
+                    from_table=join.from_table, from_column=join.from_column,
+                    to_table=join.to_table, to_column=join.to_column,
+                    description_fa=join.description, cardinality=join.cardinality,
+                    confidence=1.0,
+                ))
+
+        suggestions.metrics = [
+            SemanticMetricSuggestion(
+                name=metric.name, table=metric.table, expression=metric.expression,
+                aggregation=metric.aggregation, description_fa=metric.description,
+                aliases_fa=metric.aliases, confidence=1.0, review_required=False,
+            )
+            for metric in existing_catalog.metrics
+        ]
 
         return suggestions
 
@@ -536,7 +580,7 @@ class SemanticSuggestionService:
             )
         return terms
 
-    def _value_mappings(self, table_names: set[str]) -> list[SemanticValueMappingSuggestion]:
+    def _value_mappings(self, table_names: set[str], discovery: Optional[SchemaDiscoverySnapshot] = None) -> list[SemanticValueMappingSuggestion]:
         mappings = []
         for table in sorted(table_names & {"employees", "students"}):
             mappings.append(
@@ -569,6 +613,22 @@ class SemanticSuggestionService:
                         confidence=0.95,
                     )
                 )
+        if discovery:
+            for table in discovery.tables:
+                for column in table.columns:
+                    if not any(token in column.name.lower() for token in ("role", "position", "status", "type", "category")):
+                        continue
+                    for sample in column.sample_values[:8]:
+                        if not sample.value:
+                            continue
+                        mappings.append(SemanticValueMappingSuggestion(
+                            term_fa=sample.value,
+                            aliases_fa=[sample.value],
+                            column=f"{table.name}.{column.name}",
+                            value=sample.value,
+                            description_fa=f"مقدار واقعی ستون {table.name}.{column.name}.",
+                            confidence=0.8,
+                        ))
         return mappings
 
     def _rules(self, table_names: set[str]) -> list[SemanticRuleSuggestion]:
@@ -613,9 +673,13 @@ class SemanticSuggestionService:
             )
         return rules
 
-    def generate(self, tenant_id: Optional[str] = None) -> SemanticSuggestionSet:
+    def generate(
+        self,
+        tenant_id: Optional[str] = None,
+        discovery: Optional[SchemaDiscoverySnapshot] = None,
+    ) -> SemanticSuggestionSet:
         tenant = tenant_id or self.settings.tenant_id
-        discovery = self._load_discovery(tenant)
+        discovery = discovery or self._load_discovery(tenant)
         existing_catalog = self._load_existing_active_catalog(tenant)
         table_names = {table.name for table in discovery.tables}
         suggestions = SemanticSuggestionSet(
@@ -625,7 +689,7 @@ class SemanticSuggestionService:
             tables=[self._suggest_table(table) for table in discovery.tables],
             joins=self._suggest_joins(discovery),
             business_terms=self._business_terms(table_names),
-            value_mappings=self._value_mappings(table_names),
+            value_mappings=self._value_mappings(table_names, discovery),
             rules=self._rules(table_names),
         )
         return self._merge_existing_reviews(suggestions, existing_catalog)
@@ -637,8 +701,13 @@ class SemanticSuggestionService:
             json.dump(suggestions.model_dump(), file, ensure_ascii=False, indent=2)
         return path
 
-    def sync(self, tenant_id: Optional[str] = None, output_path: Optional[Path] = None) -> tuple[SemanticSuggestionSet, Path]:
-        suggestions = self.generate(tenant_id)
+    def sync(
+        self,
+        tenant_id: Optional[str] = None,
+        output_path: Optional[Path] = None,
+        discovery: Optional[SchemaDiscoverySnapshot] = None,
+    ) -> tuple[SemanticSuggestionSet, Path]:
+        suggestions = self.generate(tenant_id, discovery=discovery)
         return suggestions, self.save(suggestions, output_path)
 
     def sync_incremental(
@@ -656,25 +725,30 @@ class SemanticSuggestionService:
         if path.exists():
             with path.open("r", encoding="utf-8") as file:
                 existing = SemanticSuggestionSet.model_validate(json.load(file))
+
         current_tables = {table.name: table for table in discovery.tables}
         existing_tables = {table.name: table for table in (existing.tables if existing else [])}
-        merged_tables = [
-            self._suggest_table(table)
-            if name in changed_tables or name not in existing_tables
-            else existing_tables[name]
-            for name, table in current_tables.items()
-        ]
+        merged_tables = []
+        for name, table in current_tables.items():
+            if name in changed_tables or name not in existing_tables:
+                merged_tables.append(self._suggest_table(table))
+            else:
+                merged_tables.append(existing_tables[name])
+
         table_names = set(current_tables) - removed_tables
         suggestions = SemanticSuggestionSet(
-            tenant_id=tenant, source_fingerprint=discovery.fingerprint,
+            tenant_id=tenant,
+            source_fingerprint=discovery.fingerprint,
             generated_at=datetime.now().isoformat(timespec="seconds"),
-            tables=merged_tables, joins=self._suggest_joins(discovery),
+            tables=merged_tables,
+            joins=self._suggest_joins(discovery),
             business_terms=self._business_terms(table_names),
-            value_mappings=self._value_mappings(table_names),
+            value_mappings=self._value_mappings(table_names, discovery),
             rules=self._rules(table_names),
         )
         suggestions = self._merge_existing_reviews(
-            suggestions, self._load_existing_active_catalog(tenant),
+            suggestions,
+            self._load_existing_active_catalog(tenant),
         )
         return suggestions, self.save(suggestions, path)
 

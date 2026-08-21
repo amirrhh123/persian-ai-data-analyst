@@ -300,13 +300,18 @@ class ValueIndexService:
         """Replace index slices for changed tables and discard removed tables."""
         previous = self.load(discovery.tenant_id)
         refresh_tables = changed_tables | {
-            table.name for table in discovery.tables if previous is None
+            table.name for table in discovery.tables
+            if previous is None
         }
-        partial_snapshot = discovery.model_copy(update={
-            "tables": [table for table in discovery.tables if table.name in refresh_tables]
-        })
+        partial_snapshot = discovery.model_copy(
+            update={
+                "tables": [table for table in discovery.tables if table.name in refresh_tables]
+            }
+        )
         partial = self.build(
-            partial_snapshot, column_aliases=column_aliases, pii_columns=pii_columns,
+            partial_snapshot,
+            column_aliases=column_aliases,
+            pii_columns=pii_columns,
         )
         retained_entries = [] if previous is None else [
             entry for entry in previous.entries

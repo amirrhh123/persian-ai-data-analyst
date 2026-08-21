@@ -8,5 +8,5 @@ psycopg2-binary==2.9.9
 httpx==0.25.2
 pytest==7.4.3
 pytest-asyncio==0.23.2
-sentence-transformers==2.2.2
+sentence-transformers==2.7.0
 chromadb==0.4.18

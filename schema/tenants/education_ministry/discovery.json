@@ -2,7 +2,7 @@
   "tenant_id": "education_ministry",
   "database_name": "persian_ai_db",
   "schema_name": "public",
-  "generated_at": "2026-08-21T01:51:55",
+  "generated_at": "2026-08-21T19:18:24",
   "fingerprint": "9bedda2e39e8facd27b7d3cf5045cf16dce63e1d387852bf82bd4530fd7093bf",
   "tables": [
     {

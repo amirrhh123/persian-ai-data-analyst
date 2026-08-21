@@ -111,6 +111,8 @@ def _compare_expected_dict(actual: dict[str, Any], expected: dict[str, Any], pre
     failures = []
     for key, expected_value in expected.items():
         actual_value = _value_at(actual, key)
+        # Sensitive fields are intentionally redacted by the data policy.
+        # Validate the visible suffix without requiring raw PII in results.
         if (
             isinstance(actual_value, str)
             and actual_value.startswith("***")

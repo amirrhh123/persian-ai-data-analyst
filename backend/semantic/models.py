@@ -52,12 +52,24 @@ class SemanticRule(BaseModel):
     applies_to: list[str] = Field(default_factory=list)
 
 
+class SemanticMetric(BaseModel):
+    name: str
+    table: str
+    expression: str
+    aggregation: str | None = None
+    description: str = ""
+    aliases: list[str] = Field(default_factory=list)
+
+
 class SemanticCatalog(BaseModel):
     version: int = 1
     language: str = "fa"
     tables: list[SemanticTable] = Field(default_factory=list)
     joins: list[SemanticJoin] = Field(default_factory=list)
     rules: list[SemanticRule] = Field(default_factory=list)
+    value_mappings: list[dict] = Field(default_factory=list)
+    business_terms: list[dict] = Field(default_factory=list)
+    metrics: list[SemanticMetric] = Field(default_factory=list)
 
     def table(self, name: str) -> SemanticTable | None:
         normalized = normalize_identifier(name)
@@ -141,6 +153,17 @@ class SemanticRuleSuggestion(BaseModel):
     review_required: bool = True
 
 
+class SemanticMetricSuggestion(BaseModel):
+    name: str
+    table: str
+    expression: str
+    aggregation: str | None = None
+    description_fa: str = ""
+    aliases_fa: list[str] = Field(default_factory=list)
+    confidence: float = 1.0
+    review_required: bool = False
+
+
 class SemanticSuggestionSet(BaseModel):
     version: int = 1
     language: str = "fa"
@@ -153,6 +176,7 @@ class SemanticSuggestionSet(BaseModel):
     business_terms: list[SemanticBusinessTermSuggestion] = Field(default_factory=list)
     value_mappings: list[SemanticValueMappingSuggestion] = Field(default_factory=list)
     rules: list[SemanticRuleSuggestion] = Field(default_factory=list)
+    metrics: list[SemanticMetricSuggestion] = Field(default_factory=list)
 
 
 class SemanticReviewRequest(BaseModel):
@@ -166,6 +190,17 @@ class SemanticReviewRequest(BaseModel):
     value_type: str | None = None
     pii: bool | None = None
     approved: bool = True
+    term_fa: str | None = None
+    maps_to: str | None = None
+    value: str | None = None
+    from_table: str | None = None
+    from_column: str | None = None
+    to_table: str | None = None
+    to_column: str | None = None
+    cardinality: str = "many_to_one"
+    metric_name: str | None = None
+    expression: str | None = None
+    aggregation: str | None = None
 
 
 class SemanticReviewResponse(BaseModel):

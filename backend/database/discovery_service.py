@@ -321,6 +321,24 @@ class SchemaDiscoveryService:
         encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
         return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
+    def calculate_structure_fingerprint(self, snapshot: SchemaDiscoverySnapshot) -> str:
+        """Fingerprint schema shape while ignoring row data and samples."""
+        payload = {
+            "schema_name": snapshot.schema_name,
+            "tables": [
+                {"name": table.name,
+                 "columns": [{"name": c.name, "data_type": c.data_type,
+                              "nullable": c.is_nullable, "primary_key": c.is_primary_key,
+                              "unique": c.is_unique} for c in table.columns],
+                 "primary_keys": table.primary_keys,
+                 "foreign_keys": [fk.model_dump() for fk in table.foreign_keys]}
+                for table in snapshot.tables
+            ],
+            "relationships": [r.model_dump() for r in snapshot.relationships],
+        }
+        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+        return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
     def save_snapshot(
         self,
         snapshot: SchemaDiscoverySnapshot,

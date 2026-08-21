@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 from backend.pipeline.intent import QueryIntent
 from backend.sql.models import SQLPlan, ValidationResult
+from backend.config import get_settings
 
 
 class ExplainabilityService:
@@ -70,8 +71,16 @@ class ExplainabilityService:
                 for item in plan.filters
             )
         if intent and intent.province:
-            filters.append({"column": "province", "operator": "=", "value": intent.province})
-        return filters
+            if not any(item.get("column") in {"province", "organization_units.province"} and item.get("value") == intent.province for item in filters):
+                filters.append({"column": "province", "operator": "=", "value": intent.province})
+        unique = []
+        seen = set()
+        for item in filters:
+            key = (item.get("column"), item.get("operator"), str(item.get("value")))
+            if key not in seen:
+                seen.add(key)
+                unique.append(item)
+        return unique
 
     def _aggregation(self, plan: Optional[SQLPlan], intent: Optional[QueryIntent]) -> dict[str, Any]:
         return {
@@ -103,6 +112,8 @@ class ExplainabilityService:
         }
 
     def _redact_value(self, column: str, value: Any) -> Any:
+        if not get_settings().data_masking_enabled:
+            return value
         if value is None:
             return None
         if "national_id" in column.lower() or re.fullmatch(r"\d{10}", str(value)):

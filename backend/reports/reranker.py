@@ -9,8 +9,14 @@ from backend.reports.hybrid_retrieval import HybridRetriever, HybridSearchResult
 
 
 _NAME_FIELDS = {
-    "name", "title", "report_name", "group_name", "table_name",
-    "column_name", "report_id", "group_id",
+    "name",
+    "title",
+    "report_name",
+    "group_name",
+    "table_name",
+    "column_name",
+    "report_id",
+    "group_id",
 }
 
 
@@ -43,7 +49,12 @@ class RetrievalReranker:
         phrase_weight: float = 0.10,
         metadata_weight: float = 0.10,
     ) -> None:
-        weights = (hybrid_weight, coverage_weight, phrase_weight, metadata_weight)
+        weights = (
+            hybrid_weight,
+            coverage_weight,
+            phrase_weight,
+            metadata_weight,
+        )
         if any(weight < 0 for weight in weights) or sum(weights) <= 0:
             raise ValueError("Reranker weights must be non-negative and non-zero")
         total = sum(weights)
@@ -83,7 +94,8 @@ class RetrievalReranker:
     @staticmethod
     def _metadata_text(metadata: Mapping[str, Any]) -> str:
         return " ".join(
-            str(value) for value in metadata.values()
+            str(value)
+            for value in metadata.values()
             if isinstance(value, (str, int, float)) and str(value).strip()
         )
 
@@ -116,21 +128,28 @@ class RetrievalReranker:
                 + self.phrase_weight * phrase
                 + self.metadata_weight * metadata
             )
-            ranked.append(RerankedResult(
-                source=item,
-                features=RerankFeatures(
-                    token_coverage=round(coverage, 4),
-                    exact_phrase=round(phrase, 4),
-                    metadata_match=round(metadata, 4),
-                ),
-                reranker_score=round(reranker_score, 4),
-                final_score=round(max(0.0, min(1.0, final_score)), 4),
-            ))
+            ranked.append(
+                RerankedResult(
+                    source=item,
+                    features=RerankFeatures(
+                        token_coverage=round(coverage, 4),
+                        exact_phrase=round(phrase, 4),
+                        metadata_match=round(metadata, 4),
+                    ),
+                    reranker_score=round(reranker_score, 4),
+                    final_score=round(max(0.0, min(1.0, final_score)), 4),
+                )
+            )
 
-        ranked.sort(key=lambda item: (
-            item.final_score, item.reranker_score,
-            item.source.final_score, item.source.candidate.id,
-        ), reverse=True)
+        ranked.sort(
+            key=lambda item: (
+                item.final_score,
+                item.reranker_score,
+                item.source.final_score,
+                item.source.candidate.id,
+            ),
+            reverse=True,
+        )
         return ranked[:limit] if limit is not None else ranked
 
 

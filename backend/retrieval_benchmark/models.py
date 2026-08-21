@@ -1,5 +1,7 @@
 from typing import Literal
+
 from pydantic import BaseModel, Field
+
 
 class RetrievalBenchmarkCase(BaseModel):
     id: str
@@ -8,9 +10,11 @@ class RetrievalBenchmarkCase(BaseModel):
     expected_report: str | None = None
     tags: list[str] = []
 
+
 class RetrievalBenchmarkRequest(BaseModel):
     top_k: int = Field(default=3, ge=1, le=10)
     minimum_top1: float = Field(default=0.80, ge=0.0, le=1.0)
+
 
 class RetrievalCaseResult(BaseModel):
     id: str
@@ -24,12 +28,14 @@ class RetrievalCaseResult(BaseModel):
     latency_ms: float
     error: str | None = None
 
+
 class RetrievalMetrics(BaseModel):
     evaluated: int
     top1_accuracy: float
     top_k_accuracy: float
     mrr: float
     average_latency_ms: float
+
 
 class RetrievalBenchmarkResult(BaseModel):
     status: Literal["passed", "failed"]

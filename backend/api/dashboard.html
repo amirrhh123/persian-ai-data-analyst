@@ -101,6 +101,8 @@
           <button id="adminApplyLightweightGaps" type="button">اعمال پیشنهادها</button>
           <button id="adminDataPolicy" type="button">بررسی اطلاعات حساس</button>
           <button id="adminErrorTaxonomy" type="button">راهنمای خطاها</button>
+          <button id="adminSemanticSuggestions" type="button">نمایش پیشنهادهای معنایی</button>
+          <button id="adminRuntimeRefresh" type="button">به‌روزرسانی خودکار از دیتابیس</button>
           <span class="badge" id="lifeStatus">آماده</span>
         </div>
         <div class="life-steps" id="lifeSteps"></div>
@@ -121,9 +123,20 @@
           <small><b>نام جدول</b>: نام جدولی که می‌خواهید معنی آن را به سیستم یاد بدهید. اگر نمی‌دانید نام دقیق جدول چیست، ابتدا «خواندن اطلاعات دیتابیس» را بزنید و از نتیجه آن استفاده کنید.</small><br>
           <small><b>نام ستون</b>: فقط وقتی پر شود که می‌خواهید معنی یک ستون خاص را اصلاح کنید. اگر خالی بماند، سیستم معنی کل جدول را اصلاح می‌کند.</small><br>
           <small><b>عبارت فارسی</b>: کلمه‌ای که کاربران معمولاً در سؤال‌هایشان می‌گویند. مثال: «پست»، «سمت»، «درخواست آموزشی»، «هزینه».</small><br>
+          <select id="reviewType" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
+            <option value="auto">معنی جدول یا ستون</option>
+            <option value="business_term">اصطلاح سازمانی</option>
+            <option value="value_mapping">معنی یک مقدار</option>
+            <option value="join">رابطه بین دو جدول</option>
+            <option value="metric">معیار محاسباتی</option>
+          </select>
           <input id="reviewTable" placeholder="نام جدول" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
           <input id="reviewColumn" placeholder="نام ستون، اختیاری" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
           <input id="reviewAlias" placeholder="عبارت فارسی" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
+          <input id="reviewTarget" placeholder="مقصد معنا؛ مثال employees.position" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
+          <input id="reviewValue" placeholder="مقدار واقعی؛ مثال approved" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
+          <input id="reviewJoinTarget" placeholder="جدول و ستون مقصد رابطه؛ مثال units.id" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
+          <input id="reviewExpression" placeholder="فرمول معیار؛ مثال net_salary" style="width:31%;padding:8px;border:1px solid var(--line);border-radius:7px;font:12px Vazirmatn">
           <div class="lifecycle-actions"><button id="adminReviewApply" type="button">ثبت اصلاح معنی</button></div>
           <small>بعد از ثبت اصلاح، دوباره «بررسی سلامت دیتابیس» و سپس «به‌روزرسانی کامل سیستم» را اجرا کنید تا اصلاح جدید در پاسخ‌های سیستم اعمال شود.</small>
         </div>
@@ -300,8 +313,10 @@ function renderExplanation(explanation){
 }
 function citationTypeLabel(type){
   return {
-    database_table:'جدول دیتابیس', semantic_group:'گروه معنایی',
-    semantic_report:'گزارش معنایی', sql_generation:'روش تولید SQL',
+    database_table:'جدول دیتابیس',
+    semantic_group:'گروه معنایی',
+    semantic_report:'گزارش معنایی',
+    sql_generation:'روش تولید SQL',
     retrieval_evidence:'شواهد بازیابی'
   }[type]||type;
 }
@@ -444,20 +459,45 @@ async function applySemanticReview(){
     const table=$('reviewTable').value.trim();
     const column=$('reviewColumn').value.trim();
     const alias=$('reviewAlias').value.trim();
+    const type=$('reviewType').value;
+    const target=$('reviewTarget').value.trim();
+    const value=$('reviewValue').value.trim();
+    const joinTarget=$('reviewJoinTarget').value.trim();
+    const expression=$('reviewExpression').value.trim();
     if(!table||!alias)throw Error('table و alias لازم است.');
     setAdminBusy('ثبت review...');
     const body={
-      target_type:column?'column':'table',
+      target_type:type==='auto'?(column?'column':'table'):type,
       table,
       column:column||null,
       aliases_fa:[alias],
       display_name_fa:alias,
       approved:true
     };
+    if(type==='business_term'){body.term_fa=alias;body.maps_to=target;body.description_fa=alias;}
+    if(type==='value_mapping'){body.term_fa=alias;body.maps_to=target;body.value=value;body.description_fa=alias;}
+    if(type==='join'){
+      const destination=joinTarget.split('.');
+      body.from_table=table;body.from_column=column;body.to_table=destination[0]||'';body.to_column=destination[1]||'';
+      body.description_fa=alias;
+    }
+    if(type==='metric'){body.metric_name=alias;body.expression=expression;body.aggregation=value||null;body.description_fa=alias;}
     const r=await fetch('/semantic/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const d=await r.json();
     if(!r.ok)throw Error(d.detail||'ثبت review ناموفق بود');
     setAdminResult(`Review ثبت شد: <b>${esc(table)}${column?'.'+esc(column):''}</b><br><small>${esc(d.message||'')}</small>`);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
+async function loadSemanticSuggestions(){
+  try{
+    setAdminBusy('خواندن پیشنهادهای معنایی...');
+    const d=await fetch('/semantic/suggestions').then(r=>r.json());
+    const items=[];
+    (d.tables||[]).forEach(t=>{
+      if(t.review_required) items.push(`<small>• جدول <b>${esc(t.name)}</b> — ${esc(t.display_name_fa||'')} — اطمینان: <b>${faDigits(Math.round((t.confidence||0)*100))}٪</b><br>${esc((t.confidence_reasons||[]).join('، '))}</small>`);
+      (t.columns||[]).filter(c=>c.confidence<0.75).forEach(c=>items.push(`<small>• ستون <b>${esc(t.name)}.${esc(c.name)}</b> — ${esc(c.display_name_fa||'')} — اطمینان: <b>${faDigits(Math.round((c.confidence||0)*100))}٪</b></small>`));
+    });
+    setAdminResult(`<b>پیشنهادهای نیازمند بررسی</b><br>تعداد: <b>${faDigits(items.length)}</b><br>${items.slice(0,20).join('<br>')||'موردی برای بررسی وجود ندارد.'}<br><small>برای اصلاح، اطلاعات مورد را در فرم «اصلاح معنی توسط انسان» وارد کنید.</small>`,items.length?'warn':'ok');
   }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
 }
 async function loadDataPolicy(){
@@ -503,6 +543,16 @@ async function runLifecycle(){
     $('lifeStatus').textContent='خطا';
     $('lifeResult').innerHTML=`<span class="error">${esc(e.message)}</span>`;
   }finally{$('lifeRun').disabled=false;}
+}
+async function refreshRuntimeSemantic(){
+  try{
+    setAdminBusy('در حال بررسی ساختار دیتابیس...');
+    const r=await fetch('/semantic/runtime/refresh',{method:'POST'});
+    const d=await r.json();
+    if(!r.ok)throw Error(d.detail||'به‌روزرسانی انجام نشد');
+    setAdminResult(`وضعیت: <span class="badge ok">${esc(d.status)}</span><br>تعداد جدول: <b>${faDigits(d.tables||0)}</b> · رابطه: <b>${faDigits(d.joins||0)}</b><br><small>semantic بر اساس ساختار فعلی دیتابیس آماده است.</small>`,'ok');
+    await loadSemanticFreshness();
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
 }
 async function loadSemanticFreshness(){
   try{
@@ -558,13 +608,23 @@ async function loadAuditSummary(){
 let lastQueryResponse=null;
 function renderFeedback(d){
   if(!d.query_id)return '';
-  return `<div class="feedback-bar"><b>این پاسخ مفید بود؟</b><button class="feedback-good" onclick="submitFeedback('positive')">درست بود</button><button class="feedback-bad" onclick="submitFeedback('negative')">نیاز به اصلاح دارد</button><span id="feedbackStatus" class="feedback-status"></span></div>`;
+  return `<div class="feedback-bar"><b>این پاسخ مفید بود؟</b>
+    <button class="feedback-good" onclick="submitFeedback('positive')">درست بود</button>
+    <button class="feedback-bad" onclick="submitFeedback('negative')">نیاز به اصلاح دارد</button>
+    <span id="feedbackStatus" class="feedback-status"></span></div>`;
 }
 async function submitFeedback(rating){
   if(!lastQueryResponse)return;
   let comment=null;
   if(rating==='negative')comment=prompt('لطفاً مشکل پاسخ را کوتاه بنویسید (اختیاری):')||null;
-  const payload={query_id:lastQueryResponse.query_id,question:$('q').value.trim(),rating,selected_group:lastQueryResponse.group||null,selected_report:lastQueryResponse.report||null,comment};
+  const payload={
+    query_id:lastQueryResponse.query_id,
+    question:$('q').value.trim(),
+    rating,
+    selected_group:lastQueryResponse.group||null,
+    selected_report:lastQueryResponse.report||null,
+    comment
+  };
   const status=$('feedbackStatus');
   try{
     const response=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -631,7 +691,7 @@ async function runQuery(){
     await loadAuditSummary();
   }finally{$('run').disabled=false;}
 }
-renderSamples(); checkHealth(); loadSemanticFreshness(); loadSemanticVersions(); loadAuditSummary(); $('run').onclick=runQuery; $('lifeRun').onclick=runLifecycle; $('adminSyncDiscovery').onclick=runDiscoverySync; $('adminQualityGate').onclick=runQualityGate; $('adminSmokeSync').onclick=runSmokeSync; $('adminSmokeRun').onclick=runSmokeTests; $('adminLightweightReadiness').onclick=checkLightweightReadiness; $('adminLightweightGaps').onclick=loadLightweightGapSuggestions; $('adminApplyLightweightGaps').onclick=applyLightweightGapSuggestions; $('adminReviewApply').onclick=applySemanticReview; $('adminDataPolicy').onclick=loadDataPolicy; $('adminErrorTaxonomy').onclick=loadErrorTaxonomy;
+ renderSamples(); checkHealth(); loadSemanticFreshness(); loadSemanticVersions(); loadAuditSummary(); $('run').onclick=runQuery; $('lifeRun').onclick=runLifecycle; $('adminRuntimeRefresh').onclick=refreshRuntimeSemantic; $('adminSyncDiscovery').onclick=runDiscoverySync; $('adminQualityGate').onclick=runQualityGate; $('adminSmokeSync').onclick=runSmokeSync; $('adminSmokeRun').onclick=runSmokeTests; $('adminLightweightReadiness').onclick=checkLightweightReadiness; $('adminLightweightGaps').onclick=loadLightweightGapSuggestions; $('adminApplyLightweightGaps').onclick=applyLightweightGapSuggestions; $('adminReviewApply').onclick=applySemanticReview; $('adminSemanticSuggestions').onclick=loadSemanticSuggestions; $('adminDataPolicy').onclick=loadDataPolicy; $('adminErrorTaxonomy').onclick=loadErrorTaxonomy;
 </script>
 </body>
 </html>

@@ -65,6 +65,8 @@ class DataSensitivityPolicy:
     ) -> dict[str, Any]:
         if not result:
             return result
+        if not self.settings.data_masking_enabled:
+            return result
 
         sensitive = self.sensitive_columns(tenant_id)
         sensitive_by_column = {column: reason for (_, column), reason in sensitive.items()}

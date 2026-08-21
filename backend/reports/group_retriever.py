@@ -150,7 +150,9 @@ class GroupRetriever:
                 query_scores[group_id] = max(0.0, min(1.0, 1.0 - distance))
             score_maps.append(query_scores)
         vector_scores = fuse_vector_scores(score_maps)
-        feedback_adjustments = feedback_service.candidate_adjustments(tenant_id, question, "group")
+        feedback_adjustments = feedback_service.candidate_adjustments(
+            tenant_id, question, "group"
+        )
 
         for group in groups:
             score = vector_scores.get(group.id, 0.0)

@@ -24,9 +24,9 @@ class AmbiguityDetector:
         (r"مذکور", "PointerException مشخص نشده. مورد مورد نظر را ذکر کنید."),
         (r"موردنظر", "PointerException مشخص نشده. مورد مورد نظر را ذکر کنید."),
     ]
-    
+
     REFERENCE_DEMONSTRATIVES = ["این", "آن", "همان", "مذکور", "موردنظر"]
-    
+
     def detect(self, question: str) -> Dict[str, Any]:
         for pattern, clarification in self.AMBIGUOUS_PATTERNS:
             if re.search(pattern, question):

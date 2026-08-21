@@ -125,7 +125,7 @@ class SQLPlanner:
 
         return aggregations
 
-    def detect_filters(self, question: str) -> List[dict[str, str]]:
+    def detect_filters(self, question: str, catalog: SemanticCatalog | None = None) -> List[dict[str, str]]:
         filters = []
 
         if "فعال" in question:
@@ -133,6 +133,13 @@ class SQLPlanner:
 
         if "جدید" in question:
             filters.append({"column": "created_at", "operator": ">=", "value": "CURRENT_DATE - INTERVAL '30 days'"})
+
+        if catalog:
+            for mapping in getattr(catalog, "value_mappings", []):
+                aliases = [mapping.get("term_fa", ""), *mapping.get("aliases_fa", [])]
+                if any(self._contains_alias(question, alias) for alias in aliases):
+                    value = str(mapping.get("value", "")).replace("'", "''")
+                    filters.append({"column": mapping.get("column", ""), "operator": "=", "value": f"'{value}'"})
 
         return filters
 
@@ -153,7 +160,7 @@ class SQLPlanner:
         tables = self.expand_required_tables(tables, schema.relationships)
         joins = self.detect_joins(tables, schema.relationships)
         aggregations = self.detect_aggregations(question)
-        filters = self.detect_filters(question)
+        filters = self.detect_filters(question, catalog=self._catalog(tenant_id, catalog))
 
         selected_columns = ["*"]
         if aggregations:

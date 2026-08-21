@@ -8,7 +8,11 @@ from backend.semantic.activation_service import semantic_activation_service
 from backend.semantic.models import (
     SemanticReviewRequest,
     SemanticReviewResponse,
+    SemanticBusinessTermSuggestion,
+    SemanticJoinSuggestion,
+    SemanticMetricSuggestion,
     SemanticSuggestionSet,
+    SemanticValueMappingSuggestion,
     normalize_identifier,
 )
 
@@ -31,6 +35,14 @@ class SemanticReviewService:
             self._apply_table_review(suggestions, request, canonical_table)
         elif request.target_type == "column":
             self._apply_column_review(suggestions, request, canonical_table)
+        elif request.target_type == "business_term":
+            self._apply_business_term_review(suggestions, request)
+        elif request.target_type == "value_mapping":
+            self._apply_value_mapping_review(suggestions, request)
+        elif request.target_type == "join":
+            self._apply_join_review(suggestions, request)
+        elif request.target_type == "metric":
+            self._apply_metric_review(suggestions, request, canonical_table)
         else:
             return SemanticReviewResponse(
                 status="not_found",
@@ -38,9 +50,10 @@ class SemanticReviewService:
                 target_type=request.target_type,
                 table=request.table,
                 column=request.column,
-                message="target_type must be 'table' or 'column'.",
+                message="target_type must be table, column, business_term, value_mapping, join, or metric.",
             )
 
+        suggestions.version += 1
         suggestions.status = "reviewed"
         self._save(suggestions, path)
         activation = semantic_activation_service.activate(tenant)
@@ -123,6 +136,103 @@ class SemanticReviewService:
         payload["reviewed_at"] = datetime.now().isoformat(timespec="seconds")
         with path.open("w", encoding="utf-8") as file:
             json.dump(payload, file, ensure_ascii=False, indent=2)
+
+    def _apply_business_term_review(
+        self,
+        suggestions: SemanticSuggestionSet,
+        request: SemanticReviewRequest,
+    ) -> None:
+        if not request.term_fa or not request.maps_to:
+            raise ValueError("term_fa and maps_to are required for a business term.")
+        item = next((term for term in suggestions.business_terms if term.term_fa == request.term_fa), None)
+        payload = {
+            "term_fa": request.term_fa,
+            "aliases_fa": request.aliases_fa or [],
+            "maps_to": request.maps_to,
+            "description_fa": request.description_fa or request.term_fa,
+            "confidence": 1.0 if request.approved else 0.8,
+            "review_required": not request.approved,
+        }
+        if item:
+            for key, value in payload.items():
+                setattr(item, key, value)
+        else:
+            suggestions.business_terms.append(SemanticBusinessTermSuggestion(**payload))
+
+    def _apply_value_mapping_review(
+        self,
+        suggestions: SemanticSuggestionSet,
+        request: SemanticReviewRequest,
+    ) -> None:
+        if not request.term_fa or not request.maps_to or request.value is None:
+            raise ValueError("term_fa, maps_to, and value are required for a value mapping.")
+        item = next((value for value in suggestions.value_mappings if value.term_fa == request.term_fa), None)
+        payload = {
+            "term_fa": request.term_fa,
+            "aliases_fa": request.aliases_fa or [],
+            "column": request.maps_to,
+            "value": request.value,
+            "description_fa": request.description_fa or request.term_fa,
+            "confidence": 1.0 if request.approved else 0.8,
+        }
+        if item:
+            for key, value in payload.items():
+                setattr(item, key, value)
+        else:
+            suggestions.value_mappings.append(SemanticValueMappingSuggestion(**payload))
+
+    def _apply_join_review(
+        self,
+        suggestions: SemanticSuggestionSet,
+        request: SemanticReviewRequest,
+    ) -> None:
+        required = [request.from_table, request.from_column, request.to_table, request.to_column]
+        if not all(required):
+            raise ValueError("from_table, from_column, to_table, and to_column are required for a join.")
+        key = (request.from_table, request.from_column, request.to_table, request.to_column)
+        item = next(
+            (join for join in suggestions.joins if (join.from_table, join.from_column, join.to_table, join.to_column) == key),
+            None,
+        )
+        payload = {
+            "from_table": request.from_table,
+            "from_column": request.from_column,
+            "to_table": request.to_table,
+            "to_column": request.to_column,
+            "description_fa": request.description_fa or "رابطه تأییدشده توسط مدیر",
+            "cardinality": request.cardinality,
+            "confidence": 1.0 if request.approved else 0.8,
+        }
+        if item:
+            for key_name, value in payload.items():
+                setattr(item, key_name, value)
+        else:
+            suggestions.joins.append(SemanticJoinSuggestion(**payload))
+
+    def _apply_metric_review(
+        self,
+        suggestions: SemanticSuggestionSet,
+        request: SemanticReviewRequest,
+        canonical_table: str,
+    ) -> None:
+        if not request.metric_name or not request.expression:
+            raise ValueError("metric_name and expression are required for a metric.")
+        item = next((metric for metric in suggestions.metrics if metric.name == request.metric_name), None)
+        payload = {
+            "name": request.metric_name,
+            "table": canonical_table,
+            "expression": request.expression,
+            "aggregation": request.aggregation,
+            "description_fa": request.description_fa or request.metric_name,
+            "aliases_fa": request.aliases_fa or [],
+            "confidence": 1.0 if request.approved else 0.8,
+            "review_required": not request.approved,
+        }
+        if item:
+            for key, value in payload.items():
+                setattr(item, key, value)
+        else:
+            suggestions.metrics.append(SemanticMetricSuggestion(**payload))
 
     def _add_reason(self, reasons: list[str], reason: str) -> None:
         if reason not in reasons:

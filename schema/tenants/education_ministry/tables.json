@@ -1,0 +1,492 @@
+[
+  {
+    "name": "employees",
+    "columns": [
+      {
+        "name": "id",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": "nextval('employees_id_seq'::regclass)",
+        "is_primary_key": true
+      },
+      {
+        "name": "national_id",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "first_name",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "last_name",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "organization_unit_id",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "position",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "hire_date",
+        "data_type": "date",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "status",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": "'active'::character varying",
+        "is_primary_key": false
+      },
+      {
+        "name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": true,
+        "column_default": "CURRENT_TIMESTAMP",
+        "is_primary_key": false
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "row_count": 20008
+  },
+  {
+    "name": "organization_units",
+    "columns": [
+      {
+        "name": "id",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": "nextval('organization_units_id_seq'::regclass)",
+        "is_primary_key": true
+      },
+      {
+        "name": "name",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "unit_type",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "parent_id",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "province",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "city",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": true,
+        "column_default": "CURRENT_TIMESTAMP",
+        "is_primary_key": false
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "row_count": 129
+  },
+  {
+    "name": "ranking_requests",
+    "columns": [
+      {
+        "name": "id",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": "nextval('ranking_requests_id_seq'::regclass)",
+        "is_primary_key": true
+      },
+      {
+        "name": "employee_id",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "request_date",
+        "data_type": "date",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "ranking_type",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "current_rank",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "requested_rank",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "status",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": "'pending'::character varying",
+        "is_primary_key": false
+      },
+      {
+        "name": "review_date",
+        "data_type": "date",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": true,
+        "column_default": "CURRENT_TIMESTAMP",
+        "is_primary_key": false
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "row_count": 5004
+  },
+  {
+    "name": "retirement_records",
+    "columns": [
+      {
+        "name": "id",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": "nextval('retirement_records_id_seq'::regclass)",
+        "is_primary_key": true
+      },
+      {
+        "name": "employee_id",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "retirement_date",
+        "data_type": "date",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "retirement_type",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "years_of_service",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "pension_amount",
+        "data_type": "numeric",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "reason",
+        "data_type": "text",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": true,
+        "column_default": "CURRENT_TIMESTAMP",
+        "is_primary_key": false
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "row_count": 2002
+  },
+  {
+    "name": "salary_items",
+    "columns": [
+      {
+        "name": "id",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": "nextval('salary_items_id_seq'::regclass)",
+        "is_primary_key": true
+      },
+      {
+        "name": "employee_id",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "year",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "month",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "base_salary",
+        "data_type": "numeric",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "allowances",
+        "data_type": "numeric",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "deductions",
+        "data_type": "numeric",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "net_salary",
+        "data_type": "numeric",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "payment_date",
+        "data_type": "date",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": true,
+        "column_default": "CURRENT_TIMESTAMP",
+        "is_primary_key": false
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "row_count": 1000008
+  },
+  {
+    "name": "schools",
+    "columns": [
+      {
+        "name": "id",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": "nextval('schools_id_seq'::regclass)",
+        "is_primary_key": true
+      },
+      {
+        "name": "name",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "school_type",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "organization_unit_id",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "capacity",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "established_year",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "address",
+        "data_type": "text",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "phone",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": true,
+        "column_default": "CURRENT_TIMESTAMP",
+        "is_primary_key": false
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "row_count": 1505
+  },
+  {
+    "name": "students",
+    "columns": [
+      {
+        "name": "id",
+        "data_type": "integer",
+        "is_nullable": false,
+        "column_default": "nextval('students_id_seq'::regclass)",
+        "is_primary_key": true
+      },
+      {
+        "name": "national_id",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "first_name",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "last_name",
+        "data_type": "character varying",
+        "is_nullable": false,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "school_id",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "grade",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "enrollment_year",
+        "data_type": "integer",
+        "is_nullable": true,
+        "column_default": null,
+        "is_primary_key": false
+      },
+      {
+        "name": "status",
+        "data_type": "character varying",
+        "is_nullable": true,
+        "column_default": "'active'::character varying",
+        "is_primary_key": false
+      },
+      {
+        "name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": true,
+        "column_default": "CURRENT_TIMESTAMP",
+        "is_primary_key": false
+      }
+    ],
+    "primary_keys": [
+      "id"
+    ],
+    "row_count": 300010
+  }
+]

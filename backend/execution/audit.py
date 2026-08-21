@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
+from backend.config import get_settings
 
 
 class QueryAuditLogger:
@@ -86,6 +87,8 @@ class QueryAuditLogger:
         return summary
 
     def _redact_sql(self, sql: str) -> str:
+        if not get_settings().data_masking_enabled:
+            return sql
         redacted = re.sub(r"'(?:''|[^'])*'", "'***'", sql)
         redacted = re.sub(r'"(?:""|[^"])*"', '"***"', redacted)
         redacted = re.sub(r"\b\d{10}\b", "***", redacted)

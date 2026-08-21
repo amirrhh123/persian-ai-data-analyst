@@ -150,14 +150,19 @@ class SemanticLifecycleService:
         ):
             try:
                 incremental = await incremental_sync_service.run(
-                    tenant_id=tenant, schema_name=schema_name,
-                    sample_size=sample_size, sample_value_limit=sample_value_limit,
-                    min_pass_rate=min_pass_rate, benchmark_limit=benchmark_limit,
+                    tenant_id=tenant,
+                    schema_name=schema_name,
+                    sample_size=sample_size,
+                    sample_value_limit=sample_value_limit,
+                    min_pass_rate=min_pass_rate,
+                    benchmark_limit=benchmark_limit,
                     force_activate=force_activate,
                 )
                 freshness_after = self.check_freshness(
-                    tenant_id=tenant, schema_name=schema_name,
-                    sample_size=sample_size, sample_value_limit=sample_value_limit,
+                    tenant_id=tenant,
+                    schema_name=schema_name,
+                    sample_size=sample_size,
+                    sample_value_limit=sample_value_limit,
                 )
                 success = (
                     incremental.get("status") in {"ready", "skipped"}
@@ -165,14 +170,19 @@ class SemanticLifecycleService:
                 )
                 return SemanticAutoUpdateResponse(
                     status="updated" if success else str(incremental.get("status", "failed")),
-                    tenant_id=tenant, action="incremental_sync",
+                    tenant_id=tenant,
+                    action="incremental_sync",
                     freshness_before=freshness_before,
                     incremental_sync=incremental,
                     freshness_after=freshness_after,
-                    message=("Changed tables were synchronized incrementally."
-                             if success else "Incremental synchronization ran but did not pass every quality gate."),
+                    message=(
+                        "Changed tables were synchronized incrementally."
+                        if success
+                        else "Incremental synchronization ran but did not pass every quality gate."
+                    ),
                 )
             except Exception:
+                # A full lifecycle is the safe recovery path for missing or incompatible checkpoints.
                 pass
 
         lifecycle = await self.run(

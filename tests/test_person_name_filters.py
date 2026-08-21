@@ -22,6 +22,56 @@ def test_employee_full_name_filter_is_extracted():
     assert intent.named_employee == "علی احمدی"
 
 
+def test_student_count_with_by_name_extracts_both_name_parts():
+    intent = extract_intent("تعداد دانش آموز با نام امید خسروی")
+
+    assert intent.requested_entity == "student"
+    assert intent.aggregation == "COUNT"
+    assert intent.first_name == "امید"
+    assert intent.last_name == "خسروی"
+
+
+@pytest.mark.asyncio
+async def test_student_count_by_full_name_keeps_filters_in_final_sql():
+    from backend.pipeline.query_pipeline import PipelineRequest, query_pipeline
+
+    response = await query_pipeline.execute(
+        PipelineRequest(
+            question="تعداد دانش آموز با نام امید خسروی",
+            execute=False,
+        )
+    )
+
+    assert response.success is True
+    assert response.valid is True
+    assert response.sql is not None
+    assert "COUNT(" in response.sql.upper()
+    assert "first_name" in response.sql
+    assert "last_name" in response.sql
+    assert "امید" in response.sql
+    assert "خسروی" in response.sql
+
+
+@pytest.mark.asyncio
+async def test_ranking_type_by_employee_full_name_uses_join_and_name_filters():
+    response = await query_pipeline.execute(
+        PipelineRequest(
+            question="نوع رتبه بندی کارمند با نام امیر احمدی",
+            execute=False,
+        )
+    )
+
+    assert response.success is True
+    assert response.valid is True
+    assert response.sql is not None
+    assert "ranking_requests.ranking_type" in response.sql
+    assert "JOIN employees ON ranking_requests.employee_id = employees.id" in response.sql
+    assert "employees.first_name = 'امیر'" in response.sql
+    assert "employees.last_name = 'احمدی'" in response.sql
+    assert "employees.status" not in response.sql
+    assert "`" not in response.sql
+
+
 @pytest.mark.asyncio
 async def test_student_last_name_list_uses_last_name_filter():
     response = await query_pipeline.execute(

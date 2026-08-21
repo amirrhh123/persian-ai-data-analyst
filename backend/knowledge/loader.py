@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from backend.knowledge.models import (
     CompanyInfo, BusinessDefinition, MetricDefinition,
-    BusinessRule, Terminology, CompanyContext, Report, ReportContext
+    BusinessRule, Terminology, CompanyContext, Report, ReportContext, ReportColumnDefinition
 )
 
 
@@ -68,7 +68,24 @@ class KnowledgeLoader:
     
     def load_all_reports(self) -> List[Report]:
         if not self.reports_path.exists():
-            return []
+            try:
+                from backend.semantic.loader import load_tenant_semantic_catalog
+                tenant = self.tenant_path.name
+                catalog = load_tenant_semantic_catalog(tenant)
+                return [Report(
+                    id=f"semantic_table_{table.name}",
+                    name=table.description or table.name,
+                    description=table.description,
+                    linked_table=table.name,
+                    group_id=table.entity or table.name,
+                    example_questions=[f"اطلاعات {table.description}"],
+                    important_columns={column.name: ReportColumnDefinition(
+                        meaning=column.description, persian_name=(column.aliases[0] if column.aliases else None),
+                        data_type=column.data_type,
+                    ) for column in table.columns},
+                ) for table in catalog.tables]
+            except Exception:
+                return []
         
         reports = []
         for report_file in self.reports_path.glob("*.yaml"):

@@ -1,17 +1,56 @@
 from __future__ import annotations
 
+from contextvars import ContextVar
 from typing import Callable, Optional
 
-from backend.semantic import semantic_catalog
+from backend.semantic.loader import load_tenant_semantic_catalog
+from backend.semantic.models import SemanticCatalog
 from backend.sql.models import SQLPlan
 
 
 TemplateFn = Callable[[SQLPlan], Optional[str]]
+_request_catalog: ContextVar[SemanticCatalog | None] = ContextVar(
+    "template_semantic_catalog", default=None
+)
+
+
+def _semantic_catalog() -> SemanticCatalog:
+    """Return the catalog injected for the current async request."""
+    return _request_catalog.get() or load_tenant_semantic_catalog()
 
 
 def sql_literal(value: object) -> str:
     text = "" if value is None else str(value)
     return "'" + text.replace("'", "''") + "'"
+
+
+def semantic_metric(plan: SQLPlan) -> Optional[str]:
+    marker = next((item for item in plan.selected_columns if item.startswith("SEMANTIC_METRIC:")), None)
+    if not marker:
+        return None
+    name = marker.split(":", 1)[1]
+    metric = next((item for item in _semantic_catalog().metrics if item.name == name), None)
+    if not metric or metric.table not in plan.required_tables:
+        return None
+    function = (metric.aggregation or "").upper()
+    if function == "COUNT_DISTINCT":
+        expression = f"COUNT(DISTINCT {metric.expression})"
+    elif function in {"COUNT", "SUM", "AVG", "MIN", "MAX"}:
+        expression = f"{function}({metric.expression})"
+    elif not function or function == "VALUE":
+        expression = metric.expression
+    else:
+        return None
+    safe_alias = "".join(character if character.isalnum() or character == "_" else "_" for character in metric.name)
+    table = _semantic_catalog().table(metric.table)
+    valid_columns = {column.name for column in table.columns} if table else set()
+    clauses = [
+        f"{metric.table}.{item['column']} {item.get('operator', '=')} {sql_literal(item.get('value'))}"
+        for item in plan.filters
+        if item.get("column") in valid_columns and item.get("operator", "=") in {"=", "!=", ">", ">=", "<", "<="}
+    ]
+    where = " WHERE " + " AND ".join(clauses) if clauses else ""
+    return f"SELECT {expression} AS {safe_alias} FROM {metric.table}{where}"
 
 
 def filter_value(plan: SQLPlan, column: str, default: str = "") -> str:
@@ -162,7 +201,7 @@ def _selected(plan: SQLPlan) -> set[str]:
 
 
 def _projection(table_name: str, requested_columns: list[str]) -> str:
-    table = semantic_catalog.table(table_name)
+    table = _semantic_catalog().table(table_name)
     allowed = {column.name for column in table.columns} if table else set()
     pii_columns = {column.name for column in table.columns if column.pii} if table else set()
     qualified_columns = []
@@ -180,7 +219,7 @@ def _projection(table_name: str, requested_columns: list[str]) -> str:
 
 
 def _generic_table_columns(table_name: str) -> set[str]:
-    table = semantic_catalog.table(table_name)
+    table = _semantic_catalog().table(table_name)
     return {column.name for column in table.columns} if table else set()
 
 
@@ -242,7 +281,7 @@ def generic_table_count(plan: SQLPlan) -> Optional[str]:
     if "GENERIC_TABLE_COUNT" not in _selected(plan):
         return None
     table_name = plan.required_tables[0]
-    table = semantic_catalog.table(table_name)
+    table = _semantic_catalog().table(table_name)
     if not table:
         return None
     count_column = table.primary_key or "id"
@@ -272,7 +311,7 @@ def generic_table_list(plan: SQLPlan) -> Optional[str]:
     if "GENERIC_TABLE_LIST" not in _selected(plan):
         return None
     table_name = plan.required_tables[0]
-    table = semantic_catalog.table(table_name)
+    table = _semantic_catalog().table(table_name)
     if not table:
         return None
     requested_columns = [
@@ -302,7 +341,7 @@ def generic_table_aggregate(plan: SQLPlan) -> Optional[str]:
     if not plan.aggregations:
         return None
     table_name = plan.required_tables[0]
-    table = semantic_catalog.table(table_name)
+    table = _semantic_catalog().table(table_name)
     if not table:
         return None
     required_tables = set(plan.required_tables)
@@ -370,7 +409,7 @@ def generic_filter_where(plan: SQLPlan, table_name: str) -> str:
 
 def training_request_where_clause(plan: SQLPlan) -> str:
     clauses = []
-    table = semantic_catalog.table("demo_training_requests")
+    table = _semantic_catalog().table("demo_training_requests")
     allowed_columns = {column.name for column in table.columns} if table else set()
     for item in plan.filters:
         column = item.get("column", "")
@@ -531,7 +570,14 @@ def composable_counts_by_city(plan: SQLPlan) -> Optional[str]:
 
 
 def student_total_count(plan: SQLPlan) -> Optional[str]:
-    if set(plan.required_tables) == {"students"} and any("COUNT" in column.upper() for column in plan.selected_columns):
+    # This template is intentionally limited to the explicit total-count
+    # projection.  Semantic markers such as STUDENT_COUNT_BY_NAME must be
+    # handled by their more specific templates below; otherwise their filters
+    # are silently discarded and the count of the whole table is returned.
+    if (
+        set(plan.required_tables) == {"students"}
+        and "COUNT(students.id) AS total_students" in plan.selected_columns
+    ):
         clauses = []
         status = filter_value(plan, "status")
         grade = filter_value(plan, "grade")
@@ -1355,6 +1401,8 @@ def salary_aggregate(plan: SQLPlan) -> Optional[str]:
     for dimension in plan.group_by:
         if dimension in {"province", "city"} and "organization_units" in plan.required_tables:
             dimensions.append(f"organization_units.{dimension}")
+        elif dimension == "position" and "employees" in plan.required_tables:
+            dimensions.append("employees.position")
     projection = [*dimensions, f"{function}({column}) AS {alias}"]
     group_by = f" GROUP BY {', '.join(dimensions)}" if dimensions else ""
     order_by = f" ORDER BY {alias} DESC" if dimensions else ""
@@ -1367,7 +1415,7 @@ def salary_aggregate(plan: SQLPlan) -> Optional[str]:
 def salary_list(plan: SQLPlan) -> Optional[str]:
     if "SALARY_LIST" not in _selected(plan):
         return None
-    salary_table = semantic_catalog.table("salary_items")
+    salary_table = _semantic_catalog().table("salary_items")
     allowed = {column.name for column in salary_table.columns} if salary_table else {
         "year", "month", "base_salary", "allowances", "deductions", "net_salary",
     }
@@ -1425,7 +1473,32 @@ def pending_ranking_requests(plan: SQLPlan) -> Optional[str]:
     )
 
 
+def ranking_by_employee_name(plan: SQLPlan) -> Optional[str]:
+    if set(plan.required_tables) != {"ranking_requests", "employees"}:
+        return None
+    if "RANKING_BY_EMPLOYEE_NAME" not in _selected(plan):
+        return None
+    allowed = {
+        "id", "employee_id", "request_date", "ranking_type", "current_rank",
+        "requested_rank", "status", "review_date", "reviewer_id", "notes",
+        "created_at",
+    }
+    requested = [
+        column for column in plan.selected_columns
+        if column != "RANKING_BY_EMPLOYEE_NAME" and column in allowed
+    ] or ["ranking_type", "current_rank", "requested_rank", "status"]
+    projection = ", ".join(f"ranking_requests.{column}" for column in requested)
+    where = person_name_clause(plan, "employees", prefix="WHERE")
+    return (
+        f"SELECT {projection} FROM ranking_requests "
+        "JOIN employees ON ranking_requests.employee_id = employees.id "
+        f"{where}"
+        "ORDER BY ranking_requests.created_at DESC, ranking_requests.id DESC"
+    )
+
+
 TEMPLATES: list[TemplateFn] = [
+    semantic_metric,
     training_request_count,
     training_request_list,
     training_request_cost_sum,
@@ -1482,14 +1555,22 @@ TEMPLATES: list[TemplateFn] = [
     salary_list,
     salary_base_net_average,
     salary_total_by_employee,
+    ranking_by_employee_name,
     pending_ranking_requests,
     school_count_by_province_fallback,
 ]
 
 
-def render_template_sql(plan: SQLPlan) -> Optional[str]:
-    for template in TEMPLATES:
-        sql = template(plan)
-        if sql:
-            return sql
-    return None
+def render_template_sql(
+    plan: SQLPlan,
+    semantic_catalog: SemanticCatalog | None = None,
+) -> Optional[str]:
+    token = _request_catalog.set(semantic_catalog)
+    try:
+        for template in TEMPLATES:
+            sql = template(plan)
+            if sql:
+                return sql
+        return None
+    finally:
+        _request_catalog.reset(token)

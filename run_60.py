@@ -8,9 +8,7 @@ from pathlib import Path
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-project_root = Path(__file__).resolve().parent
-questions_path = project_root / "tests" / "manual_questions_education_ministry.json"
-with questions_path.open(encoding="utf-8") as f:
+with open("D:/projects/LLM Database/tests/manual_questions_education_ministry.json", encoding="utf-8") as f:
     questions = json.load(f)
 
 print(f"Running {len(questions)} questions...\n")
@@ -74,7 +72,7 @@ for i, q in enumerate(questions):
         results.append({"id": qid, "question": text, "error": str(e), "passed": False, "time": 0})
         print(f"[{i+1:2d}/{len(questions)}] ERROR {qid:12s} {str(e)[:50]}")
 
-results_dir = project_root / "tests" / "results"
+results_dir = Path("D:/projects/LLM Database/tests/results")
 results_dir.mkdir(parents=True, exist_ok=True)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 timestamped_path = results_dir / f"benchmark_66_{timestamp}.json"

@@ -3,209 +3,6 @@
   "language": "fa",
   "tables": [
     {
-      "name": "demo_training_requests",
-      "entity": "training_request",
-      "description": "درخواست‌های آموزشی، دوره‌ها و کارگاه‌های ثبت‌شده توسط مدارس، معلمان و واحدهای سازمانی.",
-      "aliases": [
-        "درخواست آموزشی",
-        "درخواست‌های آموزشی",
-        "درخواست های آموزشی",
-        "درخواست دوره",
-        "درخواست‌های دوره",
-        "دوره آموزشی",
-        "دوره‌های آموزشی",
-        "کارگاه آموزشی",
-        "کارگاه هوش مصنوعی",
-        "آموزش ضمن خدمت"
-      ],
-      "primary_key": "id",
-      "default_display_columns": [
-        "requester_name",
-        "request_type",
-        "province",
-        "priority",
-        "status",
-        "estimated_cost"
-      ],
-      "profile_columns": [
-        "id",
-        "requester_name",
-        "requester_role",
-        "request_type",
-        "province",
-        "city",
-        "priority",
-        "status",
-        "assigned_unit",
-        "estimated_cost",
-        "requested_at",
-        "created_at"
-      ],
-      "columns": [
-        {
-          "name": "id",
-          "data_type": "integer",
-          "description": "شناسه داخلی رکورد.",
-          "aliases": [
-            "شناسه",
-            "آیدی"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "requester_name",
-          "data_type": "character varying",
-          "description": "نام شخصی که درخواست آموزشی را ثبت کرده است.",
-          "aliases": [
-            "نام درخواست‌دهنده",
-            "درخواست‌دهنده",
-            "ثبت‌کننده درخواست",
-            "نام متقاضی"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "requester_role",
-          "data_type": "character varying",
-          "description": "نقش یا سمت شخص درخواست‌دهنده مانند مدیر مدرسه، معلم یا کارمند اداری.",
-          "aliases": [
-            "نقش درخواست‌دهنده",
-            "سمت درخواست‌دهنده",
-            "نقش متقاضی",
-            "سمت متقاضی"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "request_type",
-          "data_type": "character varying",
-          "description": "نوع یا موضوع درخواست آموزشی مانند کارگاه هوش مصنوعی یا دوره ضمن خدمت معلمان.",
-          "aliases": [
-            "نوع درخواست",
-            "نوع دوره",
-            "موضوع دوره",
-            "عنوان دوره",
-            "کارگاه",
-            "دوره"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "province",
-          "data_type": "character varying",
-          "description": "نام استان.",
-          "aliases": [
-            "استان"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "city",
-          "data_type": "character varying",
-          "description": "نام شهر یا منطقه.",
-          "aliases": [
-            "شهر",
-            "منطقه"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "priority",
-          "data_type": "character varying",
-          "description": "اولویت رسیدگی به درخواست آموزشی؛ مانند high، normal یا low.",
-          "aliases": [
-            "اولویت",
-            "فوریت",
-            "میزان اهمیت",
-            "اولویت بالا",
-            "کم‌اولویت"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "status",
-          "data_type": "character varying",
-          "description": "وضعیت رکورد مانند active یا inactive.",
-          "aliases": [
-            "وضعیت",
-            "فعال",
-            "غیرفعال"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "assigned_unit",
-          "data_type": "character varying",
-          "description": "واحد سازمانی مسئول رسیدگی به درخواست آموزشی.",
-          "aliases": [
-            "واحد مسئول",
-            "واحد رسیدگی‌کننده",
-            "اداره مسئول",
-            "مرکز مسئول"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "estimated_cost",
-          "data_type": "bigint",
-          "description": "هزینه یا بودجه برآوردشده برای درخواست آموزشی.",
-          "aliases": [
-            "هزینه",
-            "هزینه برآوردی",
-            "مبلغ",
-            "بودجه",
-            "هزینه تخمینی"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "requested_at",
-          "data_type": "date",
-          "description": "تاریخ ثبت درخواست آموزشی.",
-          "aliases": [
-            "تاریخ درخواست",
-            "زمان درخواست",
-            "تاریخ ثبت درخواست"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        },
-        {
-          "name": "created_at",
-          "data_type": "timestamp without time zone",
-          "description": "زمان ایجاد رکورد.",
-          "aliases": [
-            "تاریخ ایجاد",
-            "زمان ثبت"
-          ],
-          "examples": [],
-          "value_type": null,
-          "pii": false
-        }
-      ]
-    },
-    {
       "name": "employees",
       "entity": "employee",
       "description": "اطلاعات پایه کارمندان و پرسنل سازمان.",
@@ -306,7 +103,11 @@
             "شغل",
             "سمت",
             "عنوان شغلی",
-            "پست"
+            "پست",
+            "دبیر تربیت بدنی",
+            "دبیر ادبیات",
+            "دبیر تاریخ",
+            "دبیر جغرافیا"
           ],
           "examples": [],
           "value_type": null,
@@ -331,7 +132,8 @@
           "aliases": [
             "وضعیت",
             "فعال",
-            "غیرفعال"
+            "غیرفعال",
+            "active"
           ],
           "examples": [],
           "value_type": null,
@@ -409,7 +211,10 @@
           "description": "نوع واحد سازمانی مانند province یا district.",
           "aliases": [
             "نوع واحد",
-            "نوع"
+            "نوع",
+            "district",
+            "province",
+            "ministry"
           ],
           "examples": [],
           "value_type": null,
@@ -534,7 +339,11 @@
           "description": "نوع رتبه‌بندی یا ارتقا.",
           "aliases": [
             "نوع رتبه",
-            "نوع رتبه‌بندی"
+            "نوع رتبه‌بندی",
+            "انتقال",
+            "ارتقای رتبه",
+            "تغییر سمت",
+            "نوع رتبه بندی"
           ],
           "examples": [],
           "value_type": null,
@@ -569,7 +378,10 @@
           "aliases": [
             "وضعیت",
             "فعال",
-            "غیرفعال"
+            "غیرفعال",
+            "pending",
+            "approved",
+            "rejected"
           ],
           "examples": [],
           "value_type": null,
@@ -667,7 +479,10 @@
           "data_type": "character varying",
           "description": "نوع بازنشستگی.",
           "aliases": [
-            "نوع بازنشستگی"
+            "نوع بازنشستگی",
+            "بازنشستگی پیش از موعد",
+            "بازنشستگی استعلاجی",
+            "بازنشستگی عادی"
           ],
           "examples": [],
           "value_type": null,
@@ -935,7 +750,11 @@
           "description": "نوع مدرسه مانند دبستان، دبیرستان یا هنرستان.",
           "aliases": [
             "نوع مدرسه",
-            "مقطع مدرسه"
+            "مقطع مدرسه",
+            "دبستان",
+            "دبیرستان",
+            "هنرستان",
+            "نمونه دولتی"
           ],
           "examples": [],
           "value_type": null,
@@ -1140,7 +959,8 @@
           "aliases": [
             "وضعیت",
             "فعال",
-            "غیرفعال"
+            "غیرفعال",
+            "active"
           ],
           "examples": [],
           "value_type": null,
@@ -1282,53 +1102,430 @@
       ]
     },
     {
-      "name": "value_mapping_demo_training_requests_status_active",
-      "description": "فعال: درخواست آموزشی فعال یا باز به مقدار active نگاشت شود. value=active; aliases=active, باز, در حال رسیدگی",
+      "name": "value_mapping_employees_position_دبیر تربیت بدنی",
+      "description": "دبیر تربیت بدنی: مقدار واقعی ستون employees.position. value=دبیر تربیت بدنی; aliases=دبیر تربیت بدنی",
       "applies_to": [
-        "demo_training_requests.status"
+        "employees.position"
       ]
     },
     {
-      "name": "value_mapping_demo_training_requests_status_approved",
-      "description": "تایید شده: درخواست آموزشی تایید شده به مقدار approved نگاشت شود. value=approved; aliases=تأیید شده, approved, مصوب, قبول شده",
+      "name": "value_mapping_employees_position_دبیر ادبیات",
+      "description": "دبیر ادبیات: مقدار واقعی ستون employees.position. value=دبیر ادبیات; aliases=دبیر ادبیات",
       "applies_to": [
-        "demo_training_requests.status"
+        "employees.position"
       ]
     },
     {
-      "name": "value_mapping_demo_training_requests_status_pending",
-      "description": "در انتظار بررسی: درخواست آموزشی در انتظار بررسی به مقدار pending نگاشت شود. value=pending; aliases=pending, منتظر بررسی, در انتظار, بررسی نشده",
+      "name": "value_mapping_employees_position_دبیر تاریخ",
+      "description": "دبیر تاریخ: مقدار واقعی ستون employees.position. value=دبیر تاریخ; aliases=دبیر تاریخ",
       "applies_to": [
-        "demo_training_requests.status"
+        "employees.position"
       ]
     },
     {
-      "name": "value_mapping_demo_training_requests_status_rejected",
-      "description": "رد شده: درخواست آموزشی رد شده به مقدار rejected نگاشت شود. value=rejected; aliases=rejected, مردود, ردشده",
+      "name": "value_mapping_employees_position_دبیر جغرافیا",
+      "description": "دبیر جغرافیا: مقدار واقعی ستون employees.position. value=دبیر جغرافیا; aliases=دبیر جغرافیا",
       "applies_to": [
-        "demo_training_requests.status"
+        "employees.position"
       ]
     },
     {
-      "name": "value_mapping_demo_training_requests_priority_high",
-      "description": "اولویت بالا: اولویت بالا یا فوری به مقدار high نگاشت شود. value=high; aliases=high, فوری, مهم, با اولویت بالا",
+      "name": "value_mapping_employees_status_active",
+      "description": "active: مقدار واقعی ستون employees.status. value=active; aliases=active",
       "applies_to": [
-        "demo_training_requests.priority"
+        "employees.status"
       ]
     },
     {
-      "name": "value_mapping_demo_training_requests_priority_normal",
-      "description": "اولویت عادی: اولویت عادی به مقدار normal نگاشت شود. value=normal; aliases=normal, معمولی, عادی",
+      "name": "value_mapping_organization_units_unit_type_district",
+      "description": "district: مقدار واقعی ستون organization_units.unit_type. value=district; aliases=district",
       "applies_to": [
-        "demo_training_requests.priority"
+        "organization_units.unit_type"
       ]
     },
     {
-      "name": "value_mapping_demo_training_requests_priority_low",
-      "description": "کم‌اولویت: کم‌اولویت یا اولویت پایین به مقدار low نگاشت شود. value=low; aliases=low, اولویت پایین, کم اهمیت",
+      "name": "value_mapping_organization_units_unit_type_province",
+      "description": "province: مقدار واقعی ستون organization_units.unit_type. value=province; aliases=province",
       "applies_to": [
-        "demo_training_requests.priority"
+        "organization_units.unit_type"
+      ]
+    },
+    {
+      "name": "value_mapping_organization_units_unit_type_ministry",
+      "description": "ministry: مقدار واقعی ستون organization_units.unit_type. value=ministry; aliases=ministry",
+      "applies_to": [
+        "organization_units.unit_type"
+      ]
+    },
+    {
+      "name": "value_mapping_ranking_requests_ranking_type_انتقال",
+      "description": "انتقال: مقدار واقعی ستون ranking_requests.ranking_type. value=انتقال; aliases=انتقال",
+      "applies_to": [
+        "ranking_requests.ranking_type"
+      ]
+    },
+    {
+      "name": "value_mapping_ranking_requests_ranking_type_ارتقای رتبه",
+      "description": "ارتقای رتبه: مقدار واقعی ستون ranking_requests.ranking_type. value=ارتقای رتبه; aliases=ارتقای رتبه",
+      "applies_to": [
+        "ranking_requests.ranking_type"
+      ]
+    },
+    {
+      "name": "value_mapping_ranking_requests_ranking_type_تغییر سمت",
+      "description": "تغییر سمت: مقدار واقعی ستون ranking_requests.ranking_type. value=تغییر سمت; aliases=تغییر سمت",
+      "applies_to": [
+        "ranking_requests.ranking_type"
+      ]
+    },
+    {
+      "name": "value_mapping_ranking_requests_status_pending",
+      "description": "pending: مقدار واقعی ستون ranking_requests.status. value=pending; aliases=pending",
+      "applies_to": [
+        "ranking_requests.status"
+      ]
+    },
+    {
+      "name": "value_mapping_ranking_requests_status_approved",
+      "description": "approved: مقدار واقعی ستون ranking_requests.status. value=approved; aliases=approved",
+      "applies_to": [
+        "ranking_requests.status"
+      ]
+    },
+    {
+      "name": "value_mapping_ranking_requests_status_rejected",
+      "description": "rejected: مقدار واقعی ستون ranking_requests.status. value=rejected; aliases=rejected",
+      "applies_to": [
+        "ranking_requests.status"
+      ]
+    },
+    {
+      "name": "value_mapping_retirement_records_retirement_type_بازنشستگی پیش از موعد",
+      "description": "بازنشستگی پیش از موعد: مقدار واقعی ستون retirement_records.retirement_type. value=بازنشستگی پیش از موعد; aliases=بازنشستگی پیش از موعد",
+      "applies_to": [
+        "retirement_records.retirement_type"
+      ]
+    },
+    {
+      "name": "value_mapping_retirement_records_retirement_type_بازنشستگی استعلاجی",
+      "description": "بازنشستگی استعلاجی: مقدار واقعی ستون retirement_records.retirement_type. value=بازنشستگی استعلاجی; aliases=بازنشستگی استعلاجی",
+      "applies_to": [
+        "retirement_records.retirement_type"
+      ]
+    },
+    {
+      "name": "value_mapping_retirement_records_retirement_type_بازنشستگی عادی",
+      "description": "بازنشستگی عادی: مقدار واقعی ستون retirement_records.retirement_type. value=بازنشستگی عادی; aliases=بازنشستگی عادی",
+      "applies_to": [
+        "retirement_records.retirement_type"
+      ]
+    },
+    {
+      "name": "value_mapping_schools_school_type_دبستان",
+      "description": "دبستان: مقدار واقعی ستون schools.school_type. value=دبستان; aliases=دبستان",
+      "applies_to": [
+        "schools.school_type"
+      ]
+    },
+    {
+      "name": "value_mapping_schools_school_type_دبیرستان",
+      "description": "دبیرستان: مقدار واقعی ستون schools.school_type. value=دبیرستان; aliases=دبیرستان",
+      "applies_to": [
+        "schools.school_type"
+      ]
+    },
+    {
+      "name": "value_mapping_schools_school_type_هنرستان",
+      "description": "هنرستان: مقدار واقعی ستون schools.school_type. value=هنرستان; aliases=هنرستان",
+      "applies_to": [
+        "schools.school_type"
+      ]
+    },
+    {
+      "name": "value_mapping_schools_school_type_نمونه دولتی",
+      "description": "نمونه دولتی: مقدار واقعی ستون schools.school_type. value=نمونه دولتی; aliases=نمونه دولتی",
+      "applies_to": [
+        "schools.school_type"
+      ]
+    },
+    {
+      "name": "value_mapping_students_status_active",
+      "description": "active: مقدار واقعی ستون students.status. value=active; aliases=active",
+      "applies_to": [
+        "students.status"
       ]
     }
-  ]
+  ],
+  "value_mappings": [
+    {
+      "term_fa": "فعال",
+      "aliases_fa": [
+        "اکتیو",
+        "active",
+        "در حال فعالیت"
+      ],
+      "column": "employees.status",
+      "value": "active",
+      "description_fa": "کلمه فعال در سؤال کاربر به مقدار دیتابیسی active تبدیل شود.",
+      "confidence": 0.95
+    },
+    {
+      "term_fa": "فعال",
+      "aliases_fa": [
+        "اکتیو",
+        "active",
+        "در حال فعالیت"
+      ],
+      "column": "students.status",
+      "value": "active",
+      "description_fa": "کلمه فعال در سؤال کاربر به مقدار دیتابیسی active تبدیل شود.",
+      "confidence": 0.95
+    },
+    {
+      "term_fa": "دبیر تربیت بدنی",
+      "aliases_fa": [
+        "دبیر تربیت بدنی"
+      ],
+      "column": "employees.position",
+      "value": "دبیر تربیت بدنی",
+      "description_fa": "مقدار واقعی ستون employees.position.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "دبیر ادبیات",
+      "aliases_fa": [
+        "دبیر ادبیات"
+      ],
+      "column": "employees.position",
+      "value": "دبیر ادبیات",
+      "description_fa": "مقدار واقعی ستون employees.position.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "دبیر تاریخ",
+      "aliases_fa": [
+        "دبیر تاریخ"
+      ],
+      "column": "employees.position",
+      "value": "دبیر تاریخ",
+      "description_fa": "مقدار واقعی ستون employees.position.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "دبیر جغرافیا",
+      "aliases_fa": [
+        "دبیر جغرافیا"
+      ],
+      "column": "employees.position",
+      "value": "دبیر جغرافیا",
+      "description_fa": "مقدار واقعی ستون employees.position.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "active",
+      "aliases_fa": [
+        "active"
+      ],
+      "column": "employees.status",
+      "value": "active",
+      "description_fa": "مقدار واقعی ستون employees.status.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "district",
+      "aliases_fa": [
+        "district"
+      ],
+      "column": "organization_units.unit_type",
+      "value": "district",
+      "description_fa": "مقدار واقعی ستون organization_units.unit_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "province",
+      "aliases_fa": [
+        "province"
+      ],
+      "column": "organization_units.unit_type",
+      "value": "province",
+      "description_fa": "مقدار واقعی ستون organization_units.unit_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "ministry",
+      "aliases_fa": [
+        "ministry"
+      ],
+      "column": "organization_units.unit_type",
+      "value": "ministry",
+      "description_fa": "مقدار واقعی ستون organization_units.unit_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "انتقال",
+      "aliases_fa": [
+        "انتقال"
+      ],
+      "column": "ranking_requests.ranking_type",
+      "value": "انتقال",
+      "description_fa": "مقدار واقعی ستون ranking_requests.ranking_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "ارتقای رتبه",
+      "aliases_fa": [
+        "ارتقای رتبه"
+      ],
+      "column": "ranking_requests.ranking_type",
+      "value": "ارتقای رتبه",
+      "description_fa": "مقدار واقعی ستون ranking_requests.ranking_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "تغییر سمت",
+      "aliases_fa": [
+        "تغییر سمت"
+      ],
+      "column": "ranking_requests.ranking_type",
+      "value": "تغییر سمت",
+      "description_fa": "مقدار واقعی ستون ranking_requests.ranking_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "pending",
+      "aliases_fa": [
+        "pending"
+      ],
+      "column": "ranking_requests.status",
+      "value": "pending",
+      "description_fa": "مقدار واقعی ستون ranking_requests.status.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "approved",
+      "aliases_fa": [
+        "approved"
+      ],
+      "column": "ranking_requests.status",
+      "value": "approved",
+      "description_fa": "مقدار واقعی ستون ranking_requests.status.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "rejected",
+      "aliases_fa": [
+        "rejected"
+      ],
+      "column": "ranking_requests.status",
+      "value": "rejected",
+      "description_fa": "مقدار واقعی ستون ranking_requests.status.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "بازنشستگی پیش از موعد",
+      "aliases_fa": [
+        "بازنشستگی پیش از موعد"
+      ],
+      "column": "retirement_records.retirement_type",
+      "value": "بازنشستگی پیش از موعد",
+      "description_fa": "مقدار واقعی ستون retirement_records.retirement_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "بازنشستگی استعلاجی",
+      "aliases_fa": [
+        "بازنشستگی استعلاجی"
+      ],
+      "column": "retirement_records.retirement_type",
+      "value": "بازنشستگی استعلاجی",
+      "description_fa": "مقدار واقعی ستون retirement_records.retirement_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "بازنشستگی عادی",
+      "aliases_fa": [
+        "بازنشستگی عادی"
+      ],
+      "column": "retirement_records.retirement_type",
+      "value": "بازنشستگی عادی",
+      "description_fa": "مقدار واقعی ستون retirement_records.retirement_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "دبستان",
+      "aliases_fa": [
+        "دبستان"
+      ],
+      "column": "schools.school_type",
+      "value": "دبستان",
+      "description_fa": "مقدار واقعی ستون schools.school_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "دبیرستان",
+      "aliases_fa": [
+        "دبیرستان"
+      ],
+      "column": "schools.school_type",
+      "value": "دبیرستان",
+      "description_fa": "مقدار واقعی ستون schools.school_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "هنرستان",
+      "aliases_fa": [
+        "هنرستان"
+      ],
+      "column": "schools.school_type",
+      "value": "هنرستان",
+      "description_fa": "مقدار واقعی ستون schools.school_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "نمونه دولتی",
+      "aliases_fa": [
+        "نمونه دولتی"
+      ],
+      "column": "schools.school_type",
+      "value": "نمونه دولتی",
+      "description_fa": "مقدار واقعی ستون schools.school_type.",
+      "confidence": 0.8
+    },
+    {
+      "term_fa": "active",
+      "aliases_fa": [
+        "active"
+      ],
+      "column": "students.status",
+      "value": "active",
+      "description_fa": "مقدار واقعی ستون students.status.",
+      "confidence": 0.8
+    }
+  ],
+  "business_terms": [
+    {
+      "term_fa": "سنوات",
+      "aliases_fa": [
+        "سنوات پرداخت‌شده",
+        "مبلغ سنوات",
+        "مستمری"
+      ],
+      "maps_to": "retirement_records.pension_amount",
+      "description_fa": "در این سیستم منظور کاربر از سنوات، ستون pension_amount در جدول retirement_records است.",
+      "confidence": 0.95,
+      "review_required": false
+    },
+    {
+      "term_fa": "سابقه خدمت",
+      "aliases_fa": [
+        "سال خدمت",
+        "تعداد سال خدمت"
+      ],
+      "maps_to": "retirement_records.years_of_service",
+      "description_fa": "برای تعداد سال‌های خدمت از years_of_service استفاده شود، نه pension_amount.",
+      "confidence": 0.9,
+      "review_required": false
+    }
+  ],
+  "metrics": []
 }

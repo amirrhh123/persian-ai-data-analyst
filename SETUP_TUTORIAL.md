@@ -54,14 +54,16 @@ ollama list
 ## Step 4: Clone the Project
 
 ```powershell
+cd D:\projects
 git clone <repository-url>
-cd persian-ai-data-analyst
+cd "LLM Database"
 ```
 
 ## Step 5: Install Python Dependencies
 
 ```powershell
-python -m pip install -r requirements.txt
+# Use Python 3.12 explicitly
+& "C:\Users\USER\AppData\Local\Programs\Python\Python312\python.exe" -m pip install -r requirements.txt
 ```
 
 ## Step 6: Configure Environment
@@ -90,7 +92,7 @@ Wait for services to be healthy (about 30 seconds).
 
 ```powershell
 # Create the education database tables
-python -c "
+& "C:\Users\USER\AppData\Local\Programs\Python\Python312\python.exe" -c "
 from sqlalchemy import create_engine, text
 from pathlib import Path
 
@@ -108,7 +110,7 @@ print('Database initialized!')
 ## Step 9: Sync Knowledge and Reports
 
 ```powershell
-python -c "
+& "C:\Users\USER\AppData\Local\Programs\Python\Python312\python.exe" -c "
 import sys
 sys.path.insert(0, '.')
 from backend.reports.group_retriever import group_retriever
@@ -123,7 +125,7 @@ print(f'Synced: {g} groups, {r} reports')
 ## Step 10: Start the API Server
 
 ```powershell
-python -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8080
+& "C:\Users\USER\AppData\Local\Programs\Python\Python312\python.exe" -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8080
 ```
 
 ## Step 11: Verify Installation
@@ -146,7 +148,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/query" -Method POST -ContentType "
 ## Step 12: Run Tests
 
 ```powershell
-python -m pytest tests/test_api.py -v
+& "C:\Users\USER\AppData\Local\Programs\Python\Python312\python.exe" -m pytest tests/test_api.py -v
 ```
 
 ## Troubleshooting
@@ -179,7 +181,8 @@ ollama serve
 
 ### Python module not found
 ```powershell
-python -m pip install -r requirements.txt
+# Use Python 3.12 explicitly
+& "C:\Users\USER\AppData\Local\Programs\Python\Python312\python.exe" -m pip install -r requirements.txt
 ```
 
 ## API Endpoints

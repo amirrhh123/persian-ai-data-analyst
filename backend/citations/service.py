@@ -6,6 +6,7 @@ import re
 from typing import Any, Optional
 
 from backend.pipeline.models import CitationView, PipelineTrace, SourceCitation
+from backend.config import get_settings
 
 
 _IDENTIFIER = r"[a-z_][a-z0-9_]*"
@@ -30,6 +31,8 @@ class CitationService:
 
     @staticmethod
     def _redact_sql(sql: str) -> str:
+        if not get_settings().data_masking_enabled:
+            return sql
         redacted = re.sub(r"'(?:''|[^'])*'", "'***'", sql)
         return re.sub(r"\b[0-9۰-۹]{10}\b", "***", redacted)
 
@@ -40,9 +43,18 @@ class CitationService:
                 return step.data
         return {}
 
-    def build(self, *, database: str, tenant_id: str, sql: Optional[str],
-              group_id: Optional[str], report_id: Optional[str],
-              generation_source: Optional[str], trace: PipelineTrace) -> CitationView:
+    def build(
+        self,
+        *,
+        database: str,
+        tenant_id: str,
+        sql: Optional[str],
+        group_id: Optional[str],
+        report_id: Optional[str],
+        generation_source: Optional[str],
+        trace: PipelineTrace,
+    ) -> CitationView:
+        """Build stable citations from SQL and pipeline trace data."""
         sql_text = sql or ""
         tables = self._tables(sql_text)
         columns = self._columns(sql_text)
@@ -52,19 +64,26 @@ class CitationService:
                 label=f"PostgreSQL table: {table}",
                 identifier=table,
                 details={"database": database, "tenant_id": tenant_id},
-            ) for table in tables
+            )
+            for table in tables
         ]
+
         if group_id:
             sources.append(SourceCitation(
-                source_type="semantic_group", label="Semantic group", identifier=group_id,
+                source_type="semantic_group",
+                label="Semantic group",
+                identifier=group_id,
             ))
         if report_id:
             sources.append(SourceCitation(
-                source_type="semantic_report", label="Semantic report", identifier=report_id,
+                source_type="semantic_report",
+                label="Semantic report",
+                identifier=report_id,
             ))
         if generation_source:
             sources.append(SourceCitation(
-                source_type="sql_generation", label="SQL generation source",
+                source_type="sql_generation",
+                label="SQL generation source",
                 identifier=generation_source,
             ))
 
@@ -80,12 +99,17 @@ class CitationService:
                 retrieval_details[f"report_{key}"] = report_retrieval[key]
         if retrieval_details:
             sources.append(SourceCitation(
-                source_type="retrieval_evidence", label="Retrieval evidence",
-                identifier="hybrid_pipeline", details=retrieval_details,
+                source_type="retrieval_evidence",
+                label="Retrieval evidence",
+                identifier="hybrid_pipeline",
+                details=retrieval_details,
             ))
 
         return CitationView(
-            database=database, tenant_id=tenant_id, tables=tables, columns=columns,
+            database=database,
+            tenant_id=tenant_id,
+            tables=tables,
+            columns=columns,
             sql_preview=self._redact_sql(sql_text) if sql_text else None,
             sources=sources,
         )

@@ -1,7 +1,6 @@
 import requests
 import json
 import time
-from pathlib import Path
 
 questions = [
     ("تعداد کل دانش‌آموزان فعال چقدر است؟", "student", "student_list"),
@@ -74,8 +73,7 @@ for i, (q, exp_group, exp_report) in enumerate(questions):
         results.append({"num": i+1, "question": q, "error": str(e), "pass": False, "time": 0})
         print(f"[{i+1:2d}] ERROR {str(e)[:60]}")
 
-results_path = Path(__file__).resolve().parent / "tests" / "results_15.json"
-with results_path.open("w", encoding="utf-8") as f:
+with open("D:/projects/LLM Database/tests/results_15.json", "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False, indent=2)
 
 passed = sum(1 for r in results if r.get("pass"))

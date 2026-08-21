@@ -35,11 +35,17 @@ def load_tenant_semantic_catalog(tenant_id: str | None = None) -> SemanticCatalo
     active_path = active_semantic_catalog_path(tenant)
     if active_path.exists():
         return load_semantic_catalog(active_path)
-    return load_semantic_catalog()
+    # Portable mode: discover the live database when no checked-in catalog
+    # exists.  Static catalog remains the final offline fallback.
+    try:
+        from backend.semantic.runtime_bootstrap import runtime_semantic_bootstrap
+        return runtime_semantic_bootstrap.load(tenant)
+    except Exception:
+        if CATALOG_PATH.exists():
+            return load_semantic_catalog()
+        return SemanticCatalog()
 
 
 def clear_semantic_catalog_cache() -> None:
     load_semantic_catalog.cache_clear()
 
-
-semantic_catalog = load_tenant_semantic_catalog()

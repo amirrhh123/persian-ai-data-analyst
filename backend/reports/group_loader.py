@@ -22,7 +22,21 @@ class GroupLoader:
     
     def load_all_groups(self) -> List[ReportGroup]:
         if not self.groups_path.exists():
-            return []
+            # Portable fallback: derive a minimal group from runtime semantic metadata.
+            try:
+                from backend.semantic.loader import load_tenant_semantic_catalog
+                tenant = self.groups_path.parent.name
+                catalog = load_tenant_semantic_catalog(tenant)
+                return [ReportGroup(
+                    id=table.entity or table.name,
+                    name=table.description or table.name,
+                    description=table.description,
+                    linked_tables=[table.name],
+                    keywords=table.aliases,
+                    entity_terms=[{"term": alias} for alias in table.aliases],
+                ) for table in catalog.tables]
+            except Exception:
+                return []
         
         groups = []
         for group_file in self.groups_path.glob("*.yaml"):

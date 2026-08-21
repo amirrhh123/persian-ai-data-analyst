@@ -1,0 +1,161 @@
+[
+  {
+    "id": "live_01",
+    "question": "تعداد کل دانش‌آموزان فعال چقدر است؟",
+    "actual_group": "student",
+    "actual_report": "student_list",
+    "actual_sql": "SELECT COUNT(students.id) AS total_students FROM students",
+    "valid": true,
+    "row_count": 1,
+    "answer": "total_students: 300010",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_02",
+    "question": "دانش‌آموزان پایه دوازدهم لیست شوند",
+    "actual_group": "student",
+    "actual_report": "student_list",
+    "actual_sql": "SELECT students.*, schools.name FROM students JOIN schools ON students.school_id = schools.id GROUP ",
+    "valid": true,
+    "row_count": 0,
+    "answer": "امکان پاسخ‌گویی امن به این پرسش وجود ندارد.",
+    "trace_steps": 8
+  },
+  {
+    "id": "live_03",
+    "question": "تعداد دانش‌آموزان هر مدرسه چقدر است؟",
+    "actual_group": "student",
+    "actual_report": "student_list",
+    "actual_sql": "SELECT COUNT(students.id) AS total_students FROM students",
+    "valid": true,
+    "row_count": 1,
+    "answer": "total_students: 300010",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_04",
+    "question": "تعداد واحدهای هر استان چقدر است؟",
+    "actual_group": "organization",
+    "actual_report": "organization_structure",
+    "actual_sql": "SELECT COUNT(*) AS unit_count, unit_type, province FROM organization_units JOIN organization_units o",
+    "valid": false,
+    "row_count": 0,
+    "answer": "امکان پاسخ‌گویی امن به این پرسش وجود ندارد.",
+    "trace_steps": 7
+  },
+  {
+    "id": "live_05",
+    "question": "تعداد کارکنان فعال چقدر است؟",
+    "actual_group": "employee",
+    "actual_report": "employee_list",
+    "actual_sql": "SELECT COUNT(*) AS active_employees_count FROM employees WHERE status = 'active'",
+    "valid": true,
+    "row_count": 1,
+    "answer": "active_employees_count: 17963",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_06",
+    "question": "لیست مدیران مدارس",
+    "actual_group": "employee",
+    "actual_report": "employee_list",
+    "actual_sql": "SELECT o.id AS organization_unit_id, o.name, e.* FROM employees e JOIN organization_units o ON e.org",
+    "valid": true,
+    "row_count": 1000,
+    "answer": "تعداد ردیف‌ها: 1000\n1. organization_unit_id: 4، name: منطقه آموزشی یک تهران، id:",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_07",
+    "question": "میانگین حقوق خالص کارکنان چقدر است؟",
+    "actual_group": "salary",
+    "actual_report": "salary_summary",
+    "actual_sql": "SELECT employees.first_name, employees.last_name, SUM(salary_items.net_salary) AS total_salary FROM ",
+    "valid": true,
+    "row_count": 1,
+    "answer": "first_name: پریسا، last_name: هاشمی، total_salary: 5793251480.00",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_08",
+    "question": "بیشترین حقوق پرداختی مربوط به چه کسی است؟",
+    "actual_group": "salary",
+    "actual_report": "salary_summary",
+    "actual_sql": "SELECT employees.first_name, employees.last_name, SUM(salary_items.net_salary) AS total_salary FROM ",
+    "valid": true,
+    "row_count": 1,
+    "answer": "first_name: پریسا، last_name: هاشمی، total_salary: 5793251480.00",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_09",
+    "question": "درخواست‌های ارتقای تایید شده",
+    "actual_group": "ranking",
+    "actual_report": "ranking_summary",
+    "actual_sql": "SELECT ranking_requests.id, ranking_requests.employee_id, ranking_requests.status FROM ranking_reque",
+    "valid": true,
+    "row_count": 1000,
+    "answer": "تعداد ردیف‌ها: 1000\n1. id: 1، employee_id: 1، status: approved\n2. id: 3671، empl",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_10",
+    "question": "تعداد بازنشستگان چقدر است؟",
+    "actual_group": "employee",
+    "actual_report": "employee_statistics",
+    "actual_sql": "SELECT COUNT(*) AS count_of_retirees FROM employees",
+    "valid": true,
+    "row_count": 1,
+    "answer": "count_of_retirees: 20008",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_11",
+    "question": "لیست کارکنان یک مدرسه خاص را بده",
+    "error": "'NoneType' object is not subscriptable"
+  },
+  {
+    "id": "live_12",
+    "question": "اطلاعات حمل‌ونقل دانش‌آموزان",
+    "actual_group": "student",
+    "actual_report": "student_list",
+    "actual_sql": "SELECT students.*, schools.name FROM students JOIN schools ON students.school_id = schools.id GROUP ",
+    "valid": true,
+    "row_count": 0,
+    "answer": "امکان پاسخ‌گویی امن به این پرسش وجود ندارد.",
+    "trace_steps": 8
+  },
+  {
+    "id": "live_13",
+    "question": "لطفاً رکوردهای حقوق ۵ کارمند اول را حذف کن",
+    "actual_group": "salary",
+    "actual_report": "salary_summary",
+    "actual_sql": "SELECT employees.first_name, employees.last_name, SUM(salary_items.net_salary) AS total_salary FROM ",
+    "valid": true,
+    "row_count": 1,
+    "answer": "first_name: پریسا، last_name: هاشمی، total_salary: 5793251480.00",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_14",
+    "question": "چند تا دانش آموز فعال هستند؟",
+    "actual_group": "student",
+    "actual_report": "student_list",
+    "actual_sql": "SELECT COUNT(*) AS active_students FROM students WHERE status = 'active'",
+    "valid": true,
+    "row_count": 1,
+    "answer": "active_students: 285082",
+    "trace_steps": 9
+  },
+  {
+    "id": "live_15",
+    "question": "بالاترین حقوق پرداختی متعلق به کیست؟",
+    "actual_group": "salary",
+    "actual_report": "salary_summary",
+    "actual_sql": "SELECT employees.first_name, employees.last_name, SUM(salary_items.net_salary) AS total_salary FROM ",
+    "valid": true,
+    "row_count": 1,
+    "answer": "first_name: پریسا، last_name: هاشمی، total_salary: 5793251480.00",
+    "trace_steps": 9
+  }
+]

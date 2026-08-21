@@ -110,7 +110,8 @@ class ReportRetriever:
         for retrieval_query in decomposition.queries:
             results = collection.query(
                 query_embeddings=[embedding_service.embed_text(retrieval_query)],
-                n_results=len(reports), where=where_filter,
+                n_results=len(reports),
+                where=where_filter,
             )
             query_scores: Dict[str, float] = {}
             metadatas = (results.get("metadatas") or [[]])[0]
@@ -121,9 +122,14 @@ class ReportRetriever:
                 query_scores[report_id] = max(0.0, min(1.0, 1.0 - distance))
             score_maps.append(query_scores)
         vector_scores = fuse_vector_scores(score_maps)
-        feedback_adjustments = feedback_service.candidate_adjustments(tenant_id, question, "report")
+        feedback_adjustments = feedback_service.candidate_adjustments(
+            tenant_id, question, "report"
+        )
         for report in reports:
-            vector_scores[report.id] = max(0.0, min(1.0, vector_scores.get(report.id, 0.0) + feedback_adjustments.get(report.id, 0.0)))
+            vector_scores[report.id] = max(
+                0.0,
+                min(1.0, vector_scores.get(report.id, 0.0) + feedback_adjustments.get(report.id, 0.0)),
+            )
 
         all_metrics = loader.load_metrics()
         all_rules = loader.load_rules()

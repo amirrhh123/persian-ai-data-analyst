@@ -23,8 +23,10 @@ class SQLRepairLoop:
 
     @staticmethod
     def _contains_forbidden_sql(sql: str) -> bool:
-        return any(re.search(rf"\b{keyword}\b", sql, re.I)
-                   for keyword in SQLValidator.FORBIDDEN_KEYWORDS)
+        return any(
+            re.search(rf"\b{keyword}\b", sql, re.IGNORECASE)
+            for keyword in SQLValidator.FORBIDDEN_KEYWORDS
+        )
 
     @staticmethod
     def _strip_markdown(sql: str) -> tuple[str, bool]:
@@ -36,7 +38,8 @@ class SQLRepairLoop:
         updated = re.sub(
             r"\bLIMIT\s+(\d+)\b",
             lambda match: "LIMIT 1000" if int(match.group(1)) > 1000 else match.group(0),
-            sql, flags=re.I,
+            sql,
+            flags=re.IGNORECASE,
         )
         return updated, updated != sql
 
@@ -44,21 +47,34 @@ class SQLRepairLoop:
     def _quote_national_id(sql: str) -> tuple[str, bool]:
         updated = re.sub(
             r"(\b(?:[a-z_][a-z0-9_]*\.)?national_id\s*=\s*)([0-9۰-۹]{10})(?![0-9۰-۹'])",
-            r"\1'\2'", sql, flags=re.I,
+            r"\1'\2'",
+            sql,
+            flags=re.IGNORECASE,
+        )
+        return updated, updated != sql
+
+    @staticmethod
+    def _normalize_postgres_identifier_quotes(sql: str) -> tuple[str, bool]:
+        updated = re.sub(
+            r"`([^`]+)`",
+            lambda match: '"' + match.group(1).replace('"', '""') + '"',
+            sql,
         )
         return updated, updated != sql
 
     @staticmethod
     def _expand_select_star(sql: str, schema: DatabaseSchema) -> tuple[str, bool]:
-        if not re.search(r"^\s*SELECT\s+\*\s+FROM\b", sql, re.I):
+        if not re.search(r"^\s*SELECT\s+\*\s+FROM\b", sql, re.IGNORECASE):
             return sql, False
         table_match = re.search(
             r"\bFROM\s+([a-z_][a-z0-9_]*)(?:\s+(?:AS\s+)?([a-z_][a-z0-9_]*))?",
-            sql, re.I,
+            sql,
+            re.IGNORECASE,
         )
         if not table_match:
             return sql, False
-        table_name, alias = table_match.group(1), table_match.group(2)
+        table_name = table_match.group(1)
+        alias = table_match.group(2)
         if alias and alias.lower() in {"where", "join", "group", "order", "limit"}:
             alias = None
         table = next((item for item in schema.tables if item.name.lower() == table_name.lower()), None)
@@ -72,68 +88,102 @@ class SQLRepairLoop:
     @staticmethod
     def _add_safe_limit(sql: str) -> tuple[str, bool]:
         normalized = sql.lower()
+        joins = len(re.findall(r"\bjoin\b", normalized))
         unsafe_list = (
-            len(re.findall(r"\bjoin\b", normalized)) >= 2
+            joins >= 2
             and not re.search(r"\bwhere\b", normalized)
             and not re.search(r"\blimit\s+\d+\b", normalized)
             and not re.search(r"\b(count|sum|avg|min|max)\s*\(|\bgroup\s+by\b", normalized)
         )
         if not unsafe_list:
             return sql, False
-        return f"{sql.rstrip().rstrip(';')} LIMIT 1000", True
+        stripped = sql.rstrip().rstrip(";")
+        return f"{stripped} LIMIT 1000", True
 
     def _repair_once(self, sql: str, schema: DatabaseSchema) -> tuple[str, list[str]]:
-        updated, strategies = sql, []
+        updated = sql
+        strategies: list[str] = []
 
         def canonicalize(value: str) -> tuple[str, bool]:
             repaired, report = canonicalize_sql_identifiers(value, schema)
             return repaired, report["changed"]
 
         for name, operation in (
-            ("strip_markdown", self._strip_markdown),
+            ("strip_markdown", lambda value: self._strip_markdown(value)),
+            ("normalize_postgres_identifier_quotes", lambda value: self._normalize_postgres_identifier_quotes(value)),
             ("canonicalize_identifiers", canonicalize),
             ("expand_select_star", lambda value: self._expand_select_star(value, schema)),
-            ("quote_national_id", self._quote_national_id),
-            ("cap_limit", self._cap_limit),
-            ("add_safe_limit", self._add_safe_limit),
+            ("quote_national_id", lambda value: self._quote_national_id(value)),
+            ("cap_limit", lambda value: self._cap_limit(value)),
+            ("add_safe_limit", lambda value: self._add_safe_limit(value)),
         ):
             updated, changed = operation(updated)
             if changed:
                 strategies.append(name)
         return updated, strategies
 
-    def repair(self, sql: str, schema: DatabaseSchema,
-               report: Optional[Report] = None,
-               intent: Optional[QueryIntent] = None) -> SQLRepairResult:
+    def repair(
+        self,
+        sql: str,
+        schema: DatabaseSchema,
+        report: Optional[Report] = None,
+        intent: Optional[QueryIntent] = None,
+    ) -> SQLRepairResult:
+        """Repair, validate, and stop on success, no progress, or policy rejection."""
         validator = SQLValidator()
-        initial = validator.validate(sql, schema, report=report, intent=intent)
-        if initial.is_valid:
-            return SQLRepairResult(sql=sql, valid=True, stopped_reason="already_valid", validation=initial)
+        initial_validation = validator.validate(sql, schema, report=report, intent=intent)
+        if initial_validation.is_valid:
+            return SQLRepairResult(
+                sql=sql, valid=True, stopped_reason="already_valid",
+                validation=initial_validation,
+            )
         if self._contains_forbidden_sql(sql):
-            return SQLRepairResult(sql=sql, valid=False, stopped_reason="forbidden_statement", validation=initial)
+            return SQLRepairResult(
+                sql=sql, valid=False, stopped_reason="forbidden_statement",
+                validation=initial_validation,
+            )
 
-        current, attempts, final = sql, [], initial
+        current = sql
+        attempts: list[SQLRepairAttempt] = []
+        final_validation = initial_validation
         for attempt_number in range(1, self.maximum_attempts + 1):
             candidate, strategies = self._repair_once(current, schema)
             if not strategies or candidate == current:
                 return SQLRepairResult(
-                    sql=current, repaired=bool(attempts), valid=False,
-                    stopped_reason="no_safe_repair", attempts=attempts, validation=final,
+                    sql=current,
+                    repaired=bool(attempts),
+                    valid=False,
+                    stopped_reason="no_safe_repair",
+                    attempts=attempts,
+                    validation=final_validation,
                 )
-            final = SQLValidator().validate(candidate, schema, report=report, intent=intent)
+            final_validation = SQLValidator().validate(
+                candidate, schema, report=report, intent=intent,
+            )
             attempts.append(SQLRepairAttempt(
-                attempt=attempt_number, sql=candidate,
-                strategies=strategies, validation=final,
+                attempt=attempt_number,
+                sql=candidate,
+                strategies=strategies,
+                validation=final_validation,
             ))
             current = candidate
-            if final.is_valid:
+            if final_validation.is_valid:
                 return SQLRepairResult(
-                    sql=current, repaired=True, valid=True,
-                    stopped_reason="validated", attempts=attempts, validation=final,
+                    sql=current,
+                    repaired=True,
+                    valid=True,
+                    stopped_reason="validated",
+                    attempts=attempts,
+                    validation=final_validation,
                 )
+
         return SQLRepairResult(
-            sql=current, repaired=bool(attempts), valid=False,
-            stopped_reason="attempt_limit", attempts=attempts, validation=final,
+            sql=current,
+            repaired=bool(attempts),
+            valid=False,
+            stopped_reason="attempt_limit",
+            attempts=attempts,
+            validation=final_validation,
         )
 
 

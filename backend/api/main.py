@@ -49,6 +49,8 @@ from backend.semantic.review_service import semantic_review_service
 from backend.semantic.smoke_test_runner import semantic_smoke_test_runner
 from backend.semantic.smoke_test_service import semantic_smoke_test_service
 from backend.semantic.suggestion_service import semantic_suggestion_service
+from backend.semantic.runtime_bootstrap import runtime_semantic_bootstrap
+from backend.semantic.snapshot import semantic_snapshot_provider
 from backend.security.data_policy import data_sensitivity_policy
 from backend.sql.models import SQLRequest, SQLResponse, SQLPlan, ValidationResult
 from backend.sql.service import sql_service
@@ -522,6 +524,56 @@ async def get_active_semantic_catalog():
         raise HTTPException(status_code=404, detail=f"Active semantic catalog not found: {str(e)}")
 
 
+@app.get("/semantic/context-index/status")
+async def get_semantic_context_index_status():
+    """Return the active semantic-context index version and size."""
+    snapshot = semantic_snapshot_provider.capture(settings.tenant_id)
+    return {
+        "tenant_id": snapshot.tenant_id,
+        "semantic_version": snapshot.version,
+        "signature": snapshot.context_index.signature,
+        "documents": len(snapshot.context_index.documents),
+    }
+
+
+@app.get("/semantic/context-index/search")
+async def search_semantic_context_index(question: str, limit: int = 10):
+    """Inspect the context slices selected for a Persian question."""
+    snapshot = semantic_snapshot_provider.capture(settings.tenant_id)
+    matches = snapshot.context_index.search(question, limit=max(1, min(limit, 30)))
+    return {
+        "question": question,
+        "semantic_version": snapshot.version,
+        "matches": [
+            {
+                "id": match.document.id,
+                "kind": match.document.kind,
+                "table": match.document.table,
+                "target": match.document.target,
+                "score": match.score,
+            }
+            for match in matches
+        ],
+    }
+
+
+@app.post("/semantic/runtime/refresh")
+async def refresh_runtime_semantic_catalog():
+    """Refresh semantic metadata directly from the connected database."""
+    try:
+        catalog, rebuilt, snapshot = runtime_semantic_bootstrap.refresh(settings.tenant_id)
+        return {
+            "status": "rebuilt" if rebuilt else "unchanged",
+            "tenant_id": settings.tenant_id,
+            "fingerprint": snapshot.fingerprint,
+            "tables": len(catalog.tables),
+            "joins": len(catalog.joins),
+            "rules": len(catalog.rules),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error refreshing runtime semantic catalog: {str(e)}")
+
+
 @app.get("/semantic/versions", response_model=List[SemanticVersionInfo])
 async def list_semantic_versions():
     try:
@@ -610,9 +662,12 @@ async def incremental_sync_semantic_layer(
     """Synchronize only table-level changes from the latest checkpoint."""
     try:
         from backend.sync.incremental_service import incremental_sync_service
+
         return await incremental_sync_service.run(
-            tenant_id=settings.tenant_id, min_pass_rate=min_pass_rate,
-            benchmark_limit=benchmark_limit, force_activate=force_activate,
+            tenant_id=settings.tenant_id,
+            min_pass_rate=min_pass_rate,
+            benchmark_limit=benchmark_limit,
+            force_activate=force_activate,
         )
     except FileNotFoundError as exc:
         raise HTTPException(
@@ -660,6 +715,7 @@ async def query(request: PipelineRequest):
 
 @app.post("/feedback", response_model=FeedbackResponse)
 async def submit_feedback(request: FeedbackRequest):
+    """Store a response rating; SQL safety rules remain authoritative."""
     try:
         return feedback_service.submit(settings.tenant_id, request)
     except Exception as e:
@@ -676,8 +732,13 @@ async def get_feedback_summary():
 
 @app.post("/retrieval/benchmark", response_model=RetrievalBenchmarkResult)
 async def run_retrieval_benchmark(request: RetrievalBenchmarkRequest):
+    """Run the versioned offline retrieval quality gate."""
     try:
-        return retrieval_benchmark_service.run(settings.tenant_id, top_k=request.top_k, minimum_top1=request.minimum_top1)
+        return retrieval_benchmark_service.run(
+            settings.tenant_id,
+            top_k=request.top_k,
+            minimum_top1=request.minimum_top1,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error running retrieval benchmark: {str(e)}")
 

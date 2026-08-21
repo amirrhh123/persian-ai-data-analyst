@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     ollama_temperature: float = 0.1
     ollama_top_p: float = 0.9
     llm_enabled: bool = True
+    llm_force_for_all_questions: bool = True
+    data_masking_enabled: bool = False
     llm_context_max_tokens: int = 8192
     llm_reserved_output_tokens: int = 1024
     llm_tokenizer_model_path: str = ""
@@ -36,6 +38,7 @@ class Settings(BaseSettings):
     
     embedding_model_path: str = "D:/projects/LLM Database/models/paraphrase-multilingual-mpnet-base-v2"
     embedding_device: str = "cpu"
+    runtime_semantic_cache_ttl_seconds: int = 300
     
     api_host: str = "0.0.0.0"
     api_port: int = 8080

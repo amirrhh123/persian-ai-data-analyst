@@ -5,7 +5,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from backend.semantic import semantic_catalog
+from backend.semantic.loader import load_tenant_semantic_catalog
+from backend.semantic.models import SemanticCatalog
 
 
 class IntentFilter(BaseModel):
@@ -55,6 +56,7 @@ class QueryIntent(BaseModel):
     wants_list: bool = False
     ranking_metric: Optional[str] = None
     requested_columns: list[str] = Field(default_factory=list)
+    semantic_metrics: list[str] = Field(default_factory=list)
 
 
 class NormalizedIntentFilter(BaseModel):
@@ -227,7 +229,7 @@ def _contains_alias(question: str, alias: str) -> bool:
     return re.search(rf"(?<![\wآ-ی]){re.escape(alias)}(?![\wآ-ی])", question) is not None
 
 
-def _detect_entity(q: str) -> Optional[str]:
+def _detect_entity(q: str, semantic_catalog: SemanticCatalog) -> Optional[str]:
     matches: list[tuple[int, str]] = []
     for table in semantic_catalog.tables:
         if any(_contains_alias(q, alias) for alias in table.aliases):
@@ -240,7 +242,11 @@ def _detect_entity(q: str) -> Optional[str]:
     return sorted(matches, reverse=True)[0][1]
 
 
-def _detect_requested_columns(q: str, requested_entity: Optional[str]) -> list[str]:
+def _detect_requested_columns(
+    q: str,
+    requested_entity: Optional[str],
+    semantic_catalog: SemanticCatalog,
+) -> list[str]:
     if not requested_entity:
         return []
 
@@ -346,11 +352,15 @@ def _extract_person_name_filters(q: str, entity: Optional[str]) -> tuple[Optiona
     return first_name, last_name
 
 
-def extract_intent(question: str) -> QueryIntent:
+def extract_intent(
+    question: str,
+    semantic_catalog: SemanticCatalog | None = None,
+) -> QueryIntent:
     q = normalize_persian(question)
+    catalog = semantic_catalog or load_tenant_semantic_catalog()
     intent = QueryIntent()
 
-    intent.requested_entity = _detect_entity(q)
+    intent.requested_entity = _detect_entity(q, catalog)
 
     if ("دانش آموز" in q or "دانش‌آموز" in q) and any(
         school_word in q for school_word in ["مدرسه", "دبیرستان", "دبستان", "هنرستان"]
@@ -386,12 +396,32 @@ def extract_intent(question: str) -> QueryIntent:
     if "مجموع" in q:
         intent.aggregation = "SUM"
     if "بیشترین" in q or "بالاترین" in q:
-        intent.aggregation = "SUM"
-        intent.sorting = IntentSorting(column="total_salary", direction="DESC")
-        intent.limit = _extract_limit(q) or 1
+        ranking_column = {
+            "salary": "net_salary",
+            "student": "student_count",
+            "school": "student_count" if any(term in q for term in ["دانش آموز", "دانش‌آموز"]) else "school_count",
+            "employee": "employee_count",
+            "retirement": "pension_amount",
+        }.get(intent.requested_entity or "", "row_count")
+        if intent.requested_entity == "salary" and intent.aggregation is None:
+            intent.aggregation = "SUM"
+        elif intent.requested_entity in {"student", "school", "employee"}:
+            intent.aggregation = "COUNT"
+        intent.sorting = IntentSorting(column=ranking_column, direction="DESC")
+        intent.limit = None if "در هر" in q else (_extract_limit(q) or 1)
     if "کمترین" in q or "پایین‌ترین" in q or "پایین ترین" in q:
-        intent.aggregation = "SUM"
-        intent.sorting = IntentSorting(column="total_salary", direction="ASC")
+        ranking_column = {
+            "salary": "net_salary",
+            "student": "student_count",
+            "school": "school_count",
+            "employee": "employee_count",
+            "retirement": "pension_amount",
+        }.get(intent.requested_entity or "", "row_count")
+        if intent.requested_entity == "salary" and intent.aggregation is None:
+            intent.aggregation = "SUM"
+        elif intent.requested_entity in {"student", "school", "employee"}:
+            intent.aggregation = "COUNT"
+        intent.sorting = IntentSorting(column=ranking_column, direction="ASC")
         intent.limit = _extract_limit(q) or 1
     if intent.requested_entity == "retirement" and intent.ranking_metric == "pension_amount" and intent.sorting:
         intent.aggregation = None
@@ -462,7 +492,9 @@ def extract_intent(question: str) -> QueryIntent:
 
     city_match = re.search(r"(?:شهر|منطقه)\s+([آ-ی]+(?:\s+[آ-ی]+)?)(?:\s+را|\s+را\s|\s+که|\s+با|\s+دارند|\s+دارد|\s+هستند|\s+است|\s+پرداخت|$)", q)
     if city_match:
-        intent.city = city_match.group(1).strip()
+        candidate_city = city_match.group(1).strip()
+        if candidate_city not in {"نشان بده", "نمایش بده", "مقایسه کن", "لیست کن"}:
+            intent.city = candidate_city
 
     province_match = re.search(r"استان\s+([آ-ی]+(?:\s+[آ-ی]+)?)(?:\s+را|\s+را\s|$)", q)
     if province_match:
@@ -487,6 +519,8 @@ def extract_intent(question: str) -> QueryIntent:
             intent.aggregation = "COUNT"
 
     explicit_city_values = re.findall(r"شهر\s+([آ-ی]+(?:\s+[آ-ی]+)?)(?=\s+و|\s+را|\s+مقایسه|$)", q)
+    command_values = {"نشان بده", "نمایش بده", "مقایسه کن", "لیست کن", "را نشان"}
+    explicit_city_values = [value for value in explicit_city_values if value not in command_values]
     matched_cities = list(dict.fromkeys([city for city in CITIES if city in q]))
     if not explicit_city_values and "مقایسه" not in q:
         matched_cities = []
@@ -502,7 +536,7 @@ def extract_intent(question: str) -> QueryIntent:
     elif intent.city:
         intent.province = None
 
-    intent.requested_columns = _detect_requested_columns(q, intent.requested_entity)
+    intent.requested_columns = _detect_requested_columns(q, intent.requested_entity, catalog)
     if intent.aggregation == "COUNT":
         intent.requested_columns = []
 
@@ -518,9 +552,17 @@ def extract_intent(question: str) -> QueryIntent:
         q,
     )
     if position_match and intent.requested_entity in {"employee", "salary"}:
-        intent.position = position_match.group(1).strip()
+        candidate_position = position_match.group(1).strip()
+        if candidate_position not in {"مقایسه کن", "نشان بده", "نمایش بده", "لیست کن"}:
+            intent.position = candidate_position
         if "national_id" in intent.requested_columns and "position" in intent.requested_columns:
             intent.requested_columns = [column for column in intent.requested_columns if column != "position"]
+
+    if intent.requested_entity in {"employee", "salary"} and any(
+        phrase in q for phrase in ["بر اساس شغل", "براساس شغل", "به تفکیک شغل", "بر اساس سمت", "به تفکیک سمت"]
+    ):
+        if "position" not in intent.grouping:
+            intent.grouping.append("position")
 
     hire_year_match = re.search(r"سال\s+استخدام\s+([0-9۰-۹]{4})", q)
     if hire_year_match and intent.requested_entity in {"employee", "salary"}:
@@ -615,6 +657,19 @@ def extract_intent(question: str) -> QueryIntent:
             intent.filters.append(IntentFilter(column="status", value=db_value))
             break
 
+    for filter_column, filter_value in (
+        ("province", intent.province),
+        ("city", intent.city),
+        ("status", intent.status),
+        ("position", intent.position),
+        ("grade", intent.grade),
+        ("school_type", intent.school_type),
+    ):
+        if filter_value not in (None, "") and filter_column not in intent.grouping:
+            intent.requested_columns = [
+                column for column in intent.requested_columns if column != filter_column
+            ]
+
     return intent
 
 
@@ -689,6 +744,7 @@ def normalize_intent(intent: QueryIntent) -> NormalizedIntent:
         operation = "list"
 
     metrics: list[str] = []
+    metrics.extend(intent.semantic_metrics)
     if intent.ranking_metric:
         metrics.append(intent.ranking_metric)
     if intent.sorting and intent.sorting.column not in metrics:

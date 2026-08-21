@@ -26,6 +26,8 @@ from backend.reports.group_retriever import group_retriever
 from backend.reports.retriever import report_retriever
 from backend.semantic.loader import load_tenant_semantic_catalog
 from backend.semantic.models import SemanticCatalog, SemanticTable, normalize_identifier
+from backend.semantic.resolver import semantic_resolver
+from backend.semantic.snapshot import SemanticSnapshot, semantic_snapshot_provider
 from backend.security.data_policy import data_sensitivity_policy
 from backend.sql.aggregate_guard import sql_aggregate_safety_guard
 from backend.sql.deterministic_builder import deterministic_sql_builder
@@ -296,6 +298,12 @@ class QueryPipeline:
         text = self._normalize_text(question)
         if any(term in text for term in ["رتبه بندی", "رتبه‌بندی", "رتبه", "ارتقا"]):
             return False
+        # Generic "موارد/رکوردها" questions are training-request queries;
+        # do not let a province sample value route them to organization_units.
+        if re.search(r"(?:تعداد|لیست|فهرست)\s+(?:موارد|مورد|رکوردها?)\b", text) and not any(
+            term in text for term in ["دانش آموز", "دانش‌آموز", "کارمند", "مدرسه", "سازمانی"]
+        ):
+            return True
         table = self._semantic_target_table(question, catalog)
         if not table:
             table = self._semantic_target_table_by_labeled_sample_values(question, catalog)
@@ -1489,7 +1497,7 @@ class QueryPipeline:
                         "to_column": "id",
                     },
                 ]
-            elif intent.aggregation == "COUNT":
+            elif intent.aggregation == "COUNT" and not (intent.first_name or intent.last_name):
                 plan.required_tables = ["students"]
                 plan.selected_columns = ["COUNT(students.id) AS total_students"]
                 plan.aggregations = [{"function": "COUNT", "column": "students.id"}]
@@ -1835,6 +1843,29 @@ class QueryPipeline:
                 else:
                     plan.selected_columns = ["first_name", "last_name", "position", "status"]
 
+        if intent.requested_entity == "ranking" and (intent.first_name or intent.last_name):
+            plan.required_tables = ["ranking_requests", "employees"]
+            ranking_columns = list(intent.requested_columns) or [
+                "ranking_type", "current_rank", "requested_rank", "status"
+            ]
+            plan.selected_columns = ["RANKING_BY_EMPLOYEE_NAME", *ranking_columns]
+            plan.filters = []
+            if intent.first_name:
+                plan.filters.append({"column": "first_name", "operator": "=", "value": intent.first_name})
+            if intent.last_name:
+                plan.filters.append({"column": "last_name", "operator": "=", "value": intent.last_name})
+
+        if intent.semantic_metrics:
+            metric_name = intent.semantic_metrics[0]
+            metric = next((item for item in active_catalog.metrics if item.name == metric_name), None)
+            if metric:
+                plan.required_tables = list(dict.fromkeys([metric.table, *plan.required_tables]))
+                plan.selected_columns = [f"SEMANTIC_METRIC:{metric.name}"]
+                plan.aggregations = [{
+                    "function": metric.aggregation or "VALUE",
+                    "column": metric.expression,
+                }]
+
         detected_joins = sql_planner.detect_joins(plan.required_tables, schema.relationships)
         if detected_joins:
             plan.joins = detected_joins
@@ -1844,8 +1875,14 @@ class QueryPipeline:
         tracer = PipelineTracer()
         self._last_related_ambiguity = None
         tenant_id = request.tenant_id or self.settings.tenant_id
-        active_catalog = load_tenant_semantic_catalog(tenant_id)
+        semantic_snapshot: SemanticSnapshot = semantic_snapshot_provider.capture(tenant_id)
+        active_catalog = semantic_snapshot.catalog
         start_time = time.time()
+        question_text = self._normalize_text(request.question)
+        complex_question = any(term in question_text for term in [
+            "مقایسه", "بر اساس", "به تفکیک", "در هر", "روند", "ماه اخیر",
+            "بیش از", "کمتر از", "بالاتر از", "پایین تر از", "پایین‌تر از",
+        ])
         errors: list[str] = []
         error_details = []
 
@@ -1861,9 +1898,20 @@ class QueryPipeline:
         confidence = None
         generation_source = None
         validation = None
-        intent = extract_intent(request.question)
+        intent = extract_intent(request.question, active_catalog)
+        semantic_step_start = time.time()
+        semantic_resolution = await semantic_resolver.resolve(request.question, semantic_snapshot)
+        intent = semantic_resolver.enrich_intent(intent, semantic_resolution)
         normalized_intent = normalize_intent(intent)
         semantic_table_plan = self._semantic_table_plan(request.question, active_catalog)
+        # Generic runtime routing is reserved for newly discovered tables.
+        # Known business entities have richer deterministic planners that must
+        # preserve person names, national IDs, location joins, and profiles.
+        if intent.requested_entity in {
+            "student", "employee", "school", "salary", "retirement",
+            "ranking", "organization",
+        }:
+            semantic_table_plan = None
         semantic_table_name = semantic_table_plan.required_tables[0] if semantic_table_plan and semantic_table_plan.required_tables else ""
         if semantic_table_plan and self._last_related_ambiguity:
             item = (self._last_related_ambiguity.get("items") or [{}])[0]
@@ -2108,6 +2156,15 @@ class QueryPipeline:
         intent_payload = intent.model_dump()
         intent_payload["normalized"] = normalized_intent.model_dump()
         tracer.add_step("intent_extraction", "success", 0.0, data=intent_payload)
+        tracer.add_step(
+            "semantic_resolution",
+            "success",
+            (time.time() - semantic_step_start) * 1000,
+            data={
+                **semantic_resolution.model_dump(),
+                "semantic_version": semantic_snapshot.version,
+            },
+        )
         tracer.add_step("intent_normalization", "success", 0.0, data=normalized_intent.model_dump())
 
         step_start = time.time()
@@ -2158,7 +2215,7 @@ class QueryPipeline:
                     aggregations=[{"function": "COUNT", "column": "*"}],
                     group_by=[dimension] if hasattr(SQLPlan, "group_by") else [],
                 )
-            elif deterministic_plan := deterministic_sql_builder.build(normalized_intent, active_catalog):
+            elif (not complex_question) and (deterministic_plan := deterministic_sql_builder.build(normalized_intent, active_catalog)):
                 scoped_schema = schema
                 plan = deterministic_plan
             elif (
@@ -2250,7 +2307,26 @@ class QueryPipeline:
 
         if plan:
             step_start = time.time()
-            generated = await sql_generator.generate(plan, scoped_schema, business_rules=request.question, report=report_obj, tenant_id=tenant_id)
+            safe_complex_template = (
+                intent.requested_entity == "salary"
+                and intent.aggregation in {"AVG", "SUM", "COUNT"}
+                and bool(intent.grouping)
+                and "کمتر از میانگین" not in question_text
+                and "بیشتر از میانگین" not in question_text
+            ) or (
+                intent.requested_entity == "school"
+                and intent.aggregation == "COUNT"
+                and bool(intent.grouping)
+            )
+            generated = await sql_generator.generate(
+                plan,
+                scoped_schema,
+                business_rules=request.question,
+                report=report_obj,
+                tenant_id=tenant_id,
+                allow_template=(not complex_question) or safe_complex_template,
+                semantic_snapshot=semantic_snapshot,
+            )
             sql = generated.sql or None
             explanation = generated.explanation
             confidence = generated.confidence

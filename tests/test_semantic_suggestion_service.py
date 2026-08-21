@@ -1,3 +1,4 @@
+from backend.database.models import ColumnSampleValue, DiscoveredColumnInfo, DiscoveredTableInfo, SchemaDiscoverySnapshot
 from backend.semantic.models import (
     SemanticCatalog,
     SemanticColumn,
@@ -100,3 +101,33 @@ def test_semantic_suggestions_preserve_existing_human_aliases():
     assert table.aliases_fa == ["test", "جدول تست"]
     assert column.aliases_fa == ["requester_role", "پست"]
     assert column.value_type == "category"
+
+
+def test_unknown_column_uses_database_comment_as_semantic_alias():
+    column = DiscoveredColumnInfo(
+        name="role_code", data_type="text", udt_name="text", comment="پست سازمانی"
+    )
+    suggestion = semantic_suggestion_service._suggest_column(column)
+    assert suggestion.display_name_fa == "پست سازمانی"
+    assert "پست سازمانی" in suggestion.aliases_fa
+
+
+def test_categorical_sample_values_become_query_aliases():
+    column = DiscoveredColumnInfo(
+        name="requester_role", data_type="text", udt_name="text",
+        sample_values=[ColumnSampleValue(value="کارمند اداری", count=4)],
+    )
+    suggestion = semantic_suggestion_service._suggest_column(column)
+    assert "کارمند اداری" in suggestion.aliases_fa
+
+
+def test_categorical_values_create_explicit_value_mappings():
+    snapshot = SchemaDiscoverySnapshot(
+        tenant_id="demo", database_name="demo", generated_at="now", fingerprint="fp",
+        tables=[DiscoveredTableInfo(name="requests", columns=[DiscoveredColumnInfo(
+            name="requester_role", data_type="text", udt_name="text",
+            sample_values=[ColumnSampleValue(value="کارمند اداری", count=2)]
+        )])], relationships=[]
+    )
+    suggestions = semantic_suggestion_service.generate("demo", discovery=snapshot)
+    assert any(mapping.column == "requests.requester_role" and mapping.value == "کارمند اداری" for mapping in suggestions.value_mappings)

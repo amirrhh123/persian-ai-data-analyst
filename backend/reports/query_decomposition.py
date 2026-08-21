@@ -21,6 +21,8 @@ _INTENT_TERMS = {
 
 @dataclass(frozen=True, slots=True)
 class QueryDecomposition:
+    """Original query plus unique retrieval-safe atomic queries."""
+
     original: str
     queries: tuple[str, ...]
     decomposed: bool
@@ -55,30 +57,38 @@ class QueryDecomposer:
         return unique
 
     def decompose(self, question: str) -> QueryDecomposition:
+        """Create bounded subqueries while preserving the original query first."""
         original = " ".join(question.split()).strip()
         if not original:
             return QueryDecomposition("", tuple(), False, "empty_query")
+
         parts = self._unique(_STRONG_BOUNDARY.split(original))
         reason = "strong_boundary"
         if len(parts) <= 1:
             conjunction_parts = self._unique(re.split(r"\s+و\s+", original))
-            if len(conjunction_parts) > 1 and all(
-                self._valid_part(part) and self._has_intent(part)
-                for part in conjunction_parts
+            if (
+                len(conjunction_parts) > 1
+                and all(self._valid_part(part) and self._has_intent(part) for part in conjunction_parts)
             ):
                 parts = conjunction_parts
                 reason = "independent_intents"
+
         valid_parts = [part for part in parts if self._valid_part(part)]
         if len(valid_parts) <= 1:
             return QueryDecomposition(original, (original,), False, "single_intent")
+
         retrieval_queries = self._unique([original, *valid_parts])[: self.maximum_parts + 1]
         return QueryDecomposition(
-            original, tuple(retrieval_queries), True, reason,
+            original=original,
+            queries=tuple(retrieval_queries),
+            decomposed=True,
+            reason=reason,
         )
 
 
 def fuse_vector_scores(
-    score_maps: Sequence[Mapping[str, float]], original_weight: float = 0.60,
+    score_maps: Sequence[Mapping[str, float]],
+    original_weight: float = 0.60,
 ) -> dict[str, float]:
     """Fuse original-query evidence with the strongest atomic-query evidence."""
     if not 0 <= original_weight <= 1:
@@ -87,16 +97,19 @@ def fuse_vector_scores(
         return {}
     if len(score_maps) == 1:
         return dict(score_maps[0])
+
     candidate_ids = set().union(*(scores.keys() for scores in score_maps))
     fused: dict[str, float] = {}
     for candidate_id in candidate_ids:
         original_score = score_maps[0].get(candidate_id, 0.0)
         atomic_score = max(
-            (scores.get(candidate_id, 0.0) for scores in score_maps[1:]), default=0.0,
+            (scores.get(candidate_id, 0.0) for scores in score_maps[1:]),
+            default=0.0,
         )
-        fused[candidate_id] = max(0.0, min(
-            1.0, original_weight * original_score + (1 - original_weight) * atomic_score,
-        ))
+        fused[candidate_id] = max(
+            0.0,
+            min(1.0, original_weight * original_score + (1 - original_weight) * atomic_score),
+        )
     return fused
 
 

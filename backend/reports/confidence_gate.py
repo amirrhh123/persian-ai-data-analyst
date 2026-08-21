@@ -59,7 +59,11 @@ class ConfidenceGate:
         elif evidence < self.minimum_evidence:
             reason = "insufficient_evidence"
             accepted = False
-        elif len(candidates) > 1 and margin < self.minimum_margin and best.final_score < self.strong_score:
+        elif (
+            len(candidates) > 1
+            and margin < self.minimum_margin
+            and best.final_score < self.strong_score
+        ):
             reason = "ambiguous_top_candidates"
             accepted = False
         else:

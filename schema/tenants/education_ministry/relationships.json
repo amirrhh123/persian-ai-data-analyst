@@ -1,0 +1,51 @@
+[
+  {
+    "source_table": "organization_units",
+    "source_column": "parent_id",
+    "target_table": "organization_units",
+    "target_column": "id",
+    "relationship_type": "many_to_one"
+  },
+  {
+    "source_table": "employees",
+    "source_column": "organization_unit_id",
+    "target_table": "organization_units",
+    "target_column": "id",
+    "relationship_type": "many_to_one"
+  },
+  {
+    "source_table": "salary_items",
+    "source_column": "employee_id",
+    "target_table": "employees",
+    "target_column": "id",
+    "relationship_type": "many_to_one"
+  },
+  {
+    "source_table": "ranking_requests",
+    "source_column": "employee_id",
+    "target_table": "employees",
+    "target_column": "id",
+    "relationship_type": "many_to_one"
+  },
+  {
+    "source_table": "retirement_records",
+    "source_column": "employee_id",
+    "target_table": "employees",
+    "target_column": "id",
+    "relationship_type": "many_to_one"
+  },
+  {
+    "source_table": "schools",
+    "source_column": "organization_unit_id",
+    "target_table": "organization_units",
+    "target_column": "id",
+    "relationship_type": "many_to_one"
+  },
+  {
+    "source_table": "students",
+    "source_column": "school_id",
+    "target_table": "schools",
+    "target_column": "id",
+    "relationship_type": "many_to_one"
+  }
+]

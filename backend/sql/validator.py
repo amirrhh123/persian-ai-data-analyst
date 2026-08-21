@@ -93,6 +93,9 @@ class SQLValidator:
         return True
 
     def validate_syntax(self, sql: str) -> bool:
+        if "`" in sql:
+            self.errors.append("PostgreSQL از backtick برای نام مستعار یا شناسه پشتیبانی نمی‌کند")
+            return False
         if sql.count("(") != sql.count(")"):
             self.errors.append("پرانتزها نامتقارن هستند")
             return False

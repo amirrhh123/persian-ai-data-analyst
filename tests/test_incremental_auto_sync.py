@@ -146,4 +146,3 @@ def test_planner_reports_no_changes_for_equal_snapshots() -> None:
     changes = IncrementalSyncPlanner().compare(previous, current)
     assert changes.has_changes is False
     assert changes.unchanged_tables == ("employees",)
-

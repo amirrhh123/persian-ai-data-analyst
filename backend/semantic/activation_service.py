@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -7,11 +8,13 @@ from typing import Optional
 from backend.config import get_settings
 from backend.database.models import SchemaDiscoverySnapshot
 from backend.semantic.loader import clear_semantic_catalog_cache
+from backend.semantic.context_index import semantic_context_index_service
 from backend.semantic.models import (
     SemanticActivationResponse,
     SemanticCatalog,
     SemanticColumn,
     SemanticJoin,
+    SemanticMetric,
     SemanticRule,
     SemanticRollbackResponse,
     SemanticSuggestionSet,
@@ -244,6 +247,31 @@ class SemanticActivationService:
                     )
                 )
 
+        for metric in suggestions.metrics:
+            if metric.table not in live_columns:
+                issues.append(SemanticValidationIssue(
+                    severity="error", code="unknown_metric_table",
+                    message=f"Metric '{metric.name}' targets unknown table '{metric.table}'.",
+                    path=f"metrics.{metric.name}",
+                ))
+            qualified_columns = re.findall(r"\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\b", metric.expression, re.I)
+            for table_name, column_name in qualified_columns:
+                if table_name not in live_columns or column_name not in live_columns[table_name]:
+                    issues.append(SemanticValidationIssue(
+                        severity="error", code="unknown_metric_column",
+                        message=f"Metric '{metric.name}' references unknown column '{table_name}.{column_name}'.",
+                        path=f"metrics.{metric.name}.expression",
+                    ))
+            if ";" in metric.expression or any(
+                keyword in metric.expression.upper()
+                for keyword in ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE"]
+            ):
+                issues.append(SemanticValidationIssue(
+                    severity="error", code="unsafe_metric_expression",
+                    message=f"Metric '{metric.name}' has an unsafe expression.",
+                    path=f"metrics.{metric.name}.expression",
+                ))
+
         for mapping in suggestions.value_mappings:
             if "." not in mapping.column:
                 issues.append(
@@ -333,6 +361,19 @@ class SemanticActivationService:
             tables=tables,
             joins=joins,
             rules=rules,
+            value_mappings=[mapping.model_dump() for mapping in suggestions.value_mappings],
+            business_terms=[term.model_dump() for term in suggestions.business_terms],
+            metrics=[
+                SemanticMetric(
+                    name=metric.name,
+                    table=metric.table,
+                    expression=metric.expression,
+                    aggregation=metric.aggregation,
+                    description=metric.description_fa,
+                    aliases=metric.aliases_fa,
+                )
+                for metric in suggestions.metrics
+            ],
         )
 
     def save_active_catalog(self, tenant_id: str, catalog: SemanticCatalog, source_fingerprint: str = "") -> tuple[Path, Optional[Path]]:
@@ -342,9 +383,13 @@ class SemanticActivationService:
             source_fingerprint=source_fingerprint,
         )
         path = self.active_catalog_path(tenant_id)
-        with path.open("w", encoding="utf-8") as file:
+        temporary_path = path.with_suffix(".tmp")
+        with temporary_path.open("w", encoding="utf-8") as file:
             json.dump(catalog.model_dump(), file, ensure_ascii=False, indent=2)
+        temporary_path.replace(path)
         clear_semantic_catalog_cache()
+        semantic_context_index_service.clear()
+        semantic_context_index_service.get_or_build(tenant_id, catalog)
         return path, backup_path
 
     def activate(self, tenant_id: Optional[str] = None, force: bool = False) -> SemanticActivationResponse:
@@ -410,6 +455,9 @@ class SemanticActivationService:
         active_path = self.active_catalog_path(tenant)
         shutil.copy2(version_path, active_path)
         clear_semantic_catalog_cache()
+        semantic_context_index_service.clear()
+        restored_catalog = self.load_active_catalog(tenant)
+        semantic_context_index_service.get_or_build(tenant, restored_catalog)
         return SemanticRollbackResponse(
             status="rolled_back",
             tenant_id=tenant,

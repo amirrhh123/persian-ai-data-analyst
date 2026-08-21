@@ -1,10 +1,11 @@
 from backend.database.models import ColumnInfo, DatabaseSchema, TableInfo
 from backend.database.schema_loader import schema_loader
-from backend.semantic import semantic_catalog
+from backend.semantic import load_tenant_semantic_catalog
 from backend.sql.planner import SQLPlanner
 
 
 def test_semantic_catalog_loads_core_entities():
+    semantic_catalog = load_tenant_semantic_catalog()
     assert semantic_catalog.version == 1
     assert semantic_catalog.table("employees").entity == "employee"
     assert semantic_catalog.table("students").entity == "student"
@@ -13,6 +14,7 @@ def test_semantic_catalog_loads_core_entities():
 
 
 def test_semantic_catalog_documents_text_identifiers():
+    semantic_catalog = load_tenant_semantic_catalog()
     employee_national_id = semantic_catalog.table("employees").column("national_id")
 
     assert employee_national_id is not None
@@ -39,6 +41,7 @@ def test_sql_planner_uses_semantic_table_aliases():
 
 
 def test_semantic_catalog_matches_live_schema_columns():
+    semantic_catalog = load_tenant_semantic_catalog()
     schema = schema_loader.load_full_schema()
     live_tables = {table.name: {column.name for column in table.columns} for table in schema.tables}
 

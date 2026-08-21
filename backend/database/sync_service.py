@@ -84,6 +84,25 @@ class SchemaSyncService:
                 foreign_column_name=rel.target_column
             ))
         
+        if not tables:
+            # Portable mode: the live database is the source of truth when
+            # no schema snapshot has been provisioned for this tenant.
+            from backend.database.discovery_service import schema_discovery_service
+            snapshot = schema_discovery_service.discover(tenant_id=tenant_id)
+            from backend.database.models import ColumnInfo, TableInfo, ForeignKeyInfo, RelationshipInfo
+            tables = [TableInfo(
+                name=table.name,
+                columns=[ColumnInfo(name=column.name, data_type=column.data_type,
+                    is_nullable=column.is_nullable, column_default=column.column_default,
+                    is_primary_key=column.is_primary_key) for column in table.columns],
+                primary_keys=table.primary_keys, row_count=table.row_count,
+            ) for table in snapshot.tables]
+            relationships = snapshot.relationships
+            foreign_keys = [ForeignKeyInfo(
+                table_name=rel.source_table, column_name=rel.source_column,
+                foreign_table_name=rel.target_table, foreign_column_name=rel.target_column
+            ) for rel in relationships]
+
         return DatabaseSchema(
             tables=tables,
             foreign_keys=foreign_keys,

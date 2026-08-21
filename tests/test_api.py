@@ -15,7 +15,6 @@ from backend.knowledge.models import (
 
 client = TestClient(app)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TENANT_DIR = Path(__file__).parent.parent / "knowledge" / "tenants" / "retail_company"
 BUSINESS_DIR = TENANT_DIR / "business"
 REPORTS_DIR = TENANT_DIR / "reports"
@@ -944,7 +943,7 @@ def test_group_models():
 def test_group_loader():
     from backend.reports.group_loader import GroupLoader
     
-    loader = GroupLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = GroupLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     groups = loader.load_all_groups()
     assert len(groups) == 5
     
@@ -959,7 +958,7 @@ def test_group_loader():
 def test_group_loader_single():
     from backend.reports.group_loader import GroupLoader
     
-    loader = GroupLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = GroupLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     group = loader.load_group("salary")
     assert group is not None
     assert group.id == "salary"
@@ -1006,7 +1005,7 @@ def test_intelligence_service_sync_reports():
 def test_report_has_group_id():
     from backend.knowledge.loader import KnowledgeLoader
     
-    loader = KnowledgeLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = KnowledgeLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     reports = loader.load_all_reports()
     
     for report in reports:
@@ -1342,7 +1341,7 @@ def test_sql_hint():
 def test_report_with_sql_hints():
     from backend.knowledge.loader import KnowledgeLoader
     
-    loader = KnowledgeLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = KnowledgeLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     reports = loader.load_all_reports()
     
     salary_report = next((r for r in reports if r.id == "salary_summary"), None)
@@ -1355,7 +1354,7 @@ def test_report_with_sql_hints():
 def test_report_important_columns():
     from backend.knowledge.loader import KnowledgeLoader
     
-    loader = KnowledgeLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = KnowledgeLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     reports = loader.load_all_reports()
     
     for report in reports:
@@ -1367,7 +1366,7 @@ def test_context_builder_columns():
     from backend.knowledge.context_builder import ReportContextBuilder
     from backend.knowledge.models import ReportContext
     
-    loader = KnowledgeLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = KnowledgeLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     reports = loader.load_all_reports()
     
     salary_report = next((r for r in reports if r.id == "salary_summary"), None)
@@ -1386,7 +1385,7 @@ def test_context_builder_sql_hints():
     from backend.knowledge.context_builder import ReportContextBuilder
     from backend.knowledge.models import ReportContext
     
-    loader = KnowledgeLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = KnowledgeLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     reports = loader.load_all_reports()
     
     salary_report = next((r for r in reports if r.id == "salary_summary"), None)
@@ -1405,7 +1404,7 @@ def test_context_builder_full_with_hints():
     from backend.knowledge.context_builder import ReportContextBuilder
     from backend.knowledge.models import ReportContext
     
-    loader = KnowledgeLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = KnowledgeLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     reports = loader.load_all_reports()
     
     salary_report = next((r for r in reports if r.id == "salary_summary"), None)
@@ -1482,7 +1481,7 @@ def test_sql_service_find_report():
 
 
 def test_rules_directory_exists():
-    rules_path = PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry" / "rules"
+    rules_path = Path("D:/projects/LLM Database/knowledge/tenants/education_ministry/rules")
     assert rules_path.exists()
     
     business_rules_file = rules_path / "business_rules.yaml"
@@ -1501,7 +1500,7 @@ def test_entity_term_model():
 def test_group_entity_terms():
     from backend.reports.group_loader import GroupLoader
     
-    loader = GroupLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = GroupLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     groups = loader.load_all_groups()
     
     student_group = next((g for g in groups if g.id == "student"), None)
@@ -1517,7 +1516,7 @@ def test_entity_boost():
     from backend.reports.group_loader import GroupLoader
     
     retriever = GroupRetriever()
-    loader = GroupLoader(PROJECT_ROOT / "knowledge" / "tenants" / "education_ministry")
+    loader = GroupLoader(Path("D:/projects/LLM Database/knowledge/tenants/education_ministry"))
     groups = loader.load_all_groups()
     
     student_group = next((g for g in groups if g.id == "student"), None)

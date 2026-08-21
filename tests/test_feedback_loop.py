@@ -6,7 +6,12 @@ from backend.pipeline.models import PipelineResponse
 
 
 def request(query_id: str, rating: str = "positive", **kwargs) -> FeedbackRequest:
-    return FeedbackRequest(query_id=query_id, question="اطلاعات کارمند با کد ملی 8223876400", rating=rating, **kwargs)
+    return FeedbackRequest(
+        query_id=query_id,
+        question="اطلاعات کارمند با کد ملی 8223876400",
+        rating=rating,
+        **kwargs,
+    )
 
 
 def test_pipeline_response_has_unique_query_id():
@@ -19,7 +24,8 @@ def test_feedback_redacts_sensitive_identifier(tmp_path: Path):
     service = FeedbackService(tmp_path)
     service.submit("default", request("query-0001", selected_group="employees"))
     event = service.load("default")[0]
-    assert "8223876400" not in event.question_redacted and "***" in event.question_redacted
+    assert "8223876400" not in event.question_redacted
+    assert "***" in event.question_redacted
 
 
 def test_second_vote_replaces_previous_vote(tmp_path: Path):

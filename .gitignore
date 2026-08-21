@@ -38,6 +38,7 @@ Thumbs.db
 
 # Runtime and temporary artifacts
 .tmp/
+.runtime/
 tmp/
 logs/
 output/
@@ -46,8 +47,8 @@ server.out.log
 server.err.log
 
 # Local AI models and offline dependency caches
-models/
-docker_wheels/
+/models/
+/docker_wheels/
 
 # Databases, dumps, and generated seed datasets
 *.db
@@ -55,6 +56,7 @@ docker_wheels/
 *.sqlite3
 *.dump
 *.backup
+backup.sql
 database_scripts/seed/data/
 
 # Tenant-specific generated schema and semantic artifacts
