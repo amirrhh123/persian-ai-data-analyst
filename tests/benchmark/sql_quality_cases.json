@@ -1,0 +1,295 @@
+[
+  {
+    "id": "sqlq_school_phone_by_name",
+    "category": "filter",
+    "question": "شماره تلفن دبیرستان شهید بهشتی",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "tables": ["schools"],
+      "filters": [{"column": "schools.name", "operator": "=", "value": "دبیرستان شهید بهشتی"}],
+      "result_columns": ["name", "phone"],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_student_count_tehran",
+    "category": "grouping",
+    "question": "تعداد دانش آموزان استان تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "operation": "count",
+      "tables": ["students", "schools", "organization_units"],
+      "filters": [{"column": "organization_units.province", "operator": "=", "value": "تهران"}],
+      "joins": ["students.school_id=schools.id", "schools.organization_unit_id=organization_units.id"],
+      "result_columns": ["province", "student_count"],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_student_list_by_school",
+    "category": "filter",
+    "question": "دانش آموزانی که در مدرسه دبیرستان فرزانگان مرودشت هستند",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "tables": ["students", "schools"],
+      "filters": [{"column": "schools.name", "operator": "=", "value": "دبیرستان فرزانگان مرودشت"}],
+      "joins": ["students.school_id=schools.id"],
+      "row_count_rule": "multiple"
+    }
+  },
+  {
+    "id": "sqlq_student_count_by_school_omid",
+    "category": "filter",
+    "question": "تعداد دانش آموزان دبستان امید مرودشت را بگو",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "operation": "count",
+      "tables": ["students", "schools"],
+      "filters": [{"column": "schools.name", "operator": "=", "value": "دبستان امید مرودشت"}],
+      "result_columns": ["school_name", "student_count"],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_student_count_school_with_city_word",
+    "category": "filter",
+    "question": "تعداد دانش آموزان مدرسه دبیرستان نمونه دولتی اصفهان",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "operation": "count",
+      "tables": ["students", "schools"],
+      "filters": [{"column": "schools.name", "operator": "=", "value": "دبیرستان نمونه دولتی اصفهان"}],
+      "result_columns": ["school_name", "student_count"],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_student_pair_count_shahid_beheshti",
+    "category": "filter",
+    "question": "تعداد دانش آموزان مدرسه دبیرستان شهید بهشتی",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "operation": "count",
+      "tables": ["students", "schools"],
+      "filters": [{"column": "schools.name", "operator": "=", "value": "دبیرستان شهید بهشتی"}],
+      "result_columns": ["school_name", "student_count"],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_student_pair_list_shahid_beheshti",
+    "category": "filter",
+    "question": "دانش آموزان مدرسه دبیرستان شهید بهشتی را نشان بده",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "tables": ["students", "schools"],
+      "filters": [{"column": "schools.name", "operator": "=", "value": "دبیرستان شهید بهشتی"}],
+      "joins": ["students.school_id=schools.id"],
+      "columns": ["students.first_name", "students.last_name"],
+      "row_count_rule": "multiple"
+    }
+  },
+  {
+    "id": "sqlq_org_unit_profile_by_name",
+    "category": "entity",
+    "question": "اطلاعات واحد سازمانی اداره کل آموزش و پرورش تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "organization",
+      "tables": ["organization_units"],
+      "filters": [{"column": "organization_units.name", "operator": "=", "value": "اداره کل آموزش و پرورش تهران"}],
+      "result_columns": ["name", "province"],
+      "row_count_rule": "multiple"
+    }
+  },
+  {
+    "id": "sqlq_training_request_value_routing",
+    "category": "table",
+    "question": "تعداد موارد با کارمند اداری",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "training_request",
+      "tables": ["demo_training_requests"],
+      "filters": [{"column": "requester_role", "operator": "=", "value": "کارمند اداری"}],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_training_request_persian_numeric_filter",
+    "category": "filter",
+    "question": "تعداد درخواست های آموزشی با هزینه کمتر از ۸۰ میلیون",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "training_request",
+      "tables": ["demo_training_requests"],
+      "filters": [{"column": "estimated_cost", "operator": "<", "value": "80000000"}],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_ambiguous_value_requires_clarification",
+    "category": "safety",
+    "question": "تعداد درخواست ها با تهران",
+    "execute": false,
+    "expected": {
+      "success": false,
+      "needs_clarification": true
+    }
+  },
+  {
+    "id": "sqlq_employee_identity_by_national_id",
+    "category": "filter",
+    "question": "اسم و فامیل کارمند با کد ملی 8223876400",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "tables": ["employees"],
+      "filters": [{"column": "employees.national_id", "operator": "=", "value": "8223876400"}],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_employee_service_years_join",
+    "category": "join",
+    "question": "سنوات کارمند با کد ملی \"2475429291\"",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "tables": ["employees", "retirement_records"],
+      "joins": ["retirement_records.employee_id=employees.id"],
+      "filters": [{"column": "employees.national_id", "operator": "=", "value": "2475429291"}],
+      "row_count_rule": "at_most_one"
+    }
+  },
+  {
+    "id": "sqlq_employee_full_profile_columns",
+    "category": "column",
+    "question": "کارمند با کد ملی 4871587050 وضعیت و شغل و اسم و فامیل و تمام ستون ها",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "columns": ["employees.position", "employees.status", "employees.first_name", "employees.last_name"],
+      "filters": [{"column": "employees.national_id", "operator": "=", "value": "4871587050"}],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_combined_name_and_province_filter",
+    "category": "filter",
+    "question": "تعداد دانش آموزان تهران که اسم آن ها پوریا هست را بگو",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "operation": "count",
+      "tables": ["students", "schools", "organization_units"],
+      "filters": [
+        {"column": "organization_units.province", "operator": "=", "value": "تهران"},
+        {"column": "students.first_name", "operator": "=", "value": "پوریا"}
+      ],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_lowest_payment_ranking",
+    "category": "ranking",
+    "question": "برای کدام کارمند کمترین سنوات پرداخت شده؟",
+    "execute": false,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "tables": ["retirement_records", "employees"],
+      "order_by": {"column": "retirement_records.pension_amount", "direction": "asc"},
+      "row_count_rule": "at_most_one"
+    }
+  },
+  {
+    "id": "sqlq_school_count_tehran_aggregate",
+    "category": "aggregate",
+    "question": "تعداد مدارس شهر تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "operation": "count",
+      "tables": ["schools", "organization_units"],
+      "filters": [{"column": "organization_units.city", "operator": "=", "value": "تهران"}],
+      "result_columns": ["city", "school_count"],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_intent_routes_students_not_generic",
+    "category": "intent",
+    "question": "اطلاعات کارمندان استان تهران",
+    "execute": false,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "tables": ["employees", "organization_units"],
+      "filters": [{"column": "organization_units.province", "operator": "=", "value": "تهران"}]
+    }
+  },
+  {
+    "id": "sqlq_exact_value_school_lookup",
+    "category": "value",
+    "question": "اطلاعات مدرسه دبیرستان شهید بهشتی",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "tables": ["schools"],
+      "filters": [{"column": "schools.name", "operator": "=", "value": "دبیرستان شهید بهشتی"}],
+      "row_count_rule": "single"
+    }
+  },
+  {
+    "id": "sqlq_school_names_shape",
+    "category": "result_shape",
+    "question": "اسم مدارس استان تهران",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "student",
+      "tables": ["schools", "organization_units"],
+      "filters": [{"column": "organization_units.province", "operator": "=", "value": "تهران"}],
+      "result_columns": ["name"],
+      "row_count_rule": "multiple"
+    }
+  },
+  {
+    "id": "sqlq_answer_generated_for_count",
+    "category": "answer",
+    "question": "تعداد کارمندان استان اصفهان را نشان بده",
+    "execute": true,
+    "expected": {
+      "success": true,
+      "group": "employee",
+      "operation": "count",
+      "tables": ["employees", "organization_units"],
+      "filters": [{"column": "organization_units.province", "operator": "=", "value": "اصفهان"}],
+      "row_count_rule": "single",
+      "answer_not_empty": true
+    }
+  }
+]
