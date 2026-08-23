@@ -1,10 +1,17 @@
 import argparse
 import json
+import sys
 
 from tests.benchmark.regression import run_sync, save_results, summarize
 
 
+def _force_utf8_stdout() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main() -> int:
+    _force_utf8_stdout()
     parser = argparse.ArgumentParser(description="Run SQL regression benchmark.")
     parser.add_argument("--case-id", action="append", dest="case_ids", default=None)
     parser.add_argument("--category", action="append", dest="categories", default=None)
