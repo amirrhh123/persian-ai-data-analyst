@@ -102,6 +102,7 @@
           <button id="adminDataPolicy" type="button">بررسی اطلاعات حساس</button>
           <button id="adminErrorTaxonomy" type="button">راهنمای خطاها</button>
           <button id="adminSemanticSuggestions" type="button">نمایش پیشنهادهای معنایی</button>
+          <button id="adminAliasEnrich" type="button">پیشنهاد هوشمند مترادف‌ها</button>
           <button id="adminRuntimeRefresh" type="button">به‌روزرسانی خودکار از دیتابیس</button>
           <span class="badge" id="lifeStatus">آماده</span>
         </div>
@@ -405,6 +406,17 @@ async function runDiscoverySync(){
     await loadSemanticFreshness();
   }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
 }
+async function runAliasEnrichment(){
+  try{
+    const d=await adminPost('/semantic/aliases/enrich','پیشنهاد مترادف‌ها...');
+    const s=d.stats||{};
+    if(s.enabled===false){
+      setAdminResult(`مترادف هوشمند اجرا نشد.<br>علت: <b>${esc(s.reason||'نامشخص')}</b><br><small>مدل محلی در دسترس نیست؛ مترادف‌های پایه بدون تغییر باقی می‌مانند.</small>`,'warn');
+      return;
+    }
+    setAdminResult(`مترادف‌های فارسی هوشمند آماده شد.<br>ستون‌های بهبودیافته: <b>${faDigits(s.columns_enriched||0)}</b> · مترادف تازه: <b>${faDigits(s.aliases_added||0)}</b> · درخواست به مدل: <b>${faDigits(s.prompted||0)}</b> · از حافظه: <b>${faDigits(s.cache_hits||0)}</b><br><small>برای اعمال روی سیستم، «به‌روزرسانی خودکار» یا «اجرای کامل چرخه» را بزنید.</small><br><small>${esc(d.output_path||'')}</small>`,'ok');
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
+}
 async function runQualityGate(){
   try{
     setAdminBusy('Quality gate...');
@@ -691,7 +703,7 @@ async function runQuery(){
     await loadAuditSummary();
   }finally{$('run').disabled=false;}
 }
- renderSamples(); checkHealth(); loadSemanticFreshness(); loadSemanticVersions(); loadAuditSummary(); $('run').onclick=runQuery; $('lifeRun').onclick=runLifecycle; $('adminRuntimeRefresh').onclick=refreshRuntimeSemantic; $('adminSyncDiscovery').onclick=runDiscoverySync; $('adminQualityGate').onclick=runQualityGate; $('adminSmokeSync').onclick=runSmokeSync; $('adminSmokeRun').onclick=runSmokeTests; $('adminLightweightReadiness').onclick=checkLightweightReadiness; $('adminLightweightGaps').onclick=loadLightweightGapSuggestions; $('adminApplyLightweightGaps').onclick=applyLightweightGapSuggestions; $('adminReviewApply').onclick=applySemanticReview; $('adminSemanticSuggestions').onclick=loadSemanticSuggestions; $('adminDataPolicy').onclick=loadDataPolicy; $('adminErrorTaxonomy').onclick=loadErrorTaxonomy;
+ renderSamples(); checkHealth(); loadSemanticFreshness(); loadSemanticVersions(); loadAuditSummary(); $('run').onclick=runQuery; $('lifeRun').onclick=runLifecycle; $('adminRuntimeRefresh').onclick=refreshRuntimeSemantic; $('adminSyncDiscovery').onclick=runDiscoverySync; $('adminQualityGate').onclick=runQualityGate; $('adminSmokeSync').onclick=runSmokeSync; $('adminSmokeRun').onclick=runSmokeTests; $('adminLightweightReadiness').onclick=checkLightweightReadiness; $('adminLightweightGaps').onclick=loadLightweightGapSuggestions; $('adminApplyLightweightGaps').onclick=applyLightweightGapSuggestions; $('adminReviewApply').onclick=applySemanticReview; $('adminSemanticSuggestions').onclick=loadSemanticSuggestions; $('adminAliasEnrich').onclick=runAliasEnrichment; $('adminDataPolicy').onclick=loadDataPolicy; $('adminErrorTaxonomy').onclick=loadErrorTaxonomy;
 </script>
 </body>
 </html>

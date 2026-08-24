@@ -409,6 +409,32 @@ async def sync_semantic_suggestions():
         raise HTTPException(status_code=500, detail=f"Error syncing semantic suggestions: {str(e)}")
 
 
+@app.post("/semantic/aliases/enrich")
+async def enrich_semantic_aliases(max_prompts: int | None = None):
+    """Generate fresh suggestions, add LLM Persian aliases, persist the draft.
+
+    Applying them to the active catalog still goes through the normal
+    activation gate, so this endpoint alone cannot change runtime behavior.
+    """
+    try:
+        suggestions, _ = semantic_suggestion_service.sync(tenant_id=settings.tenant_id)
+        from backend.semantic.alias_enrichment import alias_enrichment_service
+
+        enriched, stats = await alias_enrichment_service.enrich_suggestions(
+            settings.tenant_id, suggestions, max_prompts=max_prompts
+        )
+        output_path = semantic_suggestion_service.save(enriched)
+        return {
+            "status": "success",
+            "tenant_id": settings.tenant_id,
+            "stats": stats,
+            "output_path": str(output_path),
+            "note": "برای اعمال مترادف‌ها روی کاتالوگ فعال، فعال‌سازی semantic را اجرا کنید.",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error enriching aliases: {str(e)}")
+
+
 @app.get("/semantic/smoke-tests", response_model=SemanticSmokeTestGenerationResponse)
 async def get_semantic_smoke_tests(max_cases_per_table: int = 5):
     try:
