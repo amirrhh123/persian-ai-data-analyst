@@ -18,6 +18,7 @@ async def test_semantic_lifecycle_runs_end_to_end_with_small_benchmark():
         "validator_schema_sync",
         "schema_quality_gate",
         "semantic_suggestions",
+        "alias_enrichment",
         "value_index_sync",
         "semantic_activation",
         "semantic_benchmark",

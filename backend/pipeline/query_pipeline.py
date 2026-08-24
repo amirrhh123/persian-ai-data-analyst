@@ -161,21 +161,17 @@ class QueryPipeline:
         if top.score < 0.60:
             return None
 
-        candidates: list[str] = []
+        # Any non-entity table whose evidence ties the top candidate counts as
+        # a semantic reading — including the case where the semantic table IS
+        # the top hit while the entity table ties right behind it.
+        entity_table = ENTITY_PRIMARY_TABLES.get(intent.requested_entity)
         for item in grounding.evidence:
             table = item.get("table")
-            if not table:
+            if not table or table == entity_table:
                 continue
             score = float(item.get("score") or 0.0)
-            if table != top.table and abs(score - top.score) <= 0.25 and table not in candidates:
-                candidates.append(table)
-
-        entity_table = ENTITY_PRIMARY_TABLES.get(intent.requested_entity)
-        for candidate in candidates:
-            if candidate == entity_table:
-                continue
-            if catalog.table(candidate):
-                return candidate
+            if abs(score - top.score) <= 0.25 and catalog.table(table):
+                return table
         return None
 
     def _grounding_overrides_entity(
@@ -2151,7 +2147,7 @@ class QueryPipeline:
             )
             if reroute_table:
                 # Same value lives in a semantic table with an approved
-                # deterministic template; prefer that reading.
+                # deterministic template; resolve the tie in its favor.
                 intent.requested_entity = None
                 grounding.grounded_filters.sort(
                     key=lambda item: 0 if item.table == reroute_table else 1
@@ -2160,6 +2156,7 @@ class QueryPipeline:
                     key=lambda item: 0 if item.get("table") == reroute_table else 1
                 )
                 grounding.recommended_table = reroute_table
+                grounding.ambiguous_tables = [reroute_table]
                 value_override_applied = True
 
         normalized_intent = normalize_intent(intent)

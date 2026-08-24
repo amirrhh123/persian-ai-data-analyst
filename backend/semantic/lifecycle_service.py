@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -318,6 +319,29 @@ class SemanticLifecycleService:
                     "rules": len(suggestions.rules),
                     "review_required_tables": review_required,
                 },
+            )
+        )
+
+        # LLM-assisted Persian alias enrichment (optional, cached).
+        from backend.semantic.alias_enrichment import alias_enrichment_service
+
+        enrichment_start = time.time()
+        suggestions, enrich_stats = await alias_enrichment_service.enrich_suggestions(
+            tenant, suggestions
+        )
+        steps.append(
+            SemanticLifecycleStep(
+                name="alias_enrichment",
+                status="success" if enrich_stats.get("enabled") else "warning",
+                message=(
+                    f"Alias enrichment: {enrich_stats.get('aliases_added', 0)} Persian aliases "
+                    f"added across {enrich_stats.get('columns_enriched', 0)} columns "
+                    f"(prompted={enrich_stats.get('prompted', 0)}, "
+                    f"cache_hits={enrich_stats.get('cache_hits', 0)})."
+                    if enrich_stats.get("enabled")
+                    else f"Alias enrichment skipped: {enrich_stats.get('reason')}"
+                ),
+                details=enrich_stats,
             )
         )
 

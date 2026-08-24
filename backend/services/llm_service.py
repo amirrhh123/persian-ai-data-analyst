@@ -14,7 +14,9 @@ from backend.observability.cost_calculator import ModelPricing, estimate_cost
 class LLMService:
     def __init__(self):
         self.settings = get_settings()
-        self.base_url = self.settings.ollama_url
+        raw_url = self.settings.ollama_url
+        # Some environments set OLLAMA_HOST without a scheme; httpx requires one.
+        self.base_url = raw_url if str(raw_url).startswith("http") else f"http://{raw_url}"
         self.token_counter = create_token_counter(self.settings.llm_tokenizer_model_path)
         self.context_budget = ContextBudget(self.settings.llm_context_max_tokens, self.settings.llm_reserved_output_tokens)
         self.last_usage: TokenUsage | None = None

@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     value_index_deep_column_budget: int = 60
     value_index_fuzzy_enabled: bool = True
     value_index_fuzzy_min_similarity: float = 0.82
+
+    # LLM-assisted Persian alias enrichment
+    alias_max_columns_per_run: int = 40
     
     api_host: str = "0.0.0.0"
     api_port: int = 8080
