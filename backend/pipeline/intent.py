@@ -309,6 +309,26 @@ def _extract_limit(q: str) -> Optional[int]:
     return value if 1 <= value <= 50 else None
 
 
+_PERSON_NAME_STOPWORDS = {
+    "استان", "شهر", "مدرسه", "منطقه", "دانش", "دانش‌آموز", "دانش آموز",
+    "کارمند", "کارکنان", "پرسنل", "معلم", "دبیر", "مدیر", "هنرستان",
+}
+
+# Particles/prepositions that regex capture groups can swallow before a real
+# name appears; two-letter Persian tokens are effectively never given names.
+_PERSON_NAME_PARTICLES = {
+    "با", "از", "در", "به", "را", "و", "که", "برای", "تا", "هم", "یا",
+    "این", "آن", "های", "ها", "است", "بود", "شود",
+}
+
+
+def _valid_person_name_token(token: Optional[str]) -> bool:
+    if not token:
+        return False
+    cleaned = token.strip()
+    return len(cleaned) >= 3 and cleaned not in _PERSON_NAME_STOPWORDS and cleaned not in _PERSON_NAME_PARTICLES
+
+
 def _extract_person_name_filters(q: str, entity: Optional[str]) -> tuple[Optional[str], Optional[str]]:
     if entity not in {"student", "employee", "salary", "retirement", "ranking"}:
         return None, None
@@ -319,16 +339,25 @@ def _extract_person_name_filters(q: str, entity: Optional[str]) -> tuple[Optiona
     first_match = re.search(r"(?:اسم|نام)(?!\s+خانوادگی)\s*(?:او|آن\s*ها|آن‌ها|شان|ش|دانش\s*آموز|دانش‌آموز|کارمند)?\s+([آ-ی]{2,})", q)
     if first_match:
         candidate = first_match.group(1)
-        if candidate not in {"استان", "شهر", "مدرسه", "منطقه", "دانش", "دانش‌آموز", "دانش", "کارمند"}:
+        if _valid_person_name_token(candidate):
             first_name = candidate
 
     last_match = re.search(r"(?:فامیل|نام\s+خانوادگی)\s*(?:او|آن\s*ها|آن‌ها|شان|ش)?\s+([آ-ی]{2,})", q)
     if last_match:
-        last_name = last_match.group(1)
+        candidate = last_match.group(1)
+        # Role nouns like «کارمند» describe the entity, not a family name;
+        # without this guard the word leaks into required-filter contracts.
+        if _valid_person_name_token(candidate):
+            last_name = candidate
 
     entity_word = r"دانش\s*آموز|دانش‌آموز" if entity == "student" else r"کارمند|کارکن|پرسنل|معلم|دبیر"
     full_name_match = re.search(rf"(?:{entity_word})\s+([آ-ی]{{2,}})\s+([آ-ی]{{2,}})(?:\s+را|\s+رو|\s+با|\s+که|\s+در|\s+از|\s+پایه|\s+وضعیت|\s+شغل|\s+فعال|\s+غیرفعال|\s+شهر|\s+استان|\s+چیست|\s+چیه|$)", q)
-    if full_name_match and not any(term in full_name_match.group(1) for term in {"استان", "شهر", "مدرسه"}):
+    if (
+        full_name_match
+        and _valid_person_name_token(full_name_match.group(1))
+        and _valid_person_name_token(full_name_match.group(2))
+        and not any(term in full_name_match.group(1) for term in {"استان", "شهر", "مدرسه"})
+    ):
         first_name = first_name or full_name_match.group(1)
         last_name = last_name or full_name_match.group(2)
 
@@ -336,7 +365,11 @@ def _extract_person_name_filters(q: str, entity: Optional[str]) -> tuple[Optiona
         r"(?:با|برای)\s+(?:نام|اسم)\s+([\u0600-\u06FF]{2,})\s+([\u0600-\u06FF]{2,})(?:\s+را|\s+رو|\s+بده|\s+نشان|\s+نمایش|$)",
         q,
     )
-    if by_name_match:
+    if (
+        by_name_match
+        and _valid_person_name_token(by_name_match.group(1))
+        and _valid_person_name_token(by_name_match.group(2))
+    ):
         first_name = first_name or by_name_match.group(1)
         last_name = last_name or by_name_match.group(2)
 
@@ -345,7 +378,11 @@ def _extract_person_name_filters(q: str, entity: Optional[str]) -> tuple[Optiona
             r"(?:رتبه\s*بندی|رتبه‌بندی)\s+([\u0600-\u06FF]{2,})\s+([\u0600-\u06FF]{2,})",
             q,
         )
-        if ranking_name_match:
+        if (
+            ranking_name_match
+            and _valid_person_name_token(ranking_name_match.group(1))
+            and _valid_person_name_token(ranking_name_match.group(2))
+        ):
             first_name = first_name or ranking_name_match.group(1)
             last_name = last_name or ranking_name_match.group(2)
 
@@ -671,6 +708,68 @@ def extract_intent(
             ]
 
     return intent
+
+
+def suppress_name_substring_columns(
+    intent: QueryIntent,
+    semantic_catalog: SemanticCatalog,
+) -> None:
+    """Drop requested columns / type filters whose trigger text sits inside an extracted name.
+
+    General rule (no entity-specific cases): when a semantic alias such as
+    «دبیرستان» matched only because it is part of a longer extracted name like
+    «دبیرستان فرزانگان مرودشت», it describes the name - not an independent
+    requested column or categorical filter. Runs AFTER LLM enrichment so
+    late-added columns are covered too.
+    """
+    name_values = [
+        intent.named_school,
+        intent.named_organization_unit,
+        intent.named_student,
+        intent.named_employee,
+        intent.first_name,
+        intent.last_name,
+    ]
+    name_texts = [normalize_persian(str(value)).lower() for value in name_values if value]
+    if not name_texts:
+        return
+
+    column_aliases: dict[str, list[str]] = {}
+    for table in semantic_catalog.tables:
+        for column in table.columns:
+            column_aliases.setdefault(column.name, []).extend(column.aliases or [])
+
+    kept_columns: list[str] = []
+    for column in intent.requested_columns:
+        aliases = column_aliases.get(column, [])
+        substring_of_name = any(
+            alias
+            and normalize_persian(alias).lower() in text
+            for alias in aliases
+            for text in name_texts
+        )
+        if not substring_of_name:
+            kept_columns.append(column)
+    intent.requested_columns = kept_columns
+
+    if intent.school_type:
+        school_type_text = normalize_persian(intent.school_type).lower()
+        if any(school_type_text in text for text in name_texts):
+            intent.school_type = None
+
+    # Purge structured filter entries whose value merely describes an
+    # extracted name (e.g. enrichment adding school_type=دبیرستان when the
+    # word دبیرستان is part of the requested school's NAME).
+    if intent.filters:
+        kept_filters = []
+        for item in intent.filters:
+            value_text = normalize_persian(str(getattr(item, "value", ""))).lower()
+            subsumed = bool(value_text) and any(
+                value_text in text and value_text != text for text in name_texts
+            )
+            if not subsumed:
+                kept_filters.append(item)
+        intent.filters = kept_filters
 
 
 def normalize_intent(intent: QueryIntent) -> NormalizedIntent:

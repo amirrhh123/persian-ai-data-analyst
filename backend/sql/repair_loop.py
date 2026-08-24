@@ -3,14 +3,100 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from backend.database.models import DatabaseSchema
 from backend.knowledge.models import Report
 from backend.pipeline.intent import QueryIntent
+from backend.sql.filter_contract import FilterContract, normalize_value
 from backend.sql.identifier_canonicalizer import canonicalize_sql_identifiers
 from backend.sql.models import SQLRepairAttempt, SQLRepairResult
 from backend.sql.validator import SQLValidator
+
+
+_NUMERIC_TYPES = {"integer", "bigint", "numeric", "double precision", "real", "decimal", "smallint"}
+
+
+def _column_type(schema: DatabaseSchema, column: str) -> Optional[str]:
+    bare = column.split(".")[-1].lower()
+    qualified_table = column.split(".")[0].lower() if "." in column else None
+    for table in schema.tables:
+        if qualified_table and table.name.lower() != qualified_table:
+            continue
+        for item in table.columns:
+            if item.name.lower() == bare:
+                return (item.data_type or "").lower()
+    return None
+
+
+def _render_literal(schema: DatabaseSchema, column: str, value: str) -> str:
+    cleaned = normalize_value(value)
+    data_type = _column_type(schema, column)
+    is_numeric_literal = re.fullmatch(r"-?\d+(?:\.\d+)?", cleaned) is not None
+    if is_numeric_literal and data_type in _NUMERIC_TYPES:
+        return cleaned
+    return "'" + cleaned.replace("'", "''") + "'"
+
+
+def inject_missing_required_filters(
+    sql: str,
+    schema: DatabaseSchema,
+    missing_items: list[dict[str, Any]],
+) -> tuple[str, bool]:
+    """Append missing required predicates into the WHERE clause.
+
+    Only schema-verified columns are injected; national-ID-like values stay
+    quoted because their column type is textual.
+    """
+    known_columns = {
+        (table.name.lower(), item.name.lower())
+        for table in schema.tables
+        for item in table.columns
+    }
+
+    additions: list[str] = []
+    for entry in missing_items or []:
+        column = str(entry.get("column", ""))
+        operator = str(entry.get("operator", "="))
+        value = normalize_value(entry.get("value", ""))
+        if not column or not value:
+            continue
+        bare = column.split(".")[-1].lower()
+        qualified_table = column.split(".")[0].lower() if "." in column else None
+        exists = (
+            any(table_name == qualified_table and col == bare for table_name, col in known_columns)
+            if qualified_table
+            else any(col == bare for _, col in known_columns)
+        )
+        if not exists:
+            continue
+        try:
+            if operator == "IN":
+                values = [part for part in value.split("|") if part]
+                if not values:
+                    continue
+                literals = ", ".join(_render_literal(schema, column, part) for part in values)
+                additions.append(f"{column} IN ({literals})")
+            elif operator in {"=", "<>", ">", ">=", "<", "<="}:
+                additions.append(f"{column} {operator} {_render_literal(schema, column, value)}")
+        except Exception:
+            continue
+
+    if not additions:
+        return sql, False
+
+    clause = " AND ".join(additions)
+    boundary = re.search(r"\b(group\s+by|order\s+by|limit|offset)\b", sql, re.IGNORECASE)
+    insert_at = boundary.start() if boundary else len(sql.rstrip().rstrip(";"))
+    prefix = sql[:insert_at].rstrip()
+    suffix = sql[insert_at:]
+
+    if re.search(r"\bwhere\b", prefix, re.IGNORECASE):
+        updated = f"{prefix} AND {clause}"
+    else:
+        updated = f"{prefix} WHERE {clause}"
+    combined = f"{updated} {suffix}".strip()
+    return combined, combined != sql
 
 
 class SQLRepairLoop:
@@ -100,7 +186,12 @@ class SQLRepairLoop:
         stripped = sql.rstrip().rstrip(";")
         return f"{stripped} LIMIT 1000", True
 
-    def _repair_once(self, sql: str, schema: DatabaseSchema) -> tuple[str, list[str]]:
+    def _repair_once(
+        self,
+        sql: str,
+        schema: DatabaseSchema,
+        missing_filters: Optional[list[dict[str, Any]]] = None,
+    ) -> tuple[str, list[str]]:
         updated = sql
         strategies: list[str] = []
 
@@ -108,12 +199,18 @@ class SQLRepairLoop:
             repaired, report = canonicalize_sql_identifiers(value, schema)
             return repaired, report["changed"]
 
+        def inject_filters(value: str) -> tuple[str, bool]:
+            if not missing_filters:
+                return value, False
+            return inject_missing_required_filters(value, schema, missing_filters)
+
         for name, operation in (
             ("strip_markdown", lambda value: self._strip_markdown(value)),
             ("normalize_postgres_identifier_quotes", lambda value: self._normalize_postgres_identifier_quotes(value)),
             ("canonicalize_identifiers", canonicalize),
             ("expand_select_star", lambda value: self._expand_select_star(value, schema)),
             ("quote_national_id", lambda value: self._quote_national_id(value)),
+            ("inject_missing_required_filters", inject_filters),
             ("cap_limit", lambda value: self._cap_limit(value)),
             ("add_safe_limit", lambda value: self._add_safe_limit(value)),
         ):
@@ -128,10 +225,15 @@ class SQLRepairLoop:
         schema: DatabaseSchema,
         report: Optional[Report] = None,
         intent: Optional[QueryIntent] = None,
+        contract: Optional[FilterContract] = None,
     ) -> SQLRepairResult:
         """Repair, validate, and stop on success, no progress, or policy rejection."""
         validator = SQLValidator()
-        initial_validation = validator.validate(sql, schema, report=report, intent=intent)
+
+        def _validate(candidate: str) -> Any:
+            return validator.validate(candidate, schema, report=report, intent=intent, contract=contract)
+
+        initial_validation = _validate(sql)
         if initial_validation.is_valid:
             return SQLRepairResult(
                 sql=sql, valid=True, stopped_reason="already_valid",
@@ -147,7 +249,11 @@ class SQLRepairLoop:
         attempts: list[SQLRepairAttempt] = []
         final_validation = initial_validation
         for attempt_number in range(1, self.maximum_attempts + 1):
-            candidate, strategies = self._repair_once(current, schema)
+            candidate, strategies = self._repair_once(
+                current,
+                schema,
+                missing_filters=getattr(final_validation, "missing_required_filters", None),
+            )
             if not strategies or candidate == current:
                 return SQLRepairResult(
                     sql=current,
@@ -157,9 +263,7 @@ class SQLRepairLoop:
                     attempts=attempts,
                     validation=final_validation,
                 )
-            final_validation = SQLValidator().validate(
-                candidate, schema, report=report, intent=intent,
-            )
+            final_validation = _validate(candidate)
             attempts.append(SQLRepairAttempt(
                 attempt=attempt_number,
                 sql=candidate,

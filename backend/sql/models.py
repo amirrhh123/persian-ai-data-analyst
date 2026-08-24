@@ -26,6 +26,7 @@ class ValidationResult(BaseModel):
     is_valid: bool
     errors: List[str] = []
     warnings: List[str] = []
+    missing_required_filters: List[Dict[str, str]] = []
 
 
 class SQLRepairAttempt(BaseModel):

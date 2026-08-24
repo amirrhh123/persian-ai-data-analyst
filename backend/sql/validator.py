@@ -7,7 +7,9 @@ from backend.database.models import DatabaseSchema
 from backend.knowledge.models import Report
 from backend.pipeline.intent import QueryIntent
 from backend.semantic.models import normalize_identifier
+from backend.sql.filter_contract import FilterContract
 from backend.sql.models import ValidationResult
+from backend.sql.required_filter_validator import required_filter_validator
 from backend.sql.structured import ensure_single_select
 
 
@@ -325,9 +327,12 @@ class SQLValidator:
         schema: DatabaseSchema,
         report: Optional[Report] = None,
         intent: Optional[QueryIntent] = None,
+        contract: Optional[FilterContract] = None,
     ) -> ValidationResult:
         self.errors = []
         self.warnings = []
+
+        missing_required_filters: list[dict[str, str]] = []
 
         if not sql or not sql.strip():
             self.errors.append("SQL خالی است")
@@ -339,11 +344,17 @@ class SQLValidator:
             self.validate_complexity(sql)
             self.validate_constraints(sql, intent)
             self.validate_semantic_rules(sql, intent)
+            if contract is not None:
+                contract_result = required_filter_validator.validate(sql, contract, schema)
+                if not contract_result.is_valid:
+                    self.errors.extend(contract_result.errors)
+                    missing_required_filters = contract_result.missing_required_filters
 
         return ValidationResult(
             is_valid=len(self.errors) == 0,
             errors=self.errors,
             warnings=self.warnings,
+            missing_required_filters=missing_required_filters,
         )
 
     def _tables(self, sql: str) -> list[str]:

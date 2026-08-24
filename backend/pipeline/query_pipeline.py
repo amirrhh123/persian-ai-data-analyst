@@ -14,7 +14,12 @@ from backend.execution.service import execution_service
 from backend.explainability.service import explainability_service
 from backend.knowledge.loader import KnowledgeLoader
 from backend.knowledge.models import Report
-from backend.pipeline.intent import detect_ambiguity, extract_intent, normalize_intent
+from backend.pipeline.intent import (
+    detect_ambiguity,
+    extract_intent,
+    normalize_intent,
+    suppress_name_substring_columns,
+)
 from backend.pipeline.error_taxonomy import pipeline_error_taxonomy
 from backend.pipeline.models import PipelineRequest, PipelineResponse
 from backend.pipeline.school_resolver import resolve_school_name
@@ -31,6 +36,7 @@ from backend.semantic.snapshot import SemanticSnapshot, semantic_snapshot_provid
 from backend.security.data_policy import data_sensitivity_policy
 from backend.sql.aggregate_guard import sql_aggregate_safety_guard
 from backend.sql.deterministic_builder import deterministic_sql_builder
+from backend.sql.filter_contract import build_filter_contract
 from backend.sql.generator import sql_generator
 from backend.sql.identifier_canonicalizer import canonicalize_sql_identifiers
 from backend.sql.join_verifier import sql_plan_join_verifier
@@ -1902,6 +1908,7 @@ class QueryPipeline:
         semantic_step_start = time.time()
         semantic_resolution = await semantic_resolver.resolve(request.question, semantic_snapshot)
         intent = semantic_resolver.enrich_intent(intent, semantic_resolution)
+        suppress_name_substring_columns(intent, active_catalog)
         normalized_intent = normalize_intent(intent)
         semantic_table_plan = self._semantic_table_plan(request.question, active_catalog)
         # Generic runtime routing is reserved for newly discovered tables.
@@ -2399,7 +2406,18 @@ class QueryPipeline:
                 or (intent.requested_entity == "school" and intent.named_school)
             ) else report_obj
             validation_intent = None if (semantic_table_plan or multi_intent.get("is_composable")) else intent
-            validation = sql_validator.validate(sql, scoped_schema, report=validation_report, intent=validation_intent)
+            required_contract = None
+            if sql:
+                # Build from the CURRENT intent so late mutations (e.g. fuzzy
+                # school-name resolution) are reflected in the contract.
+                required_contract = build_filter_contract(normalize_intent(intent), plan)
+            validation = sql_validator.validate(
+                sql,
+                scoped_schema,
+                report=validation_report,
+                intent=validation_intent,
+                contract=required_contract,
+            )
             if not validation.is_valid:
                 from backend.sql.repair_loop import sql_repair_loop
 
@@ -2408,6 +2426,7 @@ class QueryPipeline:
                     scoped_schema,
                     report=validation_report,
                     intent=validation_intent,
+                    contract=required_contract,
                 )
                 sql = repair.sql
                 validation = repair.validation
