@@ -3,6 +3,7 @@ import re
 import time
 from pathlib import Path
 from typing import List, Optional
+from uuid import uuid4
 
 from backend.answer.service import answer_service
 from backend.citations.service import citation_service
@@ -19,6 +20,15 @@ from backend.pipeline.intent import (
     extract_intent,
     normalize_intent,
     suppress_name_substring_columns,
+)
+from backend.pipeline.clarification_state import (
+    ClarificationContext,
+    clarification_store,
+)
+from backend.pipeline.confidence_policy import (
+    DECISION_CLARIFY,
+    confidence_policy,
+    table_label_fa,
 )
 from backend.pipeline.error_taxonomy import pipeline_error_taxonomy
 from backend.pipeline.models import PipelineRequest, PipelineResponse
@@ -86,6 +96,7 @@ class QueryPipeline:
         catalog: SemanticCatalog,
     ) -> GroundingResult:
         """Ground literal values onto real columns; never breaks the pipeline."""
+        self._last_grounding_error: Optional[str] = None
         try:
             snapshot = value_index_service.load(tenant_id)
             return value_grounding_resolver.resolve(
@@ -93,7 +104,8 @@ class QueryPipeline:
                 snapshot,
                 requested_entity=intent.requested_entity,
             )
-        except Exception:
+        except Exception as exc:
+            self._last_grounding_error = f"{type(exc).__name__}: {exc}"
             return GroundingResult()
 
     @staticmethod
@@ -140,7 +152,9 @@ class QueryPipeline:
         if not grounding.grounded_filters:
             return False
         top = grounding.grounded_filters[0]
-        if top.score < 0.70:
+        # Score floor aligns with the policy's validated band; the decisive
+        # safety signals below are exact value containment and alias prefix.
+        if top.score < 0.60:
             return False
         if self._intent_has_binding_scalars(intent):
             return False
@@ -1997,6 +2011,30 @@ class QueryPipeline:
         tracer = PipelineTracer()
         self._last_related_ambiguity = None
         tenant_id = request.tenant_id or self.settings.tenant_id
+
+        # Clarification resume (roadmap Change 5): a follow-up in the same
+        # session continues the ORIGINAL request with the answer appended.
+        resumed_clarification = None
+        if request.session_id:
+            pending = clarification_store.pop(request.session_id)
+            if pending is not None:
+                resumed_clarification = pending
+                request = request.model_copy(
+                    update={"question": f"{pending.original_question} {request.question}".strip()}
+                )
+                tracer.add_step(
+                    "clarification_resume",
+                    "success",
+                    0.0,
+                    data={
+                        # Audit: which interpretation the user selected.
+                        "session_id": pending.session_id,
+                        "original_question": pending.original_question,
+                        "user_answer": request.question.split(pending.original_question)[-1].strip(),
+                        "candidate_options": pending.candidates,
+                    },
+                )
+
         semantic_snapshot: SemanticSnapshot = semantic_snapshot_provider.capture(tenant_id)
         active_catalog = semantic_snapshot.catalog
         start_time = time.time()
@@ -2039,6 +2077,7 @@ class QueryPipeline:
             (time.time() - grounding_step_start) * 1000,
             data=grounding.audit_payload(),
         )
+        value_override_applied = False
         if (
             grounding.recommended_table
             and intent.requested_entity in self.KNOWN_ENTITY_ROUTING
@@ -2048,6 +2087,7 @@ class QueryPipeline:
             # The entity keyword is itself part of a grounded value phrase
             # (e.g. «کارمند اداری» naming requester_role); trust the value.
             intent.requested_entity = None
+            value_override_applied = True
 
         normalized_intent = normalize_intent(intent)
         grounded_filter_dicts = [
@@ -2475,6 +2515,78 @@ class QueryPipeline:
                 plan = None
 
         if plan:
+            # Confidence gate (roadmap Change 5): assess BEFORE generating.
+            step_start = time.time()
+            used_semantic_table_plan = semantic_table_plan is not None
+            try:
+                from backend.sql.templates import render_template_sql
+
+                template_renderable = bool(render_template_sql(plan, active_catalog))
+            except Exception:
+                template_renderable = False
+            assessment = confidence_policy.assess(
+                intent_confidence=normalized_intent.confidence,
+                requested_entity=intent.requested_entity,
+                has_plan=True,
+                plan_source=plan.planning_source,
+                grounding=grounding,
+                entity_binding_present=self._intent_has_binding_scalars(intent),
+                used_value_override=value_override_applied,
+                plan_template_approved=(
+                    template_renderable
+                    or any(
+                        str(column).startswith(("TRAINING_REQUEST_", "GENERIC_TABLE_", "COMPOSABLE_"))
+                        or "_GROUPED_BY_" in str(column)
+                        for column in plan.selected_columns
+                    )
+                ),
+            )
+            tracer.add_step(
+                "confidence_gate",
+                "success" if not assessment.should_clarify else "warning",
+                (time.time() - step_start) * 1000,
+                data=assessment.model_dump(exclude_none=True),
+            )
+            if assessment.should_clarify:
+                session_id = request.session_id or f"clarify-{uuid4().hex[:12]}"
+                clarification_store.save(
+                    ClarificationContext(
+                        session_id=session_id,
+                        original_question=request.question,
+                        candidates=assessment.candidates,
+                        missing_decision=assessment.reason,
+                    )
+                )
+                total_time = (time.time() - start_time) * 1000
+                return PipelineResponse(
+                    question=request.question,
+                    success=False,
+                    rejected=False,
+                    unsupported=False,
+                    needs_clarification=True,
+                    clarification_question=assessment.clarification_question,
+                    group=group_id,
+                    group_name=group_name,
+                    sql=None,
+                    valid=False,
+                    result=None,
+                    answer=None,
+                    errors=[],
+                    error_details=[
+                        pipeline_error_taxonomy.detail(
+                            "confidence.clarification_required",
+                            "confidence_gate",
+                            assessment.reason,
+                            severity="warning",
+                            user_message=assessment.clarification_question,
+                        )
+                    ],
+                    intent=intent.model_dump(),
+                    trace=tracer.get_trace(),
+                    execution_time_ms=round(total_time, 2),
+                    session_id=session_id,
+                )
+
             step_start = time.time()
             safe_complex_template = (
                 intent.requested_entity == "salary"
@@ -2734,6 +2846,7 @@ class QueryPipeline:
             citations=citations,
             trace=trace,
             execution_time_ms=round(total_time, 2),
+            session_id=request.session_id,
         )
 
     def _get_all_reports(self, tenant_id: str) -> List[Report]:

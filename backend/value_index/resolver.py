@@ -47,6 +47,24 @@ class GroundingResult(BaseModel):
     def found_any(self) -> bool:
         return bool(self.grounded_filters)
 
+    @property
+    def is_ambiguous(self) -> bool:
+        """More than one distinct candidate table within the tie epsilon."""
+        return len(self.ambiguous_tables) > 1
+
+    @property
+    def candidate_tables(self) -> List[str]:
+        """Distinct candidate tables ordered by evidence strength."""
+        tables: List[str] = []
+        for item in self.evidence:
+            table = item.get("table")
+            if table and table not in tables:
+                tables.append(table)
+        for item in self.grounded_filters:
+            if item.table not in tables:
+                tables.append(item.table)
+        return tables
+
     def audit_payload(self) -> Dict[str, Any]:
         """Trace-safe representation; contains only indexed (safe) values."""
         return {

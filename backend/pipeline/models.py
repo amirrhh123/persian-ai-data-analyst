@@ -8,6 +8,7 @@ class PipelineRequest(BaseModel):
     question: str
     tenant_id: Optional[str] = None
     execute: bool = True
+    session_id: Optional[str] = None
 
 
 class PipelineStep(BaseModel):
@@ -76,3 +77,4 @@ class PipelineResponse(BaseModel):
     citations: Optional[CitationView] = None
     trace: PipelineTrace = PipelineTrace()
     execution_time_ms: float = 0.0
+    session_id: Optional[str] = None
