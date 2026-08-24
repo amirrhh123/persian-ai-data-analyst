@@ -174,6 +174,14 @@ class IncrementalAutoSyncService:
             column_aliases=aliases,
             pii_columns=pii,
         )
+        if self.settings.value_index_deep_enabled:
+            try:
+                value_index, _deep_stats = value_index_service.deep_refresh(
+                    value_index, current
+                )
+                value_index_path = value_index_service.save(value_index)
+            except Exception:
+                pass  # deep refresh is best-effort; sampled index remains usable
         activation = semantic_activation_service.activate(tenant, force=force_activate)
         if activation.status == "blocked":
             return {

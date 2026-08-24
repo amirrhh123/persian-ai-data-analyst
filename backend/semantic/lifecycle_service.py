@@ -341,6 +341,15 @@ class SemanticLifecycleService:
             column_aliases=column_aliases,
             pii_columns=pii_columns,
         )
+        deep_stats: dict = {}
+        if self.settings.value_index_deep_enabled:
+            try:
+                value_index, deep_stats = value_index_service.deep_refresh(
+                    value_index, discovery_snapshot
+                )
+                value_index_path = value_index_service.save(value_index)
+            except Exception as exc:  # deep refresh must never break onboarding
+                deep_stats = {"error": str(exc)}
         steps.append(
             SemanticLifecycleStep(
                 name="value_index_sync",

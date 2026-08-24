@@ -312,7 +312,14 @@ async def sync_database_discovery(sample_size: int = 3, sample_value_limit: int 
     if result.status != "success":
         raise HTTPException(status_code=500, detail=result.status)
     discovery_snapshot = database_onboarding_service.load_snapshot(settings.tenant_id)
-    value_index_service.sync(discovery_snapshot)
+    value_index, _ = value_index_service.sync(discovery_snapshot)
+    if settings.value_index_deep_enabled:
+        try:
+            deep_index, deep_stats = value_index_service.deep_refresh(value_index, discovery_snapshot)
+            value_index_service.save(deep_index)
+            print(f"[value_index] deep refresh: {deep_stats}")
+        except Exception as exc:
+            print(f"[value_index] deep refresh skipped: {exc}")
     return result
 
 

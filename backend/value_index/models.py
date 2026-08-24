@@ -35,3 +35,4 @@ class ValueIndexMatch(BaseModel):
     score: float
     label_matched: bool = False
     matched_label: str | None = None
+    match_kind: str = "exact"  # exact | token | fuzzy

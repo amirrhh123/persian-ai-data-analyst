@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     embedding_model_path: str = "D:/projects/LLM Database/models/paraphrase-multilingual-mpnet-base-v2"
     embedding_device: str = "cpu"
     runtime_semantic_cache_ttl_seconds: int = 300
+
+    # Deep value-index tuning (generic grounding accuracy)
+    value_index_deep_enabled: bool = True
+    value_index_max_distinct: int = 200
+    value_index_max_values_per_column: int = 100
+    value_index_deep_column_budget: int = 60
+    value_index_fuzzy_enabled: bool = True
+    value_index_fuzzy_min_similarity: float = 0.82
     
     api_host: str = "0.0.0.0"
     api_port: int = 8080

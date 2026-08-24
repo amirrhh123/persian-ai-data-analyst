@@ -136,6 +136,48 @@ class QueryPipeline:
             ]
         )
 
+    def _semantic_value_reroute_table(
+        self,
+        grounding,
+        intent,
+        catalog: SemanticCatalog,
+    ) -> Optional[str]:
+        """Prefer a semantic-catalog table when the value spans two readings.
+
+        Deep indexing can make the entity's own table outrank a generic
+        semantic table on raw frequency (e.g. employees.position vs
+        demo_training_requests.requester_role for «کارمند اداری»). When the
+        entity reading has NO binding scalars and a sibling semantic table
+        carries the same value with comparable evidence, the semantic table
+        wins because it ships an approved deterministic template.
+        """
+        if not grounding.grounded_filters or grounding.found_any is False:
+            return None
+        if intent.requested_entity not in self.KNOWN_ENTITY_ROUTING:
+            return None
+        if self._intent_has_binding_scalars(intent):
+            return None
+        top = grounding.grounded_filters[0]
+        if top.score < 0.60:
+            return None
+
+        candidates: list[str] = []
+        for item in grounding.evidence:
+            table = item.get("table")
+            if not table:
+                continue
+            score = float(item.get("score") or 0.0)
+            if table != top.table and abs(score - top.score) <= 0.25 and table not in candidates:
+                candidates.append(table)
+
+        entity_table = ENTITY_PRIMARY_TABLES.get(intent.requested_entity)
+        for candidate in candidates:
+            if candidate == entity_table:
+                continue
+            if catalog.table(candidate):
+                return candidate
+        return None
+
     def _grounding_overrides_entity(
         self,
         grounding: GroundingResult,
@@ -167,7 +209,17 @@ class QueryPipeline:
 
         normalized_question = normalize_identifier(question)
         normalized_value = normalize_identifier(top.value)
-        if normalized_value not in normalized_question:
+        contained = normalized_value in normalized_question
+        if not contained:
+            # Plural-tolerant containment: «کارمندان اداری» contains
+            # «کارمند اداری» once Persian plural suffixes are stripped.
+            from backend.value_index.service import ValueIndexService
+
+            q_tokens = [ValueIndexService._strip_plural(t) for t in normalized_question.split()]
+            v_tokens = [ValueIndexService._strip_plural(t) for t in normalized_value.split()]
+            size = len(v_tokens)
+            contained = any(q_tokens[i : i + size] == v_tokens for i in range(0, len(q_tokens) - size + 1)) if size else False
+        if not contained:
             return False
         entity_table_name = ENTITY_PRIMARY_TABLES.get(intent.requested_entity, "")
         entity_table = catalog.table(entity_table_name)
@@ -1122,8 +1174,9 @@ class QueryPipeline:
         question: str,
         catalog: SemanticCatalog,
         extra_filters: Optional[list[dict[str, str]]] = None,
+        skip_gate: bool = False,
     ) -> Optional[SQLPlan]:
-        if not self._is_training_request_question(question, catalog):
+        if not skip_gate and not self._is_training_request_question(question, catalog):
             return None
         text = question.replace("‌", " ")
         filters = self._training_request_filters(question)
@@ -1203,10 +1256,13 @@ class QueryPipeline:
         if not target_table:
             return None
         if target_table.name == "demo_training_requests":
+            # An explicitly grounded/preferred table bypasses the lexical
+            # training-request heuristic; value evidence already decided.
             return self._training_request_plan(
                 question,
                 catalog,
                 extra_filters=grounded_filters,
+                skip_gate=bool(preferred_table),
             )
 
         text = self._normalize_text(question)
@@ -2089,16 +2145,41 @@ class QueryPipeline:
             intent.requested_entity = None
             value_override_applied = True
 
+        if not value_override_applied and intent.requested_entity:
+            reroute_table = self._semantic_value_reroute_table(
+                grounding, intent, active_catalog
+            )
+            if reroute_table:
+                # Same value lives in a semantic table with an approved
+                # deterministic template; prefer that reading.
+                intent.requested_entity = None
+                grounding.grounded_filters.sort(
+                    key=lambda item: 0 if item.table == reroute_table else 1
+                )
+                grounding.evidence.sort(
+                    key=lambda item: 0 if item.get("table") == reroute_table else 1
+                )
+                grounding.recommended_table = reroute_table
+                value_override_applied = True
+
         normalized_intent = normalize_intent(intent)
+        scoped_grounded = [
+            item
+            for item in grounding.grounded_filters
+            if not grounding.recommended_table or item.table == grounding.recommended_table
+        ] if not intent.requested_entity else None
         grounded_filter_dicts = [
             {"column": item.column, "operator": item.operator, "value": item.value}
-            for item in grounding.grounded_filters
-        ] if not intent.requested_entity else None
-        # Legacy heuristics keep precedence for known generic-table questions;
-        # value grounding acts as the fallback for everything else.
+            for item in scoped_grounded
+        ] if scoped_grounded is not None else None
+        # When value evidence overrode/rerouted the entity, the grounded table
+        # LEADS target selection. Otherwise legacy heuristics keep precedence
+        # for known generic-table questions and grounding acts as fallback.
+        force_preferred = value_override_applied and grounding.recommended_table
         semantic_table_plan = self._semantic_table_plan(
             request.question,
             active_catalog,
+            preferred_table=grounding.recommended_table if force_preferred else None,
             grounded_filters=grounded_filter_dicts,
         )
         if semantic_table_plan is None and not intent.requested_entity and grounding.recommended_table:
