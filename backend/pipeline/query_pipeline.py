@@ -44,10 +44,17 @@ from backend.sql.models import SQLPlan
 from backend.sql.planner import sql_planner
 from backend.sql.result_shape_validator import sql_result_shape_validator
 from backend.sql.validator import sql_validator
+from backend.value_index.resolver import GroundingResult, value_grounding_resolver
+from backend.value_index.ranker import ENTITY_PRIMARY_TABLES
 from backend.value_index.service import value_index_service
 
 
 class QueryPipeline:
+    KNOWN_ENTITY_ROUTING = {
+        "student", "employee", "school", "salary", "retirement",
+        "ranking", "organization",
+    }
+
     def __init__(self):
         self.settings = get_settings()
         self.tenants_dir = Path(__file__).parent.parent.parent / "knowledge" / "tenants"
@@ -69,6 +76,92 @@ class QueryPipeline:
             if report.id == report_id:
                 return report
         return None
+
+    def _ground_question_values(
+        self,
+        question: str,
+        tenant_id: str,
+        intent,
+        catalog: SemanticCatalog,
+    ) -> GroundingResult:
+        """Ground literal values onto real columns; never breaks the pipeline."""
+        try:
+            snapshot = value_index_service.load(tenant_id)
+            return value_grounding_resolver.resolve(
+                question,
+                snapshot,
+                requested_entity=intent.requested_entity,
+            )
+        except Exception:
+            return GroundingResult()
+
+    @staticmethod
+    def _intent_has_binding_scalars(intent) -> bool:
+        """True when explicit filters bind the question to the entity's table."""
+        return any(
+            [
+                getattr(intent, "national_id", None),
+                getattr(intent, "first_name", None),
+                getattr(intent, "last_name", None),
+                getattr(intent, "named_student", None),
+                getattr(intent, "named_employee", None),
+                getattr(intent, "province", None),
+                getattr(intent, "city", None),
+                getattr(intent, "status", None),
+                getattr(intent, "position", None),
+                getattr(intent, "grade", None),
+                getattr(intent, "enrollment_year", None),
+                getattr(intent, "hire_year", None),
+                getattr(intent, "named_school", None),
+                getattr(intent, "named_organization_unit", None),
+                getattr(intent, "province_values", None),
+                getattr(intent, "city_values", None),
+                getattr(intent, "school_type", None),
+                getattr(intent, "capacity_min", None),
+                getattr(intent, "established_year", None),
+                getattr(intent, "date_range", None),
+            ]
+        )
+
+    def _grounding_overrides_entity(
+        self,
+        grounding: GroundingResult,
+        intent,
+        catalog: SemanticCatalog,
+        question: str,
+    ) -> bool:
+        """Allow rerouting only when the entity word is part of a grounded value.
+
+        Example: «کارمند اداری» is a requester_role VALUE that merely starts
+        with the employee alias «کارمند»; the value evidence wins. Explicit
+        binding scalars always keep the deterministic entity path.
+        """
+        if not grounding.grounded_filters:
+            return False
+        top = grounding.grounded_filters[0]
+        if top.score < 0.70:
+            return False
+        if self._intent_has_binding_scalars(intent):
+            return False
+        recommended = grounding.recommended_table
+        if not recommended or recommended == ENTITY_PRIMARY_TABLES.get(intent.requested_entity):
+            return False
+        recommended_table = catalog.table(recommended)
+        if not recommended_table:
+            return False
+
+        normalized_question = normalize_identifier(question)
+        normalized_value = normalize_identifier(top.value)
+        if normalized_value not in normalized_question:
+            return False
+        entity_table_name = ENTITY_PRIMARY_TABLES.get(intent.requested_entity, "")
+        entity_table = catalog.table(entity_table_name)
+        if not entity_table:
+            return True
+        return any(
+            normalize_identifier(alias) and normalize_identifier(alias) in normalized_value
+            for alias in (entity_table.aliases or [])
+        )
 
     def _load_discovery_snapshot(self, tenant_id: Optional[str] = None) -> Optional[SchemaDiscoverySnapshot]:
         tenant = tenant_id or self.settings.tenant_id
@@ -1009,11 +1102,19 @@ class QueryPipeline:
             filters.extend(self._value_driven_filters_for_table(question, table, filters))
         return self._dedupe_filters(filters)
 
-    def _training_request_plan(self, question: str, catalog: SemanticCatalog) -> Optional[SQLPlan]:
+    def _training_request_plan(
+        self,
+        question: str,
+        catalog: SemanticCatalog,
+        extra_filters: Optional[list[dict[str, str]]] = None,
+    ) -> Optional[SQLPlan]:
         if not self._is_training_request_question(question, catalog):
             return None
         text = question.replace("‌", " ")
         filters = self._training_request_filters(question)
+        for item in extra_filters or []:
+            if not self._has_filter(filters, item.get("column", "")):
+                filters.append(item)
         table = catalog.table("demo_training_requests")
         default_columns = table.default_display_columns if table else [
             "requester_name",
@@ -1066,8 +1167,18 @@ class QueryPipeline:
             filters=filters,
         )
 
-    def _semantic_table_plan(self, question: str, catalog: SemanticCatalog) -> Optional[SQLPlan]:
-        target_table = self._semantic_target_table(question, catalog)
+    def _semantic_table_plan(
+        self,
+        question: str,
+        catalog: SemanticCatalog,
+        preferred_table: Optional[str] = None,
+        grounded_filters: Optional[list[dict[str, str]]] = None,
+    ) -> Optional[SQLPlan]:
+        target_table = None
+        if preferred_table:
+            target_table = catalog.table(preferred_table)
+        if not target_table:
+            target_table = self._semantic_target_table(question, catalog)
         if not target_table:
             target_table = self._semantic_target_table_by_labeled_sample_values(question, catalog)
         if not target_table:
@@ -1077,7 +1188,11 @@ class QueryPipeline:
         if not target_table:
             return None
         if target_table.name == "demo_training_requests":
-            return self._training_request_plan(question, catalog)
+            return self._training_request_plan(
+                question,
+                catalog,
+                extra_filters=grounded_filters,
+            )
 
         text = self._normalize_text(question)
         filters = self._semantic_filters_for_table(question, target_table)
@@ -1909,8 +2024,49 @@ class QueryPipeline:
         semantic_resolution = await semantic_resolver.resolve(request.question, semantic_snapshot)
         intent = semantic_resolver.enrich_intent(intent, semantic_resolution)
         suppress_name_substring_columns(intent, active_catalog)
+
+        grounding_step_start = time.time()
+        grounding = self._ground_question_values(
+            request.question,
+            tenant_id,
+            intent,
+            active_catalog,
+        )
+        tracer.add_step(
+            "value_grounding",
+            "success" if grounding.found_any or not grounding.ambiguous_tables else "warning",
+            (time.time() - grounding_step_start) * 1000,
+            data=grounding.audit_payload(),
+        )
+        if (
+            grounding.recommended_table
+            and intent.requested_entity in self.KNOWN_ENTITY_ROUTING
+            and ENTITY_PRIMARY_TABLES.get(intent.requested_entity) != grounding.recommended_table
+            and self._grounding_overrides_entity(grounding, intent, active_catalog, request.question)
+        ):
+            # The entity keyword is itself part of a grounded value phrase
+            # (e.g. «کارمند اداری» naming requester_role); trust the value.
+            intent.requested_entity = None
+
         normalized_intent = normalize_intent(intent)
-        semantic_table_plan = self._semantic_table_plan(request.question, active_catalog)
+        grounded_filter_dicts = [
+            {"column": item.column, "operator": item.operator, "value": item.value}
+            for item in grounding.grounded_filters
+        ] if not intent.requested_entity else None
+        # Legacy heuristics keep precedence for known generic-table questions;
+        # value grounding acts as the fallback for everything else.
+        semantic_table_plan = self._semantic_table_plan(
+            request.question,
+            active_catalog,
+            grounded_filters=grounded_filter_dicts,
+        )
+        if semantic_table_plan is None and not intent.requested_entity and grounding.recommended_table:
+            semantic_table_plan = self._semantic_table_plan(
+                request.question,
+                active_catalog,
+                preferred_table=grounding.recommended_table,
+                grounded_filters=grounded_filter_dicts,
+            )
         # Generic runtime routing is reserved for newly discovered tables.
         # Known business entities have richer deterministic planners that must
         # preserve person names, national IDs, location joins, and profiles.
@@ -2318,12 +2474,20 @@ class QueryPipeline:
                 intent.requested_entity == "salary"
                 and intent.aggregation in {"AVG", "SUM", "COUNT"}
                 and bool(intent.grouping)
-                and "کمتر از میانگین" not in question_text
-                and "بیشتر از میانگین" not in question_text
+                and "مقایسه شهرها" not in question_text
+                and "مقایسه استان ها" not in question_text
             ) or (
                 intent.requested_entity == "school"
                 and intent.aggregation == "COUNT"
                 and bool(intent.grouping)
+            ) or (
+                # Approved deterministic templates for known generic tables stay
+                # authoritative even for complex phrasings (e.g. numeric filters).
+                plan is not None
+                and any(
+                    str(column).startswith("TRAINING_REQUEST_")
+                    for column in plan.selected_columns
+                )
             )
             generated = await sql_generator.generate(
                 plan,

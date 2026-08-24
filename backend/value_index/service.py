@@ -117,16 +117,16 @@ class ValueIndexService:
         qualified = f"{table.name}.{column.name}"
         if column.is_primary_key:
             return "primary_key"
-        if column.is_unique:
-            return "unique_column"
-        if column.name.endswith("_id"):
-            return "relationship_identifier"
         if qualified in pii_columns or self._contains_part(
             column.name, _SENSITIVE_COLUMN_PARTS
         ):
             return "sensitive_column"
         if self._contains_part(column.name, _IDENTIFIER_COLUMN_PARTS):
             return "identifier_like_column"
+        if column.name.endswith("_id"):
+            return "relationship_identifier"
+        if column.is_unique:
+            return "unique_column"
         if column.data_type not in _SUPPORTED_TYPES:
             return "unsupported_type"
         samples = [sample for sample in column.sample_values if sample.value is not None]
