@@ -75,6 +75,8 @@ class ResultShapeValidationResult(BaseModel):
     expected_single_row: bool = False
     expected_numeric_value: bool = False
     missing_requested_columns: List[str] = []
+    shape: Optional[str] = None
+    allow_empty: bool = True
 
 
 class SQLRequest(BaseModel):

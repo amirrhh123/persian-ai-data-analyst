@@ -42,6 +42,7 @@ from backend.sql.identifier_canonicalizer import canonicalize_sql_identifiers
 from backend.sql.join_verifier import sql_plan_join_verifier
 from backend.sql.models import SQLPlan
 from backend.sql.planner import sql_planner
+from backend.sql.result_contract import build_result_contract, validate_plan_shape
 from backend.sql.result_shape_validator import sql_result_shape_validator
 from backend.sql.validator import sql_validator
 from backend.value_index.resolver import GroundingResult, value_grounding_resolver
@@ -2272,6 +2273,11 @@ class QueryPipeline:
             if intent.requested_entity == "retirement":
                 group_id = "employee"
                 group_name = "employee"
+            if intent.requested_entity == "organization":
+                # Canonical group label; retrieval may return legacy
+                # «organization_unit» ids from older group artifacts.
+                group_id = "organization"
+                group_name = "organization"
             if semantic_table_plan:
                 group_id = "training_request" if semantic_table_name == "demo_training_requests" else semantic_table_name
                 group_name = group_id
@@ -2606,6 +2612,28 @@ class QueryPipeline:
                 error_details.append(pipeline_error_taxonomy.detail("sql.validation_failed", "sql_validation", validation_error))
             tracer.add_step("sql_validation", "success" if valid else "error", (time.time() - step_start) * 1000, data=validation.model_dump())
 
+        # Pre-execution result-contract gate (roadmap Change 4): the PLAN must
+        # promise the contracted shape before any SQL runs.
+        result_contract_obj = build_result_contract(normalized_intent, plan)
+        if result_contract_obj is not None and sql:
+            contract_step_start = time.time()
+            contract_violations = validate_plan_shape(plan, result_contract_obj)
+            tracer.add_step(
+                "result_contract",
+                "success" if not contract_violations else "error",
+                (time.time() - contract_step_start) * 1000,
+                data={"shape": result_contract_obj.shape, "violations": contract_violations},
+            )
+            if contract_violations:
+                valid = False
+                errors.extend(contract_violations)
+                for violation in contract_violations:
+                    error_details.append(
+                        pipeline_error_taxonomy.detail(
+                            "result.contract_failed", "result_contract", violation
+                        )
+                    )
+
         if valid and request.execute and sql:
             step_start = time.time()
             exec_result = execution_service.execute(QueryRequest(sql=sql))
@@ -2617,7 +2645,9 @@ class QueryPipeline:
                 }
                 result = data_sensitivity_policy.apply_to_result(result, sql=sql, tenant_id=request.tenant_id)
                 tracer.add_step("sql_execution", "success", (time.time() - step_start) * 1000, data={"row_count": exec_result.row_count})
-                result_shape = sql_result_shape_validator.verify(result, normalized_intent, plan)
+                result_shape = sql_result_shape_validator.verify(
+                    result, normalized_intent, plan, contract=result_contract_obj
+                )
                 result_shape_is_hard = bool(
                     plan
                     and (

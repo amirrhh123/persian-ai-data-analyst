@@ -4,6 +4,7 @@ from backend.pipeline.intent import NormalizedIntent
 from backend.semantic.models import SemanticCatalog
 from backend.sql.models import SQLPlan
 from backend.sql.planner import sql_planner
+from backend.sql.result_contract import infer_location_dimension
 
 
 ENTITY_BASE_TABLE = {
@@ -59,7 +60,7 @@ class DeterministicSQLBuilder:
             return None
         if normalized.entity == "student" and normalized.operation in {"profile", "lookup"}:
             return None
-        if normalized.entity == "student" and normalized.operation == "count" and not self._is_simple_student_province_count(normalized):
+        if normalized.entity == "student" and normalized.operation == "count" and not self._is_simple_student_location_count(normalized):
             return None
         if normalized.entity == "student" and normalized.operation == "list":
             return None
@@ -72,13 +73,31 @@ class DeterministicSQLBuilder:
         filters = self._filters(normalized)
 
         if normalized.operation == "count":
+            dimension = infer_location_dimension(normalized)
+            grouped_token = None
+            group_by: list[str] = list(normalized.dimensions)
+            if dimension and not group_by:
+                # Contract-driven grouped shape: counts carry their group label.
+                group_by = [dimension]
+                field = dimension.split(".")[-1]
+                token_suffix = f"GROUPED_BY_{field.upper()}"
+                entity_token = {
+                    "student": f"STUDENT_COUNT_{token_suffix}",
+                    "employee": f"EMPLOYEE_COUNT_{token_suffix}",
+                    "school": f"SCHOOL_COUNT_{token_suffix}",
+                }.get(normalized.entity)
+                grouped_token = entity_token
+
+            selected_columns = (
+                [grouped_token] if grouped_token else ["GENERIC_TABLE_COUNT"]
+            )
             return SQLPlan(
                 required_tables=required_tables,
                 joins=joins,
-                selected_columns=["GENERIC_TABLE_COUNT"],
+                selected_columns=selected_columns,
                 filters=filters,
                 aggregations=[{"function": "COUNT", "column": f"{base_table}.id"}],
-                group_by=normalized.dimensions,
+                group_by=group_by,
                 planning_source="deterministic_normalized_intent",
             )
 
@@ -121,11 +140,12 @@ class DeterministicSQLBuilder:
     def _has_unique_lookup_filter(self, normalized: NormalizedIntent) -> bool:
         return any(item.field == "national_id" for item in normalized.filters)
 
-    def _is_simple_student_province_count(self, normalized: NormalizedIntent) -> bool:
+    def _is_simple_student_location_count(self, normalized: NormalizedIntent) -> bool:
+        """Single province OR city filter - both map to grouped contracts."""
         if normalized.entity != "student" or normalized.operation != "count":
             return False
         fields = [item.field for item in normalized.filters]
-        return fields == ["province"]
+        return len(fields) == 1 and fields[0] in {"province", "city"}
 
     def _required_tables(self, normalized: NormalizedIntent) -> list[str]:
         if any(item.field in {"province", "city"} for item in normalized.filters):
