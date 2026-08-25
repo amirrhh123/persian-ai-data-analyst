@@ -628,13 +628,22 @@ function renderFeedback(d){
 async function submitFeedback(rating){
   if(!lastQueryResponse)return;
   let comment=null;
-  if(rating==='negative')comment=prompt('لطفاً مشکل پاسخ را کوتاه بنویسید (اختیاری):')||null;
+  const GROUP_TO_TABLE={student:'students',employee:'employees',school:'schools',organization:'organization_units',salary:'salary_items',retirement:'retirement_records',ranking:'ranking_requests',training_request:'demo_training_requests'};
+  let servedTable=GROUP_TO_TABLE[lastQueryResponse.group]||null;
+  let correctedTable=null;
+  if(rating==='negative'){
+    comment=prompt('لطفاً مشکل جواب را بنویسید (اختیاری):')||null;
+    correctedTable=prompt('اگر جدول دیگری منظورتان بوده، نام جدول صحیح را وارد کنید (اختیاری):')||null;
+    correctedTable=(correctedTable||'').trim()||null;
+  }
   const payload={
     query_id:lastQueryResponse.query_id,
     question:$('q').value.trim(),
     rating,
     selected_group:lastQueryResponse.group||null,
     selected_report:lastQueryResponse.report||null,
+    served_table:servedTable,
+    corrected_table:correctedTable,
     comment
   };
   const status=$('feedbackStatus');

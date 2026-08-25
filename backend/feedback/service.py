@@ -78,6 +78,8 @@ class FeedbackService:
             selected_report=request.selected_report,
             corrected_group=request.corrected_group,
             corrected_report=request.corrected_report,
+            served_table=request.served_table,
+            corrected_table=request.corrected_table,
             comment=request.comment.strip() if request.comment else None,
         )
         events = [item for item in events if item.query_id != request.query_id]
@@ -119,6 +121,31 @@ class FeedbackService:
         return {
             candidate: round(max(-0.15, min(0.15, total / counts[candidate])), 4)
             for candidate, total in totals.items()
+        }
+
+    def table_adjustments(self, tenant_id: str, question: str) -> dict[str, float]:
+        """Bounded per-question table boosts/penalties from grounding feedback.
+
+        Same exact-question scope as candidate_adjustments: privacy-safe and
+        deterministic. Negative ratings penalize the served table; a declared
+        corrected table gets the boost. Positive ratings gently reinforce.
+        """
+        fingerprint = self.fingerprint(question)
+        totals: dict[str, float] = {}
+        counts: dict[str, int] = {}
+        for event in self.load(tenant_id):
+            if event.question_fingerprint != fingerprint:
+                continue
+            if event.served_table:
+                delta = -0.08 if event.rating == "negative" else 0.03
+                totals[event.served_table] = totals.get(event.served_table, 0.0) + delta
+                counts[event.served_table] = counts.get(event.served_table, 0) + 1
+            if event.corrected_table and event.rating == "negative":
+                totals[event.corrected_table] = totals.get(event.corrected_table, 0.0) + 0.12
+                counts[event.corrected_table] = counts.get(event.corrected_table, 0) + 1
+        return {
+            table: round(max(-0.20, min(0.20, total / counts[table])), 4)
+            for table, total in totals.items()
         }
 
     def summary(self, tenant_id: str) -> FeedbackSummary:

@@ -14,6 +14,8 @@ class FeedbackRequest(BaseModel):
     selected_report: Optional[str] = Field(default=None, max_length=120)
     corrected_group: Optional[str] = Field(default=None, max_length=120)
     corrected_report: Optional[str] = Field(default=None, max_length=120)
+    served_table: Optional[str] = Field(default=None, max_length=120)
+    corrected_table: Optional[str] = Field(default=None, max_length=120)
     comment: Optional[str] = Field(default=None, max_length=500)
 
 
@@ -29,6 +31,8 @@ class FeedbackEvent(BaseModel):
     selected_report: Optional[str] = None
     corrected_group: Optional[str] = None
     corrected_report: Optional[str] = None
+    served_table: Optional[str] = None
+    corrected_table: Optional[str] = None
     comment: Optional[str] = None
 
 

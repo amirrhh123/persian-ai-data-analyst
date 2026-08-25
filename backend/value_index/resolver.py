@@ -20,6 +20,7 @@ from backend.value_index.models import ValueIndexSnapshot
 from backend.value_index.ranker import (
     RankingOutcome,
     rank_candidate_values,
+    rank_matches,
 )
 
 
@@ -88,6 +89,7 @@ class ValueGroundingResolver:
         *,
         requested_entity: Optional[str] = None,
         exclude_tables: Optional[set[str]] = None,
+        table_adjustments: Optional[Dict[str, float]] = None,
         search_fn=None,
     ) -> GroundingResult:
         if index is None and search_fn is None:
@@ -116,6 +118,7 @@ class ValueGroundingResolver:
             candidates,
             bounded_search,
             requested_entity=requested_entity,
+            table_adjustments=table_adjustments,
         )
 
         result = GroundingResult(

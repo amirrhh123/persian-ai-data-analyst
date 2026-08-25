@@ -99,10 +99,18 @@ class QueryPipeline:
         self._last_grounding_error: Optional[str] = None
         try:
             snapshot = value_index_service.load(tenant_id)
+            adjustments: Optional[dict] = None
+            try:
+                from backend.feedback.service import feedback_service
+
+                adjustments = feedback_service.table_adjustments(tenant_id, question) or None
+            except Exception:
+                adjustments = None
             return value_grounding_resolver.resolve(
                 question,
                 snapshot,
                 requested_entity=intent.requested_entity,
+                table_adjustments=adjustments,
             )
         except Exception as exc:
             self._last_grounding_error = f"{type(exc).__name__}: {exc}"

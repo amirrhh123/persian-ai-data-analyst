@@ -66,9 +66,15 @@ def rank_matches(
     matches: List[ValueIndexMatch],
     *,
     requested_entity: Optional[str] = None,
+    table_adjustments: Optional[Dict[str, float]] = None,
 ) -> RankingOutcome:
-    """Apply the ranking signals to raw value-index matches."""
+    """Apply the ranking signals to raw value-index matches.
+
+    table_adjustments: bounded per-question boosts/penalties learned from user
+    feedback (feedback_service.table_adjustments) — closes the correction loop.
+    """
     primary_table = ENTITY_PRIMARY_TABLES.get(requested_entity or "", "")
+    adjustments = table_adjustments or {}
     ranked: List[RankedCandidate] = []
 
     for match in matches:
@@ -78,10 +84,13 @@ def rank_matches(
             score += 0.10
         if match.label_matched:
             score += 0.05
+        adjustment = adjustments.get(match.table)
+        if adjustment:
+            score += adjustment
         ranked.append(
             RankedCandidate(
                 match=match,
-                final_score=min(1.0, round(score, 4)),
+                final_score=min(1.0, max(0.0, round(score, 4))),
                 entity_relevant=entity_relevant,
             )
         )
@@ -94,6 +103,11 @@ def rank_matches(
         top_tables = {
             item.match.table for item in ranked if best_score - item.final_score <= _AMBIGUITY_EPSILON
         }
+        if len(top_tables) > 1 and adjustments:
+            # Feedback that explicitly prefers one table resolves the tie.
+            preferred = max(top_tables, key=lambda name: adjustments.get(name, 0.0))
+            if adjustments.get(preferred, 0.0) > 0:
+                top_tables = {preferred}
         outcome.ambiguous_tables = top_tables
     return outcome
 
@@ -104,6 +118,7 @@ def rank_candidate_values(
     search_fn,
     *,
     requested_entity: Optional[str] = None,
+    table_adjustments: Optional[Dict[str, float]] = None,
 ) -> RankingOutcome:
     """Search the value index for each extracted candidate and rank results."""
     all_matches: List[ValueIndexMatch] = []
@@ -115,4 +130,8 @@ def rank_candidate_values(
                 continue
             seen_keys.add(key)
             all_matches.append(match)
-    return rank_matches(all_matches, requested_entity=requested_entity)
+    return rank_matches(
+        all_matches,
+        requested_entity=requested_entity,
+        table_adjustments=table_adjustments,
+    )
