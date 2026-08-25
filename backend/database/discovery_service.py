@@ -34,6 +34,7 @@ class SchemaDiscoveryService:
         self.settings = get_settings()
         self.connection = db_connection
         self.schema_root = Path(__file__).parent.parent.parent / "schema" / "tenants"
+        self._last_inferred_joins = 0
 
     def _quote_identifier(self, identifier: str) -> str:
         return '"' + identifier.replace('"', '""') + '"'
@@ -302,6 +303,17 @@ class SchemaDiscoveryService:
             )
             tables.append(discovered_table)
 
+        fk_relationships = self.build_relationships(all_foreign_keys)
+        relationships = fk_relationships
+        inferred_added = 0
+        if self.settings.join_inference_enabled:
+            try:
+                from backend.database.join_inference import augment_relationships
+
+                relationships, inferred_added = augment_relationships(tables, fk_relationships)
+            except Exception:
+                inferred_added = 0  # inference is best-effort; FKs remain authoritative
+
         snapshot = SchemaDiscoverySnapshot(
             tenant_id=tenant,
             database_name=self.settings.database_name,
@@ -309,9 +321,10 @@ class SchemaDiscoveryService:
             generated_at=datetime.now().isoformat(timespec="seconds"),
             fingerprint="",
             tables=tables,
-            relationships=self.build_relationships(all_foreign_keys),
+            relationships=relationships,
         )
         snapshot.fingerprint = self.calculate_fingerprint(snapshot)
+        self._last_inferred_joins = inferred_added
         return snapshot
 
     def calculate_fingerprint(self, snapshot: SchemaDiscoverySnapshot) -> str:
@@ -370,6 +383,7 @@ class SchemaDiscoveryService:
                 tenant_id=snapshot.tenant_id,
                 tables_discovered=len(snapshot.tables),
                 relationships_found=len(snapshot.relationships),
+                inferred_relationships=self._last_inferred_joins,
                 fingerprint=snapshot.fingerprint,
                 output_path=str(saved_path),
                 status="success",

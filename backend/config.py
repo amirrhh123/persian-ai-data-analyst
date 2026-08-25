@@ -50,6 +50,9 @@ class Settings(BaseSettings):
 
     # LLM-assisted Persian alias enrichment
     alias_max_columns_per_run: int = 40
+
+    # Name-based join inference for FK-less schemas
+    join_inference_enabled: bool = True
     
     api_host: str = "0.0.0.0"
     api_port: int = 8080

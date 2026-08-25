@@ -96,6 +96,7 @@ class SchemaDiscoveryResponse(BaseModel):
     tenant_id: str
     tables_discovered: int
     relationships_found: int
+    inferred_relationships: int = 0
     fingerprint: str
     output_path: Optional[str] = None
     status: str
