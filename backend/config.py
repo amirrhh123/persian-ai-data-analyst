@@ -53,6 +53,10 @@ class Settings(BaseSettings):
 
     # Name-based join inference for FK-less schemas
     join_inference_enabled: bool = True
+
+    # Hard onboarding readiness gate
+    onboarding_gate_min_pass_rate: float = 95.0
+    onboarding_gate_auto_fix: bool = True
     
     api_host: str = "0.0.0.0"
     api_port: int = 8080

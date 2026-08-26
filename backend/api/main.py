@@ -323,6 +323,32 @@ async def sync_database_discovery(sample_size: int = 3, sample_value_limit: int 
     return result
 
 
+@app.post("/database/onboarding/gate")
+async def run_onboarding_gate(auto_fix: bool | None = None, benchmark_limit: int | None = None):
+    """Hard readiness gate: benchmark BEFORE activation; block below threshold."""
+    try:
+        from backend.database.onboarding_gate import onboarding_gate_service
+
+        report = await onboarding_gate_service.run(
+            settings.tenant_id,
+            auto_fix=auto_fix,
+            benchmark_limit=benchmark_limit,
+        )
+        status_code = 200 if report.verdict == "ready" else 409
+        # Return the report body regardless; callers key off `verdict`.
+        from fastapi import Response
+
+        return Response(
+            content=report.model_dump_json(),
+            media_type="application/json",
+            status_code=status_code,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error running onboarding gate: {str(e)}")
+
+
 @app.get("/database/onboarding-report")
 async def get_database_onboarding_report():
     try:

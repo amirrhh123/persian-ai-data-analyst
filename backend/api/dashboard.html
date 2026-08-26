@@ -103,6 +103,7 @@
           <button id="adminErrorTaxonomy" type="button">راهنمای خطاها</button>
           <button id="adminSemanticSuggestions" type="button">نمایش پیشنهادهای معنایی</button>
           <button id="adminAliasEnrich" type="button">پیشنهاد هوشمند مترادف‌ها</button>
+          <button id="adminOnboardingGate" type="button">دروازه آماده‌سازی نهایی</button>
           <button id="adminRuntimeRefresh" type="button">به‌روزرسانی خودکار از دیتابیس</button>
           <span class="badge" id="lifeStatus">آماده</span>
         </div>
@@ -398,6 +399,17 @@ async function adminPost(url,label){
   const d=await r.json();
   if(!r.ok)throw Error(d.detail||'درخواست ادمین ناموفق بود');
   return d;
+}
+async function runOnboardingGate(){
+  try{
+    setAdminBusy('دروازه آماده‌سازی...');
+    const r=await fetch('/database/onboarding/gate',{method:'POST'});
+    const d=await r.json();
+    const cls=d.verdict==='ready'?'ok':d.verdict==='blocked'?'warn':'bad';
+    const verdictFa={ready:'آماده',blocked:'مسدود',failed:'خطا'}[d.verdict]||d.verdict;
+    const steps=(d.steps||[]).map(s=>`<small>• ${esc(s.name)}: ${esc(s.status)} — ${esc(s.message)}</small>`).join('<br>');
+    setAdminResult(`دروازه آماده‌سازی: <span class="badge ${cls}">${esc(verdictFa)}</span><br>کیفیت پاسخ‌ها: <b>${faDigits(d.pass_rate||0)}٪</b> (حداقل لازم: <b>${faDigits(d.min_pass_rate||95)}٪</b>)<br>${(d.blockers||[]).length?'مانع: <b>'+esc((d.blockers||[]).join('؛ '))+'</b><br>':''}${(d.next_actions||[]).map(x=>`<small>→ ${esc(x)}</small>`).join('<br>')}<br>${steps}`,cls);
+  }catch(e){setAdminResult(`<span class="error">${esc(e.message)}</span>`,'bad');}
 }
 async function runDiscoverySync(){
   try{
@@ -712,7 +724,7 @@ async function runQuery(){
     await loadAuditSummary();
   }finally{$('run').disabled=false;}
 }
- renderSamples(); checkHealth(); loadSemanticFreshness(); loadSemanticVersions(); loadAuditSummary(); $('run').onclick=runQuery; $('lifeRun').onclick=runLifecycle; $('adminRuntimeRefresh').onclick=refreshRuntimeSemantic; $('adminSyncDiscovery').onclick=runDiscoverySync; $('adminQualityGate').onclick=runQualityGate; $('adminSmokeSync').onclick=runSmokeSync; $('adminSmokeRun').onclick=runSmokeTests; $('adminLightweightReadiness').onclick=checkLightweightReadiness; $('adminLightweightGaps').onclick=loadLightweightGapSuggestions; $('adminApplyLightweightGaps').onclick=applyLightweightGapSuggestions; $('adminReviewApply').onclick=applySemanticReview; $('adminSemanticSuggestions').onclick=loadSemanticSuggestions; $('adminAliasEnrich').onclick=runAliasEnrichment; $('adminDataPolicy').onclick=loadDataPolicy; $('adminErrorTaxonomy').onclick=loadErrorTaxonomy;
+ renderSamples(); checkHealth(); loadSemanticFreshness(); loadSemanticVersions(); loadAuditSummary(); $('run').onclick=runQuery; $('lifeRun').onclick=runLifecycle; $('adminRuntimeRefresh').onclick=refreshRuntimeSemantic; $('adminSyncDiscovery').onclick=runDiscoverySync; $('adminQualityGate').onclick=runQualityGate; $('adminSmokeSync').onclick=runSmokeSync; $('adminSmokeRun').onclick=runSmokeTests; $('adminLightweightReadiness').onclick=checkLightweightReadiness; $('adminLightweightGaps').onclick=loadLightweightGapSuggestions; $('adminApplyLightweightGaps').onclick=applyLightweightGapSuggestions; $('adminReviewApply').onclick=applySemanticReview; $('adminSemanticSuggestions').onclick=loadSemanticSuggestions; $('adminAliasEnrich').onclick=runAliasEnrichment; $('adminOnboardingGate').onclick=runOnboardingGate; $('adminDataPolicy').onclick=loadDataPolicy; $('adminErrorTaxonomy').onclick=loadErrorTaxonomy;
 </script>
 </body>
 </html>
