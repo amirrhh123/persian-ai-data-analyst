@@ -60,7 +60,7 @@ services:
     environment:
       - ANONYMIZED_TELEMETRY=False
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat')\" || exit 1"]
+      test: ["CMD-SHELL", "timeout 5 bash -c ': >/dev/tcp/127.0.0.1/8000' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -18,6 +18,29 @@ async def test_student_identity_by_quoted_national_id():
     assert "FROM students" in response.sql
     assert "students.national_id = '3489881390'" in response.sql
     assert "students.national_id = 3489881390" not in response.sql
+
+
+@pytest.mark.asyncio
+async def test_student_identity_can_be_combined_with_province():
+    response = await query_pipeline.execute(
+        PipelineRequest(
+            question="اطلاعات دانش آموزان استان تهران با کد ملی ۲۲۴۷۴۹۸۵۵۵",
+            execute=False,
+        )
+    )
+
+    assert response.valid is True
+    assert response.intent["national_id"] == "2247498555"
+    assert response.intent["province"] == "تهران"
+    assert "JOIN schools ON students.school_id = schools.id" in response.sql
+    assert (
+        "JOIN organization_units ON schools.organization_unit_id = organization_units.id"
+        in response.sql
+    )
+    assert "students.national_id = '2247498555'" in response.sql
+    assert "organization_units.province = 'تهران'" in response.sql
+
+
 def test_student_school_name_lookup_uses_school_id_join():
     # The national-id lookup must resolve students.school_id through schools.id.
     from backend.sql.models import SQLPlan

@@ -1563,22 +1563,44 @@ class QueryPipeline:
                     selected_columns.insert(0, "last_name")
                 if "first_name" not in selected_columns:
                     selected_columns.insert(0, "first_name")
-                if intent.wants_school_name:
+                needs_location_join = bool(intent.province or intent.city)
+                if intent.wants_school_name or needs_location_join:
                     selected_columns = [
                         column for column in selected_columns if column != "school_id"
                     ]
-                    selected_columns.append("school_name")
+                    if intent.wants_school_name:
+                        selected_columns.append("school_name")
                     plan.required_tables = ["students", "schools"]
-                    plan.joins = [{
-                        "from_table": "students",
-                        "from_column": "school_id",
-                        "to_table": "schools",
-                        "to_column": "id",
-                    }]
+                    plan.joins = [
+                        {
+                            "from_table": "students",
+                            "from_column": "school_id",
+                            "to_table": "schools",
+                            "to_column": "id",
+                        }
+                    ]
+                    if needs_location_join:
+                        plan.required_tables.append("organization_units")
+                        plan.joins.append(
+                            {
+                                "from_table": "schools",
+                                "from_column": "organization_unit_id",
+                                "to_table": "organization_units",
+                                "to_column": "id",
+                            }
+                        )
                 else:
                     plan.required_tables = ["students"]
                 plan.selected_columns = ["STUDENT_BY_NATIONAL_ID", *selected_columns]
                 plan.filters = [{"column": "national_id", "operator": "=", "value": intent.national_id}]
+                if intent.province:
+                    plan.filters.append(
+                        {"column": "province", "operator": "=", "value": intent.province}
+                    )
+                if intent.city:
+                    plan.filters.append(
+                        {"column": "city", "operator": "=", "value": intent.city}
+                    )
             elif intent.named_school:
                 plan.required_tables = ["students", "schools"]
                 plan.selected_columns = ["STUDENT_COUNT_BY_SCHOOL_NAME"] if intent.aggregation == "COUNT" else ["STUDENT_LIST_BY_SCHOOL_NAME"]
