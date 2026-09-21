@@ -8,41 +8,9 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
+from backend.text.normalizer import normalize_search_text
 
-_CHAR_TRANSLATION = str.maketrans(
-    {
-        "ي": "ی",
-        "ى": "ی",
-        "ك": "ک",
-        "ة": "ه",
-        "ۀ": "ه",
-        "ؤ": "و",
-        "إ": "ا",
-        "أ": "ا",
-        "ٱ": "ا",
-        "۰": "0",
-        "۱": "1",
-        "۲": "2",
-        "۳": "3",
-        "۴": "4",
-        "۵": "5",
-        "۶": "6",
-        "۷": "7",
-        "۸": "8",
-        "۹": "9",
-        "٠": "0",
-        "١": "1",
-        "٢": "2",
-        "٣": "3",
-        "٤": "4",
-        "٥": "5",
-        "٦": "6",
-        "٧": "7",
-        "٨": "8",
-        "٩": "9",
-        "‌": " ",
-    }
-)
+
 _TOKEN_PATTERN = re.compile(r"[\w]+", flags=re.UNICODE)
 
 
@@ -102,9 +70,7 @@ class HybridRetriever:
     @staticmethod
     def normalize(text: str) -> str:
         """Normalize Persian/Arabic characters, digits, and separators."""
-        normalized = text.translate(_CHAR_TRANSLATION).casefold()
-        normalized = re.sub(r"[_\-/]+", " ", normalized)
-        return " ".join(normalized.split())
+        return normalize_search_text(text)
 
     def tokenize(self, text: str) -> list[str]:
         """Tokenize normalized Persian and identifier text."""

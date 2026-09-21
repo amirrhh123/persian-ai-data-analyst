@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from backend.semantic.loader import load_tenant_semantic_catalog
 from backend.semantic.models import SemanticCatalog
+from backend.text.normalizer import normalize_persian_text
 
 
 class IntentFilter(BaseModel):
@@ -207,18 +208,8 @@ SERVICE_YEAR_PHRASES = [
 
 
 def normalize_persian(text: str) -> str:
-    replacements = {
-        "ي": "ی",
-        "ى": "ی",
-        "ك": "ک",
-        "ۀ": "ه",
-        "\u200f": "",
-        "\u200e": "",
-    }
-    normalized = text
-    for old, new in replacements.items():
-        normalized = normalized.replace(old, new)
-    return re.sub(r"\s+", " ", normalized).strip()
+    """Backward-compatible wrapper around the shared normalizer."""
+    return normalize_persian_text(text)
 
 
 def _contains_alias(question: str, alias: str) -> bool:

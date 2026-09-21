@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 from backend.router.labels import SIGNALS, V1_DOMAINS
+from backend.text.normalizer import normalize_persian_text
 
 
 DATASET_SCHEMA_VERSION = "router-dataset-v1"
@@ -112,8 +113,7 @@ class BuildResult:
 
 def normalize_persian(text: str) -> str:
     """Normalize Arabic variants, spacing, and sensitive identifiers."""
-    normalized = str(text).translate(str.maketrans({"ي": "ی", "ى": "ی", "ك": "ک", "ۀ": "ه"}))
-    normalized = normalized.replace("\u200c", " ")
+    normalized = normalize_persian_text(str(text))
     normalized = NATIONAL_ID_RE.sub("<NATIONAL_ID>", normalized)
     return WHITESPACE_RE.sub(" ", normalized).strip(" \t\r\n\"'،,.;؛")
 

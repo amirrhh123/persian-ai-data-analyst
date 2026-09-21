@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 from backend.config import get_settings
+from backend.text.normalizer import normalize_search_text
 
 from backend.feedback.models import (
     FeedbackEvent,
@@ -29,7 +30,7 @@ class FeedbackService:
 
     @staticmethod
     def _normalize_question(question: str) -> str:
-        return " ".join(question.casefold().replace("ي", "ی").replace("ك", "ک").split())
+        return normalize_search_text(question)
 
     def fingerprint(self, question: str) -> str:
         return hashlib.sha256(self._normalize_question(question).encode("utf-8")).hexdigest()

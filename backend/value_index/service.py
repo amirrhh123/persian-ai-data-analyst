@@ -18,41 +18,9 @@ from backend.value_index.models import (
     ValueIndexMatch,
     ValueIndexSnapshot,
 )
+from backend.text.normalizer import normalize_search_text
 
 
-_CHAR_TRANSLATION = str.maketrans(
-    {
-        "ي": "ی",
-        "ى": "ی",
-        "ك": "ک",
-        "ة": "ه",
-        "ۀ": "ه",
-        "ؤ": "و",
-        "إ": "ا",
-        "أ": "ا",
-        "۰": "0",
-        "۱": "1",
-        "۲": "2",
-        "۳": "3",
-        "۴": "4",
-        "۵": "5",
-        "۶": "6",
-        "۷": "7",
-        "۸": "8",
-        "۹": "9",
-        "٠": "0",
-        "١": "1",
-        "٢": "2",
-        "٣": "3",
-        "٤": "4",
-        "٥": "5",
-        "٦": "6",
-        "٧": "7",
-        "٨": "8",
-        "٩": "9",
-        "‌": " ",
-    }
-)
 _SENSITIVE_COLUMN_PARTS = {
     "national_id",
     "phone",
@@ -97,9 +65,7 @@ class ValueIndexService:
     @staticmethod
     def normalize(value: str) -> str:
         """Normalize Persian variants, digits, spacing, and separators."""
-        normalized = value.translate(_CHAR_TRANSLATION).casefold()
-        normalized = re.sub(r"[_\-/]+", " ", normalized)
-        return " ".join(normalized.split())
+        return normalize_search_text(value)
 
     def index_path(self, tenant_id: str) -> Path:
         """Return the tenant's value-index artifact path."""

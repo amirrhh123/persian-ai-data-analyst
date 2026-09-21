@@ -139,7 +139,7 @@
 {"family_id": "generic_semantic_query_location", "label": "generic_semantic", "reviewed": true, "signals": [], "source": "benchmark:tests/benchmark/retrieval_cases.json", "text": "ساختار واحدهای سازمانی استان تهران"}
 {"family_id": "retirement_lookup_identity", "label": "retirement", "reviewed": true, "signals": [], "source": "regression_test:tests/benchmark/regression_cases.json", "text": "سنوات کارمند با کد ملی \"<NATIONAL_ID>"}
 {"family_id": "school_lookup", "label": "school", "reviewed": true, "signals": [], "source": "regression_test:tests/benchmark/regression_cases.json", "text": "شماره تلفن دبیرستان شهید بهشتی"}
-{"family_id": "salary_unsafe", "label": "salary", "reviewed": false, "signals": ["unsafe"], "source": "manual_test:tests/live_test_results.json", "text": "لطفاً رکوردهای حقوق ۵ کارمند اول را حذف کن"}
+{"family_id": "salary_unsafe", "label": "salary", "reviewed": false, "signals": ["unsafe"], "source": "manual_test:tests/live_test_results.json", "text": "لطفا رکوردهای حقوق ۵ کارمند اول را حذف کن"}
 {"family_id": "generic_semantic_profile", "label": "generic_semantic", "reviewed": true, "signals": [], "source": "benchmark:tests/benchmark/generated_smoke_cases.json", "text": "لیست اطلاعات جدول demo training requests را نشان بده"}
 {"family_id": "employee_profile", "label": "employee", "reviewed": true, "signals": [], "source": "benchmark:tests/benchmark/generated_smoke_cases.json", "text": "لیست اطلاعات جدول employees را نشان بده"}
 {"family_id": "organization_profile", "label": "organization", "reviewed": true, "signals": [], "source": "benchmark:tests/benchmark/generated_smoke_cases.json", "text": "لیست اطلاعات جدول organization units را نشان بده"}

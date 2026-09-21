@@ -1,0 +1,281 @@
+{
+  "accuracy": 0.725,
+  "calls": {
+    "embedding": 0,
+    "embedding_per_question": 0.0,
+    "llm": 0,
+    "llm_per_question": 0.0
+  },
+  "correct": 87,
+  "dataset": {
+    "path": "dataset_reviewed.jsonl",
+    "sha256": "6276349ab534048d95d48f78a13b69fa8cf713e89013e7c7a1c98e11d682b8b4"
+  },
+  "errors": 33,
+  "fallback": {
+    "count": 50,
+    "rate": 0.416667
+  },
+  "latency_ms": {
+    "max": 4.29,
+    "mean": 0.310635,
+    "p50": 0.2593,
+    "p95": 0.5026
+  },
+  "per_class": {
+    "employee": {
+      "accuracy": 0.736842,
+      "correct": 14,
+      "error_examples": [
+        {
+          "expected": "employee",
+          "predicted": "generic_semantic",
+          "text": "اطلاعات جدول employees با first name آریا را نشان بده"
+        },
+        {
+          "expected": "employee",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول employees را به تفکیک first name بگو"
+        },
+        {
+          "expected": "employee",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول employees را بگو"
+        },
+        {
+          "expected": "employee",
+          "predicted": "generic_semantic",
+          "text": "جدیدترین رکوردهای جدول employees بر اساس hire date را نشان بده"
+        },
+        {
+          "expected": "employee",
+          "predicted": "generic_semantic",
+          "text": "لیست اطلاعات جدول employees را نشان بده"
+        }
+      ],
+      "errors": 5,
+      "predictions": {
+        "employee": 14,
+        "generic_semantic": 5
+      },
+      "support": 19
+    },
+    "generic_semantic": {
+      "accuracy": 0.96,
+      "correct": 24,
+      "error_examples": [
+        {
+          "expected": "generic_semantic",
+          "predicted": "organization",
+          "text": "ساختار واحدهای سازمانی استان تهران"
+        }
+      ],
+      "errors": 1,
+      "predictions": {
+        "generic_semantic": 24,
+        "organization": 1
+      },
+      "support": 25
+    },
+    "organization": {
+      "accuracy": 0.666667,
+      "correct": 8,
+      "error_examples": [
+        {
+          "expected": "organization",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول organization units را به تفکیک name بگو"
+        },
+        {
+          "expected": "organization",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول organization units را بگو"
+        },
+        {
+          "expected": "organization",
+          "predicted": "generic_semantic",
+          "text": "جدیدترین رکوردهای جدول organization units بر اساس created at را نشان بده"
+        },
+        {
+          "expected": "organization",
+          "predicted": "generic_semantic",
+          "text": "لیست اطلاعات جدول organization units را نشان بده"
+        }
+      ],
+      "errors": 4,
+      "predictions": {
+        "generic_semantic": 4,
+        "organization": 8
+      },
+      "support": 12
+    },
+    "retirement": {
+      "accuracy": 0.545455,
+      "correct": 6,
+      "error_examples": [
+        {
+          "expected": "retirement",
+          "predicted": "generic_semantic",
+          "text": "بیشترین years of service در جدول retirement records را بگو"
+        },
+        {
+          "expected": "retirement",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول retirement records را به تفکیک retirement type بگو"
+        },
+        {
+          "expected": "retirement",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول retirement records را بگو"
+        },
+        {
+          "expected": "retirement",
+          "predicted": "employee",
+          "text": "سنوات کارمند با کد ملی \"<NATIONAL_ID>"
+        },
+        {
+          "expected": "retirement",
+          "predicted": "generic_semantic",
+          "text": "لیست اطلاعات جدول retirement records را نشان بده"
+        }
+      ],
+      "errors": 5,
+      "predictions": {
+        "employee": 1,
+        "generic_semantic": 4,
+        "retirement": 6
+      },
+      "support": 11
+    },
+    "salary": {
+      "accuracy": 0.666667,
+      "correct": 8,
+      "error_examples": [
+        {
+          "expected": "salary",
+          "predicted": "generic_semantic",
+          "text": "بیشترین year در جدول salary items را بگو"
+        },
+        {
+          "expected": "salary",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول salary items را بگو"
+        },
+        {
+          "expected": "salary",
+          "predicted": "generic_semantic",
+          "text": "جدیدترین رکوردهای جدول salary items بر اساس payment date را نشان بده"
+        },
+        {
+          "expected": "salary",
+          "predicted": "generic_semantic",
+          "text": "لیست اطلاعات جدول salary items را نشان بده"
+        }
+      ],
+      "errors": 4,
+      "predictions": {
+        "generic_semantic": 4,
+        "salary": 8
+      },
+      "support": 12
+    },
+    "school": {
+      "accuracy": 0.653846,
+      "correct": 17,
+      "error_examples": [
+        {
+          "expected": "school",
+          "predicted": "generic_semantic",
+          "text": "بیشترین capacity در جدول schools را بگو"
+        },
+        {
+          "expected": "school",
+          "predicted": "student",
+          "text": "تعداد دانش آموزان دبستان امید مرودشت را بگو"
+        },
+        {
+          "expected": "school",
+          "predicted": "student",
+          "text": "تعداد دانش آموزان مدرسه دبیرستان شهید بهشتی"
+        },
+        {
+          "expected": "school",
+          "predicted": "student",
+          "text": "تعداد دانش آموزان مدرسه دبیرستان نمونه دولتی اصفهان"
+        },
+        {
+          "expected": "school",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول schools را به تفکیک name بگو"
+        },
+        {
+          "expected": "school",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول schools را بگو"
+        },
+        {
+          "expected": "school",
+          "predicted": "student",
+          "text": "دانش آموزان مدرسه دبیرستان شهید بهشتی را نشان بده"
+        },
+        {
+          "expected": "school",
+          "predicted": "student",
+          "text": "دانش آموزانی که در مدرسه دبیرستان فرزانگان مرودشت هستند"
+        },
+        {
+          "expected": "school",
+          "predicted": "generic_semantic",
+          "text": "لیست اطلاعات جدول schools را نشان بده"
+        }
+      ],
+      "errors": 9,
+      "predictions": {
+        "generic_semantic": 4,
+        "school": 17,
+        "student": 5
+      },
+      "support": 26
+    },
+    "student": {
+      "accuracy": 0.666667,
+      "correct": 10,
+      "error_examples": [
+        {
+          "expected": "student",
+          "predicted": "generic_semantic",
+          "text": "اطلاعات جدول students با first name parsa را نشان بده"
+        },
+        {
+          "expected": "student",
+          "predicted": "generic_semantic",
+          "text": "بیشترین enrollment year در جدول students را بگو"
+        },
+        {
+          "expected": "student",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول students را به تفکیک first name بگو"
+        },
+        {
+          "expected": "student",
+          "predicted": "generic_semantic",
+          "text": "تعداد رکوردهای جدول students را بگو"
+        },
+        {
+          "expected": "student",
+          "predicted": "generic_semantic",
+          "text": "لیست اطلاعات جدول students را نشان بده"
+        }
+      ],
+      "errors": 5,
+      "predictions": {
+        "generic_semantic": 5,
+        "student": 10
+      },
+      "support": 15
+    }
+  },
+  "router": "current_deterministic_intent_rules",
+  "samples": 120,
+  "schema_version": "router-baseline-v1"
+}

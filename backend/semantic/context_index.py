@@ -9,20 +9,14 @@ from collections import Counter, OrderedDict, defaultdict
 from dataclasses import dataclass, field
 
 from backend.semantic.models import SemanticCatalog
+from backend.text.normalizer import normalize_search_text
 
 
-_TRANSLATION = str.maketrans({
-    "ي": "ی", "ى": "ی", "ك": "ک", "ة": "ه", "ۀ": "ه", "‌": " ",
-    "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
-    "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
-})
 _TOKEN_PATTERN = re.compile(r"[\w]+", re.UNICODE)
 
 
 def normalize_context_text(value: str) -> str:
-    normalized = value.translate(_TRANSLATION).casefold()
-    normalized = re.sub(r"[_\-/]+", " ", normalized)
-    return " ".join(normalized.split())
+    return normalize_search_text(value)
 
 
 @dataclass(frozen=True, slots=True)
