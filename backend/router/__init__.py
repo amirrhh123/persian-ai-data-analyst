@@ -20,6 +20,7 @@ from backend.router.labels import (
     validate_domain,
 )
 from backend.router.models import RouterPrediction
+from backend.router.dataset_builder import BuildResult, DatasetExample, build_router_dataset
 
 __all__ = [
     "RouterPrediction",
@@ -32,4 +33,7 @@ __all__ = [
     "is_domain",
     "is_signal",
     "validate_domain",
+    "BuildResult",
+    "DatasetExample",
+    "build_router_dataset",
 ]
